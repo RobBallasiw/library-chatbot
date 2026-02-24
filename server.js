@@ -90,12 +90,14 @@ async function fetchUserProfile(psid, forceRefresh = false) {
     console.log('🔍 Fetching profile for PSID:', psid);
     const response = await axios.get(url);
     
+    console.log('📦 Facebook API response:', JSON.stringify(response.data, null, 2));
+    
     const profile = {
       name: response.data.name || 'Unknown',
       profilePic: response.data.profile_pic || null
     };
     
-    console.log('✅ Profile fetched:', profile.name);
+    console.log('✅ Profile created:', profile);
     
     // Cache it
     librarianProfiles.set(psid, profile);
@@ -568,10 +570,10 @@ app.get('/api/admin/librarians', async (req, res) => {
     authorizedPsids: authorizedPsids
   });
   
-  // Fetch names for all PSIDs (force refresh to get latest data)
+  // Fetch names for all PSIDs (use cache)
   const authorizedWithNames = await Promise.all(
     authorizedPsids.map(async (psid) => {
-      const profile = await fetchUserProfile(psid, true); // Force refresh
+      const profile = await fetchUserProfile(psid);
       return {
         psid,
         name: profile.name,
@@ -582,7 +584,7 @@ app.get('/api/admin/librarians', async (req, res) => {
   
   const pendingWithNames = await Promise.all(
     pendingList.map(async (req) => {
-      const profile = await fetchUserProfile(req.psid, true); // Force refresh
+      const profile = await fetchUserProfile(req.psid);
       return {
         ...req,
         name: profile.name,
