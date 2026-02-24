@@ -467,7 +467,10 @@
         clearInterval(conversationPollingInterval);
       }
       
-      // Poll every 2 seconds while modal is open
+      // Do an immediate refresh
+      setTimeout(refreshConversation, 100);
+      
+      // Then poll every 2 seconds while modal is open
       conversationPollingInterval = setInterval(() => {
         if (currentSessionId && document.getElementById('conversation-modal').classList.contains('active')) {
           refreshConversation();
@@ -489,10 +492,32 @@
         const response = await fetch(`/api/conversation/${currentSessionId}`);
         const data = await response.json();
         
-        // Only update if message count changed
-        if (data.messages.length !== currentConversation.messages.length) {
+        console.log('Refresh check:', {
+          currentMessages: currentConversation?.messages?.length || 0,
+          newMessages: data.messages?.length || 0,
+          currentStatus: currentConversation?.status,
+          newStatus: data.status
+        });
+        
+        // Check if there are new messages or status changed
+        const hasNewMessages = !currentConversation || 
+                               data.messages.length !== currentConversation.messages.length ||
+                               data.status !== currentConversation.status;
+        
+        if (hasNewMessages) {
+          console.log('✅ Updating conversation view');
+          const messagesEl = document.getElementById('modal-messages');
+          const wasAtBottom = messagesEl.scrollHeight - messagesEl.scrollTop <= messagesEl.clientHeight + 50;
+          
           currentConversation = data;
           renderConversationModal(data);
+          
+          // Auto-scroll to bottom if user was already at bottom
+          if (wasAtBottom) {
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+          }
+        } else {
+          console.log('⏭️ No changes detected');
         }
       } catch (error) {
         console.error('Error refreshing conversation:', error);
@@ -503,7 +528,10 @@
       const titleEl = document.getElementById('modal-title');
       const messagesEl = document.getElementById('modal-messages');
       
-      titleEl.textContent = `Session: ${conversation.sessionId.substring(0, 30)}...`;
+      const statusText = conversation.status === 'human' ? '🟡 Waiting' : 
+                        conversation.status === 'responded' ? '✅ Responded' : '🤖 Bot';
+      
+      titleEl.textContent = `Session: ${conversation.sessionId.substring(0, 30)}... (${statusText})`;
       
       if (!conversation.messages || conversation.messages.length === 0) {
         messagesEl.innerHTML = '<div class="empty-state"><p>No messages yet</p></div>';
