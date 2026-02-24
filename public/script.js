@@ -12,6 +12,8 @@ let conversationHistory = [];
 let isFirstOpen = true;
 let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 let conversationStatus = 'bot';
+let lastMessageCount = 0;
+let pollingInterval = null;
 
 // Toggle chat widget
 chatToggle.addEventListener('click', () => {
@@ -81,6 +83,8 @@ async function sendMessage() {
         { role: 'assistant', content: data.response }
       );
       
+      lastMessageCount = conversationHistory.length;
+      
       if (data.status) {
         conversationStatus = data.status;
         updateStatusIndicator();
@@ -120,6 +124,9 @@ async function requestLibrarian() {
       updateStatusIndicator();
       addMessage(data.message, false);
       addMessage('Please describe your question and a librarian will respond shortly.', false);
+      
+      // Initialize message count for polling
+      lastMessageCount = conversationHistory.length + 2; // +2 for the messages we just added
     } else {
       addMessage('Sorry, could not connect to a librarian. Please try again.', false);
       requestLibrarianBtn.disabled = false;
@@ -136,8 +143,36 @@ function updateStatusIndicator() {
   if (conversationStatus === 'human') {
     statusIndicator.innerHTML = '<span class="status-dot human"></span>Librarian notified';
     requestLibrarianBtn.style.display = 'none';
+    
+    // Start polling for librarian responses
+    if (!pollingInterval) {
+      pollingInterval = setInterval(checkForNewMessages, 3000);
+    }
   } else {
     statusIndicator.innerHTML = '<span class="status-dot"></span>AI Assistant';
+  }
+}
+
+async function checkForNewMessages() {
+  try {
+    const response = await fetch(`/api/conversation/${sessionId}`);
+    const data = await response.json();
+    
+    if (data.messages && data.messages.length > lastMessageCount) {
+      // New messages arrived
+      const newMessages = data.messages.slice(lastMessageCount);
+      
+      newMessages.forEach(msg => {
+        if (msg.role === 'librarian') {
+          addMessage(msg.content, false);
+          conversationHistory.push({ role: 'assistant', content: msg.content });
+        }
+      });
+      
+      lastMessageCount = data.messages.length;
+    }
+  } catch (error) {
+    console.error('Error checking for new messages:', error);
   }
 }
 
