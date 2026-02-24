@@ -77,13 +77,19 @@ async function sendMessage() {
     removeTypingIndicator();
 
     if (data.success) {
-      addMessage(data.response, false);
-      conversationHistory.push(
-        { role: 'user', content: message },
-        { role: 'assistant', content: data.response }
-      );
-      
-      lastMessageCount = conversationHistory.length;
+      // Only add bot message if there's a response (not in librarian mode)
+      if (data.response) {
+        addMessage(data.response, false);
+        conversationHistory.push(
+          { role: 'user', content: message },
+          { role: 'assistant', content: data.response }
+        );
+        
+        lastMessageCount = conversationHistory.length;
+      } else {
+        // In librarian mode - just add user message to history
+        conversationHistory.push({ role: 'user', content: message });
+      }
       
       if (data.status) {
         conversationStatus = data.status;
@@ -99,7 +105,11 @@ async function sendMessage() {
   }
 
   sendBtn.disabled = false;
-  userInput.focus();
+  
+  // Only focus input if not in librarian mode
+  if (conversationStatus === 'bot') {
+    userInput.focus();
+  }
 }
 
 async function requestLibrarian() {
@@ -140,8 +150,8 @@ async function requestLibrarian() {
 }
 
 function updateStatusIndicator() {
-  if (conversationStatus === 'human') {
-    statusIndicator.innerHTML = '<span class="status-dot human"></span>Librarian notified';
+  if (conversationStatus === 'human' || conversationStatus === 'responded') {
+    statusIndicator.innerHTML = '<span class="status-dot human"></span>Connected to Librarian';
     requestLibrarianBtn.style.display = 'none';
     
     // Start polling for librarian responses

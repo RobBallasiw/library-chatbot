@@ -144,6 +144,11 @@
       color: #1e40af;
     }
 
+    .status-badge.responded {
+      background: #dcfce7;
+      color: #166534;
+    }
+
     .conversation-preview {
       color: #666;
       font-size: 14px;
@@ -420,7 +425,9 @@
         <div class="conversation-item" data-session="${conv.sessionId}" onclick="viewConversation('${conv.sessionId}')">
           <div class="conversation-header">
             <span class="session-id">${conv.sessionId.substring(0, 20)}...</span>
-            <span class="status-badge ${conv.status}">${conv.status === 'human' ? '🟡 Waiting' : '🤖 Bot'}</span>
+            <span class="status-badge ${conv.status}">
+              ${conv.status === 'human' ? '🟡 Waiting' : conv.status === 'responded' ? '✅ Responded' : '🤖 Bot'}
+            </span>
           </div>
           <div class="conversation-preview">
             ${conv.lastMessage ? conv.lastMessage.content.substring(0, 80) + '...' : 'No messages yet'}

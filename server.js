@@ -220,12 +220,20 @@ app.post('/api/chat', async (req, res) => {
     const conversation = conversations.get(sessionId);
     conversation.messages.push({ role: 'user', content: message, timestamp: new Date() });
 
-    // If conversation is with human, queue message for librarian
-    if (conversation.status === 'human') {
-      await sendToMessenger(message, { sessionId, ...conversation });
+    // If conversation is with human librarian (waiting or already responded), don't send bot response
+    if (conversation.status === 'human' || conversation.status === 'responded') {
+      // Change status back to 'human' (waiting) since user sent a new message
+      conversation.status = 'human';
       
+      // Notify librarian of new message
+      await sendToMessenger(
+        `New message from user in session ${sessionId}:\n\n${message}`,
+        { sessionId, ...conversation }
+      );
+      
+      // Don't send any response - user will see librarian's reply via polling
       res.json({
-        response: 'A librarian will respond to you shortly. Please wait...',
+        response: null,
         success: true,
         status: 'human'
       });
@@ -695,7 +703,11 @@ app.post('/api/librarian/respond', (req, res) => {
       timestamp: new Date()
     });
     
+    // Change status to 'responded' to indicate librarian has replied
+    conversation.status = 'responded';
+    
     console.log('✅ Message added. Total messages:', conversation.messages.length);
+    console.log('📊 Status changed to: responded');
     console.log('📊 All messages:', conversation.messages.map(m => ({ role: m.role, preview: m.content.substring(0, 50) })));
     
     res.json({ success: true });
