@@ -104,7 +104,11 @@ async function fetchUserProfile(psid, forceRefresh = false) {
     
     return profile;
   } catch (error) {
-    console.error('❌ Error fetching user profile for', psid, ':', error.response?.data || error.message);
+    console.error('❌ Error fetching user profile for', psid);
+    console.error('   Error type:', error.response?.status);
+    console.error('   Error message:', error.response?.data?.error?.message || error.message);
+    console.error('   Full error:', JSON.stringify(error.response?.data, null, 2));
+    
     // Return a default profile instead of failing
     const defaultProfile = { name: 'Librarian ' + psid.substring(0, 8), profilePic: null };
     librarianProfiles.set(psid, defaultProfile);

@@ -484,7 +484,7 @@
       }
     }
 
-    // Auto-refresh every 3 seconds
+    // Auto-refresh every 10 seconds (reduced from 3 to minimize server load)
     let checkCount = 0;
     setInterval(() => {
       const previousHash = lastDataHash;
@@ -495,7 +495,7 @@
         }
         checkCount++;
       });
-    }, 3000);
+    }, 10000);
     
     // Initial load
     loadData().then(() => {
