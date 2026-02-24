@@ -538,6 +538,7 @@
     let notificationSound = null;
     let librarianNotificationTimeout = null;
     let botNotificationTimeout = null;
+    let viewedConversations = new Set(); // Track which conversations have been viewed
 
     // Create notification sound
     function initNotificationSound() {
@@ -658,41 +659,39 @@
     }
 
     function updateStats(data) {
-      const activeCount = data.activeConversations.filter(c => c.status === 'human').length;
-      const botCount = data.activeConversations.filter(c => c.status === 'bot' || c.status === 'responded').length;
+      const unreadLibrarian = data.activeConversations.filter(c => 
+        c.status === 'human' && !viewedConversations.has(c.sessionId)
+      ).length;
+      
+      const unreadBot = data.activeConversations.filter(c => 
+        (c.status === 'bot' || c.status === 'responded') && !viewedConversations.has(c.sessionId)
+      ).length;
+      
       const totalActive = data.activeConversations.length;
+      const totalPending = data.activeConversations.filter(c => c.status === 'human').length;
       const totalMessages = data.activeConversations.reduce((sum, c) => sum + c.messageCount, 0);
       
-      console.log('Stats update:', {
-        total: totalActive,
-        librarian: activeCount,
-        bot: botCount,
-        statuses: data.activeConversations.map(c => c.status)
-      });
-      
       document.getElementById('active-count').textContent = totalActive;
-      document.getElementById('pending-count').textContent = activeCount;
+      document.getElementById('pending-count').textContent = totalPending;
       document.getElementById('message-count').textContent = totalMessages;
       
-      // Always show/update librarian notification if there are pending requests
-      if (activeCount > 0) {
-        showNotification(activeCount, 'librarian');
+      // Show notification for unread librarian requests
+      if (unreadLibrarian > 0) {
+        showNotification(unreadLibrarian, 'librarian');
+        
+        // Play sound if count increased
+        if (unreadLibrarian > lastNotificationCount) {
+          // Sound already plays in showNotification
+        }
       } else {
-        // Hide notification if no more pending requests
         dismissNotification('librarian');
       }
+      lastNotificationCount = unreadLibrarian;
       
-      // Track changes for sound
-      if (activeCount > lastNotificationCount) {
-        // New request - sound already played in showNotification
-      }
-      lastNotificationCount = activeCount;
-      
-      // Always show/update bot notification if there are active bot conversations
-      if (botCount > 0) {
-        showNotification(botCount, 'bot');
+      // Show notification for unread bot conversations
+      if (unreadBot > 0) {
+        showNotification(unreadBot, 'bot');
       } else {
-        // Hide notification if no more bot conversations
         dismissNotification('bot');
       }
       
@@ -745,6 +744,9 @@
       currentSessionId = sessionId;
       const conv = document.querySelector(`[data-session="${sessionId}"]`);
       
+      // Mark this conversation as viewed
+      viewedConversations.add(sessionId);
+      
       // Fetch full conversation
       fetch(`/api/conversation/${sessionId}`)
         .then(res => res.json())
@@ -755,9 +757,40 @@
           
           // Start auto-refresh for this conversation
           startConversationPolling();
+          
+          // Update notification counts immediately
+          updateNotificationCounts();
         })
         .catch(error => {
           alert('Error loading conversation: ' + error.message);
+        });
+    }
+
+    function updateNotificationCounts() {
+      // Recalculate unread counts
+      fetch('/api/librarian/notifications')
+        .then(res => res.json())
+        .then(data => {
+          const unreadLibrarian = data.activeConversations.filter(c => 
+            c.status === 'human' && !viewedConversations.has(c.sessionId)
+          ).length;
+          
+          const unreadBot = data.activeConversations.filter(c => 
+            (c.status === 'bot' || c.status === 'responded') && !viewedConversations.has(c.sessionId)
+          ).length;
+          
+          // Update notifications with unread counts
+          if (unreadLibrarian > 0) {
+            showNotification(unreadLibrarian, 'librarian');
+          } else {
+            dismissNotification('librarian');
+          }
+          
+          if (unreadBot > 0) {
+            showNotification(unreadBot, 'bot');
+          } else {
+            dismissNotification('bot');
+          }
         });
     }
 
