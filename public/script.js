@@ -36,7 +36,14 @@ function addMessage(content, isUser) {
   messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
   messageDiv.textContent = content;
   messagesContainer.appendChild(messageDiv);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  
+  // Smooth scroll to bottom
+  setTimeout(() => {
+    messagesContainer.scrollTo({
+      top: messagesContainer.scrollHeight,
+      behavior: 'smooth'
+    });
+  }, 10);
 }
 
 function showTypingIndicator() {
@@ -45,7 +52,14 @@ function showTypingIndicator() {
   typingDiv.id = 'typing';
   typingDiv.innerHTML = '<span></span><span></span><span></span>';
   messagesContainer.appendChild(typingDiv);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  
+  // Scroll to bottom
+  setTimeout(() => {
+    messagesContainer.scrollTo({
+      top: messagesContainer.scrollHeight,
+      behavior: 'smooth'
+    });
+  }, 10);
 }
 
 function removeTypingIndicator() {
@@ -200,6 +214,14 @@ async function checkForNewMessages() {
       });
       
       lastMessageCount = data.messages.length;
+      
+      // Ensure scroll to bottom after adding messages
+      setTimeout(() => {
+        messagesContainer.scrollTo({
+          top: messagesContainer.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 100);
       
       // Check if session was ended (status changed back to bot)
       if (data.status === 'bot' && conversationStatus !== 'bot') {
