@@ -277,16 +277,30 @@ app.post('/api/request-librarian', async (req, res) => {
     const { sessionId, history = [] } = req.body;
     
     if (!conversations.has(sessionId)) {
+      // Convert history to proper message format with timestamps
+      const messages = history.map(msg => ({
+        ...msg,
+        timestamp: msg.timestamp || new Date()
+      }));
+      
       conversations.set(sessionId, {
         status: 'human',
-        messages: history,
+        messages: messages,
         userId: null,
         startTime: new Date()
       });
+      
+      console.log('📝 Created new conversation:', sessionId, 'with', messages.length, 'messages');
     }
 
     const conversation = conversations.get(sessionId);
     conversation.status = 'human';
+    
+    console.log('📊 Current conversation state:', {
+      sessionId,
+      messageCount: conversation.messages.length,
+      status: conversation.status
+    });
 
     // Notify librarian via Messenger
     const conversationSummary = history.slice(-5).map(m => 
@@ -671,6 +685,9 @@ app.post('/api/librarian/respond', (req, res) => {
   const { sessionId, message } = req.body;
   const conversation = conversations.get(sessionId);
   
+  console.log('📤 Librarian responding to session:', sessionId);
+  console.log('💬 Message:', message);
+  
   if (conversation) {
     conversation.messages.push({
       role: 'librarian',
@@ -678,8 +695,12 @@ app.post('/api/librarian/respond', (req, res) => {
       timestamp: new Date()
     });
     
+    console.log('✅ Message added. Total messages:', conversation.messages.length);
+    console.log('📊 All messages:', conversation.messages.map(m => ({ role: m.role, preview: m.content.substring(0, 50) })));
+    
     res.json({ success: true });
   } else {
+    console.log('❌ Conversation not found:', sessionId);
     res.status(404).json({ success: false, error: 'Conversation not found' });
   }
 });

@@ -156,14 +156,29 @@ function updateStatusIndicator() {
 async function checkForNewMessages() {
   try {
     const response = await fetch(`/api/conversation/${sessionId}`);
+    
+    if (!response.ok) {
+      console.log('Conversation not found yet');
+      return;
+    }
+    
     const data = await response.json();
+    
+    console.log('Polling check:', {
+      totalMessages: data.messages?.length || 0,
+      lastMessageCount: lastMessageCount,
+      hasNewMessages: (data.messages?.length || 0) > lastMessageCount
+    });
     
     if (data.messages && data.messages.length > lastMessageCount) {
       // New messages arrived
       const newMessages = data.messages.slice(lastMessageCount);
       
+      console.log('New messages detected:', newMessages);
+      
       newMessages.forEach(msg => {
         if (msg.role === 'librarian') {
+          console.log('Adding librarian message:', msg.content);
           addMessage(msg.content, false);
           conversationHistory.push({ role: 'assistant', content: msg.content });
         }
