@@ -144,6 +144,11 @@
       color: #1e40af;
     }
 
+    .status-badge.viewed {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
     .status-badge.responded {
       background: #dcfce7;
       color: #166534;
@@ -713,7 +718,7 @@
       ).length;
       
       const unreadBot = data.activeConversations.filter(c => 
-        (c.status === 'bot' || c.status === 'responded') && !viewedConversations.has(c.sessionId)
+        c.status === 'bot' && !viewedConversations.has(c.sessionId)
       ).length;
       
       const totalActive = data.activeConversations.length;
@@ -763,7 +768,7 @@
         const color = getColorForSession(conv.sessionId);
         const initials = getInitials(conv.sessionId);
         const isWaiting = conv.status === 'human';
-        const isUnread = !viewedConversations.has(conv.sessionId) && (conv.status === 'bot' || conv.status === 'responded');
+        const isUnread = !viewedConversations.has(conv.sessionId) && conv.status === 'bot';
         
         return `
         <div class="conversation-item ${isWaiting ? 'waiting' : ''}" 
@@ -777,7 +782,7 @@
               <span class="session-id">${conv.sessionId.substring(0, 20)}...</span>
             </div>
             <span class="status-badge ${conv.status}">
-              ${conv.status === 'human' ? '🟡 Waiting' : conv.status === 'responded' ? '✅ Responded' : '🤖 Bot'}
+              ${conv.status === 'human' ? '🟡 Waiting' : conv.status === 'responded' ? '✅ Responded' : conv.status === 'viewed' ? '👁️ Viewed' : '🤖 Bot'}
             </span>
           </div>
           <div class="conversation-preview">
@@ -832,7 +837,7 @@
       ).length;
       
       const unreadBot = cachedConversations.filter(c => 
-        (c.status === 'bot' || c.status === 'responded') && !viewedConversations.has(c.sessionId)
+        c.status === 'bot' && !viewedConversations.has(c.sessionId)
       ).length;
       
       // Update notifications with unread counts
@@ -916,7 +921,8 @@
       const messagesEl = document.getElementById('modal-messages');
       
       const statusText = conversation.status === 'human' ? '🟡 Waiting' : 
-                        conversation.status === 'responded' ? '✅ Responded' : '🤖 Bot';
+                        conversation.status === 'responded' ? '✅ Responded' : 
+                        conversation.status === 'viewed' ? '👁️ Viewed' : '🤖 Bot';
       
       titleEl.textContent = `Session: ${conversation.sessionId.substring(0, 30)}... (${statusText})`;
       

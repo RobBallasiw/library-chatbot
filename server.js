@@ -702,6 +702,12 @@ app.get('/api/conversation/:sessionId', (req, res) => {
   const conversation = conversations.get(sessionId);
   
   if (conversation) {
+    // Mark as viewed if it's a bot conversation
+    if (conversation.status === 'bot') {
+      conversation.status = 'viewed';
+      console.log(`👁️ Conversation ${sessionId} marked as viewed`);
+    }
+    
     res.json({
       sessionId,
       ...conversation
