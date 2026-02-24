@@ -462,8 +462,8 @@
     <div class="notification-content">
       <span class="notification-icon">🔔</span>
       <div>
-        <strong>New Librarian Request!</strong>
-        <p id="notification-text">A user needs assistance</p>
+        <strong>User Requesting Librarian!</strong>
+        <p id="notification-text">A user wants to talk with a librarian</p>
       </div>
       <button onclick="dismissNotification()" class="dismiss-btn">✕</button>
     </div>
@@ -572,7 +572,9 @@
       const alert = document.getElementById('notification-alert');
       const text = document.getElementById('notification-text');
       
-      text.textContent = count === 1 ? 'A user needs assistance' : `${count} users need assistance`;
+      text.textContent = count === 1 
+        ? '1 user is requesting to talk with a librarian' 
+        : `${count} users are requesting to talk with a librarian`;
       alert.style.display = 'block';
       
       // Play sound
