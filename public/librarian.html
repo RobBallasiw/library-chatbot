@@ -616,8 +616,8 @@
       document.getElementById('pending-count').textContent = activeCount;
       document.getElementById('message-count').textContent = totalMessages;
       
-      // Check for new pending requests
-      if (activeCount > lastNotificationCount && lastNotificationCount > 0) {
+      // Check for new pending requests (show notification if count increased OR if there's at least 1 waiting)
+      if (activeCount > lastNotificationCount) {
         showNotification(activeCount);
       }
       lastNotificationCount = activeCount;
