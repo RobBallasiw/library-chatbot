@@ -1057,20 +1057,19 @@
             countdown--;
             warnBtn.textContent = `Ending in ${countdown}s...`;
             
-            // Send countdown message to user
+            // Update countdown status on server
             if (countdown > 0) {
               try {
-                await fetch('/api/librarian/respond', {
+                await fetch('/api/librarian/set-countdown', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     sessionId: currentSessionId,
-                    message: `Session ending in ${countdown} second${countdown !== 1 ? 's' : ''}...`
+                    countdown: countdown
                   })
                 });
-                refreshConversation();
               } catch (error) {
-                console.error('Error sending countdown:', error);
+                console.error('Error updating countdown:', error);
               }
             }
             

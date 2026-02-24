@@ -194,8 +194,16 @@ async function checkForNewMessages() {
     console.log('Polling check:', {
       totalMessages: data.messages?.length || 0,
       lastMessageCount: lastMessageCount,
-      hasNewMessages: (data.messages?.length || 0) > lastMessageCount
+      hasNewMessages: (data.messages?.length || 0) > lastMessageCount,
+      countdown: data.countdown
     });
+    
+    // Update status indicator with countdown if present
+    if (data.countdown && data.countdown > 0) {
+      statusIndicator.innerHTML = `<span class="status-dot human"></span>Session ending in ${data.countdown}s...`;
+    } else if (conversationStatus === 'human' || conversationStatus === 'responded') {
+      statusIndicator.innerHTML = '<span class="status-dot human"></span>Connected to Librarian';
+    }
     
     if (data.messages && data.messages.length > lastMessageCount) {
       // New messages arrived

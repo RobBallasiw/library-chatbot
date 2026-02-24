@@ -764,11 +764,33 @@ app.post('/api/librarian/end-session', (req, res) => {
     // Change status back to 'bot'
     conversation.status = 'bot';
     
+    // Clear countdown if exists
+    if (conversation.countdown) {
+      delete conversation.countdown;
+    }
+    
     console.log('✅ Session ended. Status changed to: bot');
     
     res.json({ success: true });
   } else {
     console.log('❌ Conversation not found:', sessionId);
+    res.status(404).json({ success: false, error: 'Conversation not found' });
+  }
+});
+
+// API endpoint to set countdown status
+app.post('/api/librarian/set-countdown', (req, res) => {
+  const { sessionId, countdown } = req.body;
+  const conversation = conversations.get(sessionId);
+  
+  if (conversation) {
+    if (countdown > 0) {
+      conversation.countdown = countdown;
+    } else {
+      delete conversation.countdown;
+    }
+    res.json({ success: true });
+  } else {
     res.status(404).json({ success: false, error: 'Conversation not found' });
   }
 });
