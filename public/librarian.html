@@ -462,7 +462,7 @@
     <div class="notification-content">
       <span class="notification-icon">🔔</span>
       <div>
-        <strong>User Requesting Librarian!</strong>
+        <strong id="notification-title">User Requesting Librarian!</strong>
         <p id="notification-text">A user wants to talk with a librarian</p>
       </div>
       <button onclick="dismissNotification()" class="dismiss-btn">✕</button>
@@ -523,6 +523,7 @@
     let currentSessionId = null;
     let currentConversation = null;
     let lastNotificationCount = 0;
+    let lastActiveCount = 0;
     let notificationSound = null;
 
     // Create notification sound
@@ -568,23 +569,41 @@
       return parts[parts.length - 1].substring(0, 2).toUpperCase();
     }
 
-    function showNotification(count) {
+    function showNotification(count, type = 'librarian') {
       const alert = document.getElementById('notification-alert');
       const text = document.getElementById('notification-text');
+      const title = document.getElementById('notification-title');
       
-      text.textContent = count === 1 
-        ? '1 user is requesting to talk with a librarian' 
-        : `${count} users are requesting to talk with a librarian`;
-      alert.style.display = 'block';
-      
-      // Play sound
-      if (notificationSound) {
-        try {
-          notificationSound();
-        } catch (e) {
-          console.log('Could not play sound:', e);
+      if (type === 'librarian') {
+        // High priority - user requesting librarian
+        title.textContent = 'User Requesting Librarian!';
+        text.textContent = count === 1 
+          ? '1 user is requesting to talk with a librarian' 
+          : `${count} users are requesting to talk with a librarian`;
+        alert.style.background = '#fef3c7';
+        alert.style.borderColor = '#f59e0b';
+        
+        // Play sound for librarian requests
+        if (notificationSound) {
+          try {
+            notificationSound();
+          } catch (e) {
+            console.log('Could not play sound:', e);
+          }
         }
+      } else {
+        // Low priority - new bot conversation
+        title.textContent = 'New Chat Activity';
+        text.textContent = count === 1 
+          ? '1 user started chatting with the bot' 
+          : `${count} users started chatting with the bot`;
+        alert.style.background = '#dbeafe';
+        alert.style.borderColor = '#3b82f6';
+        
+        // No sound for bot conversations
       }
+      
+      alert.style.display = 'block';
       
       // Auto-dismiss after 10 seconds
       setTimeout(() => {
@@ -610,17 +629,27 @@
 
     function updateStats(data) {
       const activeCount = data.activeConversations.filter(c => c.status === 'human').length;
+      const totalActive = data.activeConversations.length;
       const totalMessages = data.activeConversations.reduce((sum, c) => sum + c.messageCount, 0);
       
-      document.getElementById('active-count').textContent = data.activeConversations.length;
+      document.getElementById('active-count').textContent = totalActive;
       document.getElementById('pending-count').textContent = activeCount;
       document.getElementById('message-count').textContent = totalMessages;
       
-      // Check for new pending requests (show notification if count increased OR if there's at least 1 waiting)
+      // Show notification for new librarian requests (status = 'human')
       if (activeCount > lastNotificationCount) {
-        showNotification(activeCount);
+        showNotification(activeCount, 'librarian');
       }
       lastNotificationCount = activeCount;
+      
+      // Show subtle notification for new bot conversations
+      if (totalActive > lastActiveCount && lastActiveCount > 0) {
+        const newBotConversations = totalActive - lastActiveCount;
+        if (newBotConversations > 0) {
+          showNotification(newBotConversations, 'bot');
+        }
+      }
+      lastActiveCount = totalActive;
     }
 
     function renderConversations(conversations) {
