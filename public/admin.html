@@ -225,6 +225,7 @@
   <div class="header">
     <h1>🔐 Admin Dashboard</h1>
     <p>Manage librarian access and permissions</p>
+    <p style="font-size: 12px; opacity: 0.8; margin-top: 8px;">🔄 Auto-refreshes every 3 seconds</p>
   </div>
 
   <div id="alert-container"></div>
@@ -455,8 +456,8 @@
       }, 5000);
     }
 
-    // Auto-refresh every 10 seconds
-    setInterval(loadData, 10000);
+    // Auto-refresh every 3 seconds
+    setInterval(loadData, 3000);
     
     // Initial load
     loadData();
