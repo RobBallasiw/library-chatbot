@@ -1087,6 +1087,16 @@
           // Immediately refresh to show the sent message
           refreshConversation();
           
+          // Set initial countdown on server
+          await fetch('/api/librarian/set-countdown', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId: currentSessionId,
+              countdown: 10
+            })
+          });
+          
           // Start 10-second countdown
           let countdown = 10;
           const warnBtn = document.querySelector('.warn-btn');
@@ -1095,6 +1105,24 @@
           warnBtn.textContent = `Ending in ${countdown}s...`;
           
           const countdownInterval = setInterval(async () => {
+            // Check if countdown was cancelled on server
+            try {
+              const checkResponse = await fetch(`/api/conversation/${currentSessionId}`);
+              const checkData = await checkResponse.json();
+              
+              if (!checkData.countdown) {
+                // Countdown was cancelled
+                console.log('⏹️ Countdown cancelled by server');
+                clearInterval(countdownInterval);
+                endSessionTimeout = null;
+                warnBtn.textContent = originalText;
+                warnBtn.disabled = false;
+                return;
+              }
+            } catch (error) {
+              console.error('Error checking countdown:', error);
+            }
+            
             countdown--;
             warnBtn.textContent = `Ending in ${countdown}s...`;
             
@@ -1116,6 +1144,7 @@
             
             if (countdown <= 0) {
               clearInterval(countdownInterval);
+              endSessionTimeout = null;
               warnBtn.textContent = originalText;
               warnBtn.disabled = false;
               
