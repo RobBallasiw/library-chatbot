@@ -583,7 +583,7 @@
       return parts[parts.length - 1].substring(0, 2).toUpperCase();
     }
 
-    function showNotification(count, type = 'librarian') {
+    function showNotification(count, type = 'librarian', playSound = true) {
       if (type === 'librarian') {
         // High priority - user requesting librarian
         const alert = document.getElementById('notification-librarian');
@@ -595,8 +595,8 @@
         
         alert.style.display = 'block';
         
-        // Play sound for librarian requests
-        if (notificationSound) {
+        // Play sound for librarian requests (only if requested)
+        if (playSound && notificationSound) {
           try {
             notificationSound();
           } catch (e) {
@@ -651,9 +651,6 @@
         const response = await fetch('/api/librarian/notifications');
         const data = await response.json();
         
-        // Cache conversations for immediate updates
-        cachedConversations = data.activeConversations;
-        
         updateStats(data);
         renderConversations(data.activeConversations);
       } catch (error) {
@@ -662,6 +659,9 @@
     }
 
     function updateStats(data) {
+      // Cache conversations for immediate updates
+      cachedConversations = data.activeConversations;
+      
       const unreadLibrarian = data.activeConversations.filter(c => 
         c.status === 'human' && !viewedConversations.has(c.sessionId)
       ).length;
@@ -680,12 +680,9 @@
       
       // Show notification for unread librarian requests
       if (unreadLibrarian > 0) {
-        showNotification(unreadLibrarian, 'librarian');
-        
         // Play sound if count increased
-        if (unreadLibrarian > lastNotificationCount) {
-          // Sound already plays in showNotification
-        }
+        const shouldPlaySound = unreadLibrarian > lastNotificationCount;
+        showNotification(unreadLibrarian, 'librarian', shouldPlaySound);
       } else {
         dismissNotification('librarian');
       }
@@ -693,7 +690,7 @@
       
       // Show notification for unread bot conversations
       if (unreadBot > 0) {
-        showNotification(unreadBot, 'bot');
+        showNotification(unreadBot, 'bot', false);
       } else {
         dismissNotification('bot');
       }
