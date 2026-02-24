@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -15,6 +16,50 @@ const ollama = new Ollama({ host: 'http://localhost:11434' });
 
 app.use(express.json());
 app.use(express.static('public'));
+
+// Librarian data file
+const LIBRARIAN_DATA_FILE = path.join(__dirname, 'librarian-data.json');
+
+// Load or initialize librarian data
+function loadLibrarianData() {
+  try {
+    if (fs.existsSync(LIBRARIAN_DATA_FILE)) {
+      const data = JSON.parse(fs.readFileSync(LIBRARIAN_DATA_FILE, 'utf8'));
+      console.log('✅ Loaded librarian data from file:', data.authorizedPsids.length, 'authorized');
+      return data;
+    }
+  } catch (error) {
+    console.error('⚠️  Error loading librarian data:', error.message);
+  }
+  
+  // Initialize with .env data if file doesn't exist
+  const envPsids = process.env.LIBRARIAN_PSID 
+    ? process.env.LIBRARIAN_PSID.split(',').map(id => id.trim()).filter(id => id)
+    : [];
+  
+  console.log('📝 Initializing librarian data with', envPsids.length, 'PSIDs from .env');
+  
+  return {
+    authorizedPsids: envPsids,
+    lastUpdated: new Date().toISOString()
+  };
+}
+
+// Save librarian data
+function saveLibrarianData(data) {
+  try {
+    data.lastUpdated = new Date().toISOString();
+    fs.writeFileSync(LIBRARIAN_DATA_FILE, JSON.stringify(data, null, 2));
+    console.log('✅ Saved librarian data to file');
+    return true;
+  } catch (error) {
+    console.error('❌ Error saving librarian data:', error.message);
+    return false;
+  }
+}
+
+// Initialize librarian data
+let librarianData = loadLibrarianData();
 
 // Store active conversations and their status
 const conversations = new Map();
@@ -87,8 +132,7 @@ const librarianNotifications = [];
 
 // Get list of authorized librarian PSIDs
 function getAuthorizedLibrarians() {
-  if (!process.env.LIBRARIAN_PSID) return [];
-  return process.env.LIBRARIAN_PSID.split(',').map(id => id.trim());
+  return librarianData.authorizedPsids || [];
 }
 
 // Check if a PSID is an authorized librarian
@@ -560,7 +604,12 @@ app.post('/api/admin/approve', async (req, res) => {
   }
   
   // Add to list
-  currentLibrarians.push(psid);
+  librarianData.authorizedPsids.push(psid);
+  
+  // Save to file
+  if (!saveLibrarianData(librarianData)) {
+    return res.status(500).json({ success: false, error: 'Failed to save data' });
+  }
   
   // Remove from pending
   pendingLibrarianRequests.delete(psid);
@@ -580,9 +629,8 @@ app.post('/api/admin/approve', async (req, res) => {
   }
   
   res.json({ 
-    success: true, 
-    newConfig: currentLibrarians.join(','),
-    message: 'Update LIBRARIAN_PSID in .env and restart server'
+    success: true,
+    message: 'Librarian approved and saved permanently!'
   });
 });
 
@@ -601,10 +649,17 @@ app.post('/api/admin/remove', (req, res) => {
     return res.json({ success: false, error: 'Not found' });
   }
   
+  // Update the list
+  librarianData.authorizedPsids = filtered;
+  
+  // Save to file
+  if (!saveLibrarianData(librarianData)) {
+    return res.status(500).json({ success: false, error: 'Failed to save data' });
+  }
+  
   res.json({ 
-    success: true, 
-    newConfig: filtered.join(','),
-    message: 'Update LIBRARIAN_PSID in .env and restart server'
+    success: true,
+    message: 'Librarian removed and saved permanently!'
   });
 });
 

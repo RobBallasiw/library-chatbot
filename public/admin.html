@@ -269,26 +269,6 @@
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-header">
-      <h2>⚠️ Important: Update Configuration</h2>
-    </div>
-    <div class="alert error">
-      <strong>Action Required!</strong> After approving or removing librarians, you MUST update the environment variable on Render:
-      <ol style="margin-top: 10px; margin-left: 20px;">
-        <li>Go to <a href="https://dashboard.render.com" target="_blank" style="color: #991b1b; text-decoration: underline;">Render Dashboard</a></li>
-        <li>Click on your <strong>library-chatbot</strong> service</li>
-        <li>Go to <strong>Environment</strong> tab</li>
-        <li>Update <strong>LIBRARIAN_PSID</strong> with the value below</li>
-        <li>Click <strong>Save Changes</strong> (service will auto-redeploy)</li>
-      </ol>
-    </div>
-    <div class="code-block" id="env-config" style="display: flex; justify-content: space-between; align-items: center;">
-      <span id="config-text">LIBRARIAN_PSID=</span>
-      <button class="btn btn-copy" onclick="copyConfig()" style="margin: 0;">📋 Copy Value</button>
-    </div>
-  </div>
-
   <script>
     let authorizedLibrarians = [];
     let pendingRequests = [];
@@ -305,7 +285,6 @@
         
         renderAuthorized();
         renderPending();
-        updateEnvConfig();
         updateKeywordDisplay();
       } catch (error) {
         showAlert('Error loading data: ' + error.message, 'error');
@@ -423,12 +402,8 @@
         const data = await response.json();
         
         if (data.success) {
-          showAlert(`✅ ${name} approved! Now scroll down and copy the configuration to update on Render.`, 'success');
+          showAlert(`✅ ${name} approved and saved permanently!`, 'success');
           loadData();
-          // Scroll to config section
-          setTimeout(() => {
-            document.getElementById('env-config').scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 500);
         } else {
           showAlert('Error: ' + data.error, 'error');
         }
@@ -452,12 +427,8 @@
         const data = await response.json();
         
         if (data.success) {
-          showAlert(`✅ ${name} removed! Now scroll down and copy the configuration to update on Render.`, 'success');
+          showAlert(`✅ ${name} removed and saved permanently!`, 'success');
           loadData();
-          // Scroll to config section
-          setTimeout(() => {
-            document.getElementById('env-config').scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 500);
         } else {
           showAlert('Error: ' + data.error, 'error');
         }
