@@ -98,6 +98,13 @@ body {
   gap: 6px;
 }
 
+.status.countdown {
+  animation: countdownPulse 1s infinite;
+  color: #fbbf24;
+  font-weight: 600;
+  opacity: 1;
+}
+
 .status-dot {
   width: 8px;
   height: 8px;
@@ -114,6 +121,17 @@ body {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+@keyframes countdownPulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
 }
 
 .close-btn {

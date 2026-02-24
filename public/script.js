@@ -201,8 +201,10 @@ async function checkForNewMessages() {
     // Update status indicator with countdown if present
     if (data.countdown && data.countdown > 0) {
       statusIndicator.innerHTML = `<span class="status-dot human"></span>Session ending in ${data.countdown}s...`;
+      statusIndicator.classList.add('countdown');
     } else if (conversationStatus === 'human' || conversationStatus === 'responded') {
       statusIndicator.innerHTML = '<span class="status-dot human"></span>Connected to Librarian';
+      statusIndicator.classList.remove('countdown');
     }
     
     if (data.messages && data.messages.length > lastMessageCount) {
@@ -229,10 +231,11 @@ async function checkForNewMessages() {
       // Force scroll to bottom after adding messages
       chatContainer.scrollTop = chatContainer.scrollHeight;
       
-      // Check if session was ended (status changed back to bot)
-      if (data.status === 'bot' && conversationStatus !== 'bot') {
+      // Check if session was ended (status changed to closed)
+      if (data.status === 'closed' && conversationStatus !== 'bot') {
         console.log('Session ended by librarian');
         conversationStatus = 'bot';
+        statusIndicator.classList.remove('countdown');
         updateStatusIndicator();
         
         // Stop polling

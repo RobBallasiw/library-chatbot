@@ -761,15 +761,16 @@ app.post('/api/librarian/end-session', (req, res) => {
       timestamp: new Date()
     });
     
-    // Change status back to 'bot'
-    conversation.status = 'bot';
+    // Change status to 'closed' instead of 'bot'
+    conversation.status = 'closed';
+    conversation.closedAt = new Date();
     
     // Clear countdown if exists
     if (conversation.countdown) {
       delete conversation.countdown;
     }
     
-    console.log('✅ Session ended. Status changed to: bot');
+    console.log('✅ Session ended. Status changed to: closed');
     
     res.json({ success: true });
   } else {
