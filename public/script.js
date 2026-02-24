@@ -37,13 +37,8 @@ function addMessage(content, isUser) {
   messageDiv.textContent = content;
   messagesContainer.appendChild(messageDiv);
   
-  // Smooth scroll to bottom
-  setTimeout(() => {
-    messagesContainer.scrollTo({
-      top: messagesContainer.scrollHeight,
-      behavior: 'smooth'
-    });
-  }, 10);
+  // Force immediate scroll to bottom
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 function showTypingIndicator() {
@@ -52,14 +47,7 @@ function showTypingIndicator() {
   typingDiv.id = 'typing';
   typingDiv.innerHTML = '<span></span><span></span><span></span>';
   messagesContainer.appendChild(typingDiv);
-  
-  // Scroll to bottom
-  setTimeout(() => {
-    messagesContainer.scrollTo({
-      top: messagesContainer.scrollHeight,
-      behavior: 'smooth'
-    });
-  }, 10);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 function removeTypingIndicator() {
@@ -215,13 +203,8 @@ async function checkForNewMessages() {
       
       lastMessageCount = data.messages.length;
       
-      // Ensure scroll to bottom after adding messages
-      setTimeout(() => {
-        messagesContainer.scrollTo({
-          top: messagesContainer.scrollHeight,
-          behavior: 'smooth'
-        });
-      }, 100);
+      // Force scroll to bottom after adding messages
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
       
       // Check if session was ended (status changed back to bot)
       if (data.status === 'bot' && conversationStatus !== 'bot') {
