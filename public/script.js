@@ -125,8 +125,8 @@ async function requestLibrarian() {
       addMessage(data.message, false);
       addMessage('Please describe your question and a librarian will respond shortly.', false);
       
-      // Initialize message count for polling
-      lastMessageCount = conversationHistory.length + 2; // +2 for the messages we just added
+      // Initialize message count - start at 0 since conversation was just created
+      lastMessageCount = 0;
     } else {
       addMessage('Sorry, could not connect to a librarian. Please try again.', false);
       requestLibrarianBtn.disabled = false;
