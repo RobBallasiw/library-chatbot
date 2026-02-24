@@ -343,7 +343,34 @@ async function handleLibrarianMessage(event) {
   console.log('🔍 Match:', librarianMessage.trim().toUpperCase() === requestKeyword.toUpperCase());
   
   // If this is an access request
-  if (isAccessRequest && !isAuthorized) {
+  if (isAccessRequest) {
+    // Check if already authorized
+    if (isAuthorized) {
+      console.log('');
+      console.log('ℹ️  User already has access');
+      console.log('═══════════════════════════════════════════');
+      console.log('');
+      
+      // Send message telling them they already have access
+      try {
+        const url = `https://graph.facebook.com/v18.0/me/messages?access_token=${process.env.FACEBOOK_PAGE_ACCESS_TOKEN}`;
+        
+        await axios.post(url, {
+          recipient: { id: senderPsid },
+          message: {
+            text: `✅ You already have librarian access!\n\nYou will receive notifications when users request assistance.\n\nNo further action needed.`
+          }
+        });
+        
+        console.log('✅ Already-authorized message sent successfully!');
+      } catch (error) {
+        console.error('❌ Error sending already-authorized message:', error.response?.data || error.message);
+      }
+      
+      return;
+    }
+    
+    // Not authorized yet - process new request
     // Fetch user profile
     const profile = await fetchUserProfile(senderPsid);
     
