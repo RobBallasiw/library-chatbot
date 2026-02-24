@@ -651,6 +651,9 @@
         const response = await fetch('/api/librarian/notifications');
         const data = await response.json();
         
+        // Cache conversations for immediate updates
+        cachedConversations = data.activeConversations;
+        
         updateStats(data);
         renderConversations(data.activeConversations);
       } catch (error) {
@@ -747,6 +750,9 @@
       // Mark this conversation as viewed
       viewedConversations.add(sessionId);
       
+      // Update notification counts immediately (no API call needed)
+      updateNotificationCountsImmediate();
+      
       // Fetch full conversation
       fetch(`/api/conversation/${sessionId}`)
         .then(res => res.json())
@@ -757,41 +763,36 @@
           
           // Start auto-refresh for this conversation
           startConversationPolling();
-          
-          // Update notification counts immediately
-          updateNotificationCounts();
         })
         .catch(error => {
           alert('Error loading conversation: ' + error.message);
         });
     }
 
-    function updateNotificationCounts() {
-      // Recalculate unread counts
-      fetch('/api/librarian/notifications')
-        .then(res => res.json())
-        .then(data => {
-          const unreadLibrarian = data.activeConversations.filter(c => 
-            c.status === 'human' && !viewedConversations.has(c.sessionId)
-          ).length;
-          
-          const unreadBot = data.activeConversations.filter(c => 
-            (c.status === 'bot' || c.status === 'responded') && !viewedConversations.has(c.sessionId)
-          ).length;
-          
-          // Update notifications with unread counts
-          if (unreadLibrarian > 0) {
-            showNotification(unreadLibrarian, 'librarian');
-          } else {
-            dismissNotification('librarian');
-          }
-          
-          if (unreadBot > 0) {
-            showNotification(unreadBot, 'bot');
-          } else {
-            dismissNotification('bot');
-          }
-        });
+    let cachedConversations = [];
+
+    function updateNotificationCountsImmediate() {
+      // Use cached data to update counts immediately
+      const unreadLibrarian = cachedConversations.filter(c => 
+        c.status === 'human' && !viewedConversations.has(c.sessionId)
+      ).length;
+      
+      const unreadBot = cachedConversations.filter(c => 
+        (c.status === 'bot' || c.status === 'responded') && !viewedConversations.has(c.sessionId)
+      ).length;
+      
+      // Update notifications with unread counts
+      if (unreadLibrarian > 0) {
+        showNotification(unreadLibrarian, 'librarian');
+      } else {
+        dismissNotification('librarian');
+      }
+      
+      if (unreadBot > 0) {
+        showNotification(unreadBot, 'bot');
+      } else {
+        dismissNotification('bot');
+      }
     }
 
     let conversationPollingInterval = null;
