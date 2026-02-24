@@ -733,15 +733,12 @@
         if (hasNewMessages) {
           console.log('✅ Updating conversation view');
           const messagesEl = document.getElementById('modal-messages');
-          const wasAtBottom = messagesEl.scrollHeight - messagesEl.scrollTop <= messagesEl.clientHeight + 50;
           
           currentConversation = data;
           renderConversationModal(data);
           
-          // Auto-scroll to bottom if user was already at bottom
-          if (wasAtBottom) {
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-          }
+          // Always scroll to bottom on refresh
+          messagesEl.scrollTop = messagesEl.scrollHeight;
         } else {
           console.log('⏭️ No changes detected');
         }
@@ -772,7 +769,7 @@
         </div>
       `).join('');
       
-      // Scroll to bottom
+      // Force scroll to bottom immediately
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
