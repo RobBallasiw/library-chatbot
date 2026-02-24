@@ -32,10 +32,22 @@ closeChat.addEventListener('click', () => {
   chatToggle.classList.remove('hidden');
 });
 
-function addMessage(content, isUser) {
+function addMessage(content, isUser, sender = null) {
   const messageDiv = document.createElement('div');
   messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-  messageDiv.textContent = content;
+  
+  // Add sender label for bot messages
+  if (!isUser && sender) {
+    const senderLabel = document.createElement('div');
+    senderLabel.className = 'message-sender';
+    senderLabel.textContent = sender === 'librarian' ? '👤 Librarian' : '🤖 AI Assistant';
+    messageDiv.appendChild(senderLabel);
+  }
+  
+  const contentDiv = document.createElement('div');
+  contentDiv.textContent = content;
+  messageDiv.appendChild(contentDiv);
+  
   messagesContainer.appendChild(messageDiv);
   
   // Scroll the chat container (not messages container)
@@ -84,7 +96,7 @@ async function sendMessage() {
     if (data.success) {
       // Only add bot message if there's a response (not in librarian mode)
       if (data.response) {
-        addMessage(data.response, false);
+        addMessage(data.response, false, 'bot');
         conversationHistory.push(
           { role: 'user', content: message },
           { role: 'assistant', content: data.response }
@@ -101,7 +113,7 @@ async function sendMessage() {
         updateStatusIndicator();
       }
     } else {
-      addMessage('Sorry, I encountered an error. Please try again.', false);
+      addMessage('Sorry, I encountered an error. Please try again.', false, 'bot');
     }
   } catch (error) {
     removeTypingIndicator();
@@ -194,12 +206,12 @@ async function checkForNewMessages() {
       newMessages.forEach(msg => {
         if (msg.role === 'librarian') {
           console.log('Adding librarian message:', msg.content);
-          addMessage(msg.content, false);
+          addMessage(msg.content, false, 'librarian');
           conversationHistory.push({ role: 'assistant', content: msg.content });
         } else if (msg.role === 'assistant') {
           // System message (like session ended)
           console.log('Adding system message:', msg.content);
-          addMessage(msg.content, false);
+          addMessage(msg.content, false, 'bot');
           conversationHistory.push({ role: 'assistant', content: msg.content });
         }
       });
