@@ -663,6 +663,13 @@
       const totalActive = data.activeConversations.length;
       const totalMessages = data.activeConversations.reduce((sum, c) => sum + c.messageCount, 0);
       
+      console.log('Stats update:', {
+        total: totalActive,
+        librarian: activeCount,
+        bot: botCount,
+        statuses: data.activeConversations.map(c => c.status)
+      });
+      
       document.getElementById('active-count').textContent = totalActive;
       document.getElementById('pending-count').textContent = activeCount;
       document.getElementById('message-count').textContent = totalMessages;
