@@ -918,8 +918,23 @@
           currentMessages: currentConversation?.messages?.length || 0,
           newMessages: data.messages?.length || 0,
           currentStatus: currentConversation?.status,
-          newStatus: data.status
+          newStatus: data.status,
+          countdown: data.countdown
         });
+        
+        // Check if countdown was cancelled (user sent a message)
+        if (endSessionTimeout && !data.countdown) {
+          console.log('⏹️ Countdown cancelled by user message');
+          clearInterval(endSessionTimeout);
+          endSessionTimeout = null;
+          
+          // Reset warn button
+          const warnBtn = document.querySelector('.warn-btn');
+          if (warnBtn) {
+            warnBtn.textContent = 'Warn Before Ending';
+            warnBtn.disabled = false;
+          }
+        }
         
         // Check if there are new messages or status changed
         const hasNewMessages = !currentConversation || 

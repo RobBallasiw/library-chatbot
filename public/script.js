@@ -7,6 +7,7 @@ const chatToggle = document.getElementById('chat-toggle');
 const closeChat = document.getElementById('close-chat');
 const notificationBadge = document.querySelector('.notification-badge');
 const requestLibrarianBtn = document.getElementById('request-librarian');
+const newChatBtn = document.getElementById('new-chat-btn');
 const statusIndicator = document.querySelector('.status');
 
 let conversationHistory = [];
@@ -234,9 +235,13 @@ async function checkForNewMessages() {
       // Check if session was ended (status changed to closed)
       if (data.status === 'closed' && conversationStatus !== 'bot') {
         console.log('Session ended by librarian');
-        conversationStatus = 'bot';
+        conversationStatus = 'closed';
         statusIndicator.classList.remove('countdown');
-        updateStatusIndicator();
+        
+        // Disable input and send button
+        userInput.disabled = true;
+        userInput.placeholder = 'This session has been closed. Please start a new chat.';
+        sendBtn.disabled = true;
         
         // Stop polling
         if (pollingInterval) {
@@ -244,9 +249,12 @@ async function checkForNewMessages() {
           pollingInterval = null;
         }
         
-        // Show the "Talk to Librarian" button again
-        requestLibrarianBtn.style.display = 'flex';
-        requestLibrarianBtn.disabled = false;
+        // Hide the "Talk to Librarian" button and show "Start New Chat" button
+        requestLibrarianBtn.style.display = 'none';
+        newChatBtn.style.display = 'flex';
+        
+        // Update status to show session is closed
+        statusIndicator.innerHTML = '<span class="status-dot" style="background: #6b7280;"></span>Session Closed';
       }
     }
   } catch (error) {
@@ -254,8 +262,42 @@ async function checkForNewMessages() {
   }
 }
 
+function startNewChat() {
+  // Generate new session ID
+  sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  
+  // Reset conversation state
+  conversationHistory = [];
+  conversationStatus = 'bot';
+  lastMessageCount = 0;
+  
+  // Clear messages
+  messagesContainer.innerHTML = '';
+  
+  // Re-enable input
+  userInput.disabled = false;
+  userInput.placeholder = 'Type your question...';
+  userInput.value = '';
+  sendBtn.disabled = false;
+  
+  // Show librarian button, hide new chat button
+  requestLibrarianBtn.style.display = 'flex';
+  requestLibrarianBtn.disabled = false;
+  newChatBtn.style.display = 'none';
+  
+  // Reset status
+  updateStatusIndicator();
+  
+  // Show welcome message
+  setTimeout(() => {
+    addMessage('Hello! I\'m your library assistant. How can I help you today?', false, 'bot');
+    addMessage('If you need personalized help, you can request to speak with a librarian anytime.', false, 'bot');
+  }, 300);
+}
+
 sendBtn.addEventListener('click', sendMessage);
 requestLibrarianBtn.addEventListener('click', requestLibrarian);
+newChatBtn.addEventListener('click', startNewChat);
 
 userInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {

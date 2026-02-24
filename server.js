@@ -238,6 +238,12 @@ app.post('/api/chat', async (req, res) => {
       // Change status back to 'human' (waiting) since user sent a new message
       conversation.status = 'human';
       
+      // Cancel countdown if it exists
+      if (conversation.countdown) {
+        delete conversation.countdown;
+        console.log('⏹️ Countdown cancelled - user sent a message');
+      }
+      
       // Notify librarian of new message
       await sendToMessenger(
         `New message from user in session ${sessionId}:\n\n${message}`,
