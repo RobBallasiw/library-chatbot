@@ -74,18 +74,20 @@ const librarianProfiles = new Map();
 // psid -> { name: string, profilePic: string }
 
 // Fetch user profile from Facebook Graph API
-async function fetchUserProfile(psid) {
-  // Check cache first
-  if (librarianProfiles.has(psid)) {
+async function fetchUserProfile(psid, forceRefresh = false) {
+  // Check cache first (unless force refresh)
+  if (!forceRefresh && librarianProfiles.has(psid)) {
     return librarianProfiles.get(psid);
   }
 
   if (!process.env.FACEBOOK_PAGE_ACCESS_TOKEN) {
-    return { name: 'Unknown', profilePic: null };
+    console.log('⚠️  No Facebook token, returning default profile for:', psid);
+    return { name: 'Librarian ' + psid.substring(0, 8), profilePic: null };
   }
 
   try {
     const url = `https://graph.facebook.com/v18.0/${psid}?fields=name,profile_pic&access_token=${process.env.FACEBOOK_PAGE_ACCESS_TOKEN}`;
+    console.log('🔍 Fetching profile for PSID:', psid);
     const response = await axios.get(url);
     
     const profile = {
@@ -93,13 +95,18 @@ async function fetchUserProfile(psid) {
       profilePic: response.data.profile_pic || null
     };
     
+    console.log('✅ Profile fetched:', profile.name);
+    
     // Cache it
     librarianProfiles.set(psid, profile);
     
     return profile;
   } catch (error) {
-    console.error('Error fetching user profile:', error.response?.data || error.message);
-    return { name: 'Unknown', profilePic: null };
+    console.error('❌ Error fetching user profile for', psid, ':', error.response?.data || error.message);
+    // Return a default profile instead of failing
+    const defaultProfile = { name: 'Librarian ' + psid.substring(0, 8), profilePic: null };
+    librarianProfiles.set(psid, defaultProfile);
+    return defaultProfile;
   }
 }
 
@@ -555,10 +562,16 @@ app.get('/api/admin/librarians', async (req, res) => {
   const authorizedPsids = getAuthorizedLibrarians();
   const pendingList = Array.from(pendingLibrarianRequests.values());
   
-  // Fetch names for all PSIDs
+  console.log('📊 Fetching librarian data:', {
+    authorizedCount: authorizedPsids.length,
+    pendingCount: pendingList.length,
+    authorizedPsids: authorizedPsids
+  });
+  
+  // Fetch names for all PSIDs (force refresh to get latest data)
   const authorizedWithNames = await Promise.all(
     authorizedPsids.map(async (psid) => {
-      const profile = await fetchUserProfile(psid);
+      const profile = await fetchUserProfile(psid, true); // Force refresh
       return {
         psid,
         name: profile.name,
@@ -569,7 +582,7 @@ app.get('/api/admin/librarians', async (req, res) => {
   
   const pendingWithNames = await Promise.all(
     pendingList.map(async (req) => {
-      const profile = await fetchUserProfile(req.psid);
+      const profile = await fetchUserProfile(req.psid, true); // Force refresh
       return {
         ...req,
         name: profile.name,
@@ -577,6 +590,10 @@ app.get('/api/admin/librarians', async (req, res) => {
       };
     })
   );
+  
+  console.log('✅ Librarian data prepared:', {
+    authorized: authorizedWithNames.map(l => ({ psid: l.psid, name: l.name }))
+  });
   
   res.json({
     authorized: authorizedWithNames,
