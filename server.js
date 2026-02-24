@@ -717,6 +717,33 @@ app.post('/api/librarian/respond', (req, res) => {
   }
 });
 
+// API endpoint for librarian to end session
+app.post('/api/librarian/end-session', (req, res) => {
+  const { sessionId } = req.body;
+  const conversation = conversations.get(sessionId);
+  
+  console.log('🔚 Ending session:', sessionId);
+  
+  if (conversation) {
+    // Add a system message
+    conversation.messages.push({
+      role: 'assistant',
+      content: 'This conversation has been closed by the librarian. If you need further assistance, feel free to ask!',
+      timestamp: new Date()
+    });
+    
+    // Change status back to 'bot'
+    conversation.status = 'bot';
+    
+    console.log('✅ Session ended. Status changed to: bot');
+    
+    res.json({ success: true });
+  } else {
+    console.log('❌ Conversation not found:', sessionId);
+    res.status(404).json({ success: false, error: 'Conversation not found' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Library chatbot server running on http://localhost:${PORT}`);

@@ -326,6 +326,26 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    .end-session-btn {
+      padding: 12px 24px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .end-session-btn:hover {
+      background: #dc2626;
+    }
+
+    .end-session-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -376,7 +396,10 @@
       </div>
       <div class="modal-input">
         <textarea id="response-input" placeholder="Type your response..."></textarea>
-        <button class="send-btn" onclick="sendResponse()">Send</button>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button class="send-btn" onclick="sendResponse()">Send</button>
+          <button class="end-session-btn" onclick="endSession()">End Session</button>
+        </div>
       </div>
     </div>
   </div>
@@ -593,6 +616,34 @@
         }
       } catch (error) {
         alert('Error sending message: ' + error.message);
+      }
+    }
+
+    async function endSession() {
+      if (!currentSessionId) return;
+      
+      if (!confirm('End this session? The user will be returned to the AI assistant.')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/librarian/end-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: currentSessionId })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('Session ended. User has been returned to the AI assistant.');
+          closeModal();
+          loadNotifications(); // Refresh the list
+        } else {
+          alert('Error ending session: ' + data.error);
+        }
+      } catch (error) {
+        alert('Error ending session: ' + error.message);
       }
     }
 

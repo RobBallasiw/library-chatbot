@@ -191,10 +191,32 @@ async function checkForNewMessages() {
           console.log('Adding librarian message:', msg.content);
           addMessage(msg.content, false);
           conversationHistory.push({ role: 'assistant', content: msg.content });
+        } else if (msg.role === 'assistant') {
+          // System message (like session ended)
+          console.log('Adding system message:', msg.content);
+          addMessage(msg.content, false);
+          conversationHistory.push({ role: 'assistant', content: msg.content });
         }
       });
       
       lastMessageCount = data.messages.length;
+      
+      // Check if session was ended (status changed back to bot)
+      if (data.status === 'bot' && conversationStatus !== 'bot') {
+        console.log('Session ended by librarian');
+        conversationStatus = 'bot';
+        updateStatusIndicator();
+        
+        // Stop polling
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          pollingInterval = null;
+        }
+        
+        // Show the "Talk to Librarian" button again
+        requestLibrarianBtn.style.display = 'flex';
+        requestLibrarianBtn.disabled = false;
+      }
     }
   } catch (error) {
     console.error('Error checking for new messages:', error);
