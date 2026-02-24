@@ -188,6 +188,12 @@
       max-width: 400px;
     }
 
+    .notification-bot {
+      background: #dbeafe !important;
+      border-color: #3b82f6 !important;
+      animation: slideIn 0.3s ease-out !important;
+    }
+
     @keyframes slideIn {
       from {
         transform: translateX(400px);
@@ -469,7 +475,7 @@
     </div>
   </div>
 
-  <div id="notification-bot" class="notification-alert" style="display: none; top: 100px; background: #dbeafe; border-color: #3b82f6;">
+  <div id="notification-bot" class="notification-alert notification-bot" style="display: none; top: 100px;">
     <div class="notification-content">
       <span class="notification-icon">💬</span>
       <div>
