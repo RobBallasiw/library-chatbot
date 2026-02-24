@@ -225,7 +225,9 @@
   <div class="header">
     <h1>🔐 Admin Dashboard</h1>
     <p>Manage librarian access and permissions</p>
-    <p style="font-size: 12px; opacity: 0.8; margin-top: 8px;">🔄 Auto-refreshes every 3 seconds</p>
+    <p style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+      <span id="status-indicator">🔄 Checking for updates...</span>
+    </p>
   </div>
 
   <div id="alert-container"></div>
@@ -274,12 +276,26 @@
     let authorizedLibrarians = [];
     let pendingRequests = [];
     let keyword = '';
+    let lastDataHash = '';
+
+    function hashData(data) {
+      return JSON.stringify(data);
+    }
 
     async function loadData() {
       try {
         const response = await fetch('/api/admin/librarians');
         const data = await response.json();
         
+        // Check if data actually changed
+        const newHash = hashData({ authorized: data.authorized, pending: data.pending });
+        
+        if (newHash === lastDataHash) {
+          // No changes, skip re-render
+          return;
+        }
+        
+        lastDataHash = newHash;
         authorizedLibrarians = data.authorized;
         pendingRequests = data.pending;
         keyword = data.keyword;
@@ -456,11 +472,35 @@
       }, 5000);
     }
 
+    function updateStatusIndicator(hasChanges) {
+      const indicator = document.getElementById('status-indicator');
+      if (hasChanges) {
+        indicator.textContent = '✅ Updated';
+        setTimeout(() => {
+          indicator.textContent = '🔄 Monitoring for changes...';
+        }, 2000);
+      } else {
+        indicator.textContent = '🔄 Monitoring for changes...';
+      }
+    }
+
     // Auto-refresh every 3 seconds
-    setInterval(loadData, 3000);
+    let checkCount = 0;
+    setInterval(() => {
+      const previousHash = lastDataHash;
+      loadData().then(() => {
+        const hasChanges = previousHash !== lastDataHash && previousHash !== '';
+        if (hasChanges) {
+          updateStatusIndicator(true);
+        }
+        checkCount++;
+      });
+    }, 3000);
     
     // Initial load
-    loadData();
+    loadData().then(() => {
+      updateStatusIndicator(false);
+    });
   </script>
 </body>
 </html>
