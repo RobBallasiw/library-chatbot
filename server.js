@@ -481,28 +481,13 @@ async function handleLibrarianMessage(event) {
     return;
   }
   
-  console.log('✅ Authorized librarian. Processing message...');
+  console.log('✅ Authorized librarian message received');
+  console.log('💡 Librarians should use the web dashboard to respond: ' + (process.env.WEBHOOK_URL?.replace('/webhook', '/librarian') || 'http://localhost:3000/librarian'));
   console.log('═══════════════════════════════════════════');
   console.log('');
   
-  // Parse session ID from message or use most recent active conversation
-  const sessionMatch = librarianMessage.match(/Session: (session_\w+)/);
-  
-  if (sessionMatch) {
-    const sessionId = sessionMatch[1];
-    const conversation = conversations.get(sessionId);
-    
-    if (conversation) {
-      conversation.status = 'human';
-      conversation.messages.push({
-        role: 'librarian',
-        content: librarianMessage,
-        timestamp: new Date()
-      });
-      
-      console.log('✅ Librarian response recorded for session:', sessionId);
-    }
-  }
+  // Librarians should use the web dashboard to respond, not Messenger
+  // Silently ignore their Messenger messages
 }
 
 // Get conversation status
