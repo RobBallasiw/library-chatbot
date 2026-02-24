@@ -450,10 +450,53 @@
           currentConversation = data;
           renderConversationModal(data);
           document.getElementById('conversation-modal').classList.add('active');
+          
+          // Start auto-refresh for this conversation
+          startConversationPolling();
         })
         .catch(error => {
           alert('Error loading conversation: ' + error.message);
         });
+    }
+
+    let conversationPollingInterval = null;
+
+    function startConversationPolling() {
+      // Clear any existing polling
+      if (conversationPollingInterval) {
+        clearInterval(conversationPollingInterval);
+      }
+      
+      // Poll every 2 seconds while modal is open
+      conversationPollingInterval = setInterval(() => {
+        if (currentSessionId && document.getElementById('conversation-modal').classList.contains('active')) {
+          refreshConversation();
+        }
+      }, 2000);
+    }
+
+    function stopConversationPolling() {
+      if (conversationPollingInterval) {
+        clearInterval(conversationPollingInterval);
+        conversationPollingInterval = null;
+      }
+    }
+
+    async function refreshConversation() {
+      if (!currentSessionId) return;
+      
+      try {
+        const response = await fetch(`/api/conversation/${currentSessionId}`);
+        const data = await response.json();
+        
+        // Only update if message count changed
+        if (data.messages.length !== currentConversation.messages.length) {
+          currentConversation = data;
+          renderConversationModal(data);
+        }
+      } catch (error) {
+        console.error('Error refreshing conversation:', error);
+      }
     }
 
     function renderConversationModal(conversation) {
@@ -487,6 +530,7 @@
 
     function closeModal() {
       document.getElementById('conversation-modal').classList.remove('active');
+      stopConversationPolling();
       currentSessionId = null;
       currentConversation = null;
       document.getElementById('response-input').value = '';
@@ -514,8 +558,8 @@
         
         if (data.success) {
           input.value = '';
-          // Reload conversation
-          viewConversation(currentSessionId);
+          // Immediately refresh to show the sent message
+          refreshConversation();
         } else {
           alert('Error sending message: ' + data.error);
         }
