@@ -876,6 +876,7 @@
     }
 
     let conversationPollingInterval = null;
+    let endSessionTimeout = null; // Track countdown timer
 
     function startConversationPolling() {
       // Clear any existing polling
@@ -973,6 +974,20 @@
     function closeModal() {
       document.getElementById('conversation-modal').classList.remove('active');
       stopConversationPolling();
+      
+      // Clear any pending countdown
+      if (endSessionTimeout) {
+        clearInterval(endSessionTimeout);
+        endSessionTimeout = null;
+        
+        // Reset warn button
+        const warnBtn = document.querySelector('.warn-btn');
+        if (warnBtn) {
+          warnBtn.textContent = 'Warn Before Ending';
+          warnBtn.disabled = false;
+        }
+      }
+      
       currentSessionId = null;
       currentConversation = null;
       document.getElementById('response-input').value = '';
@@ -1013,7 +1028,7 @@
     async function sendWarning() {
       if (!currentSessionId) return;
 
-      const warningMessage = "Thank you for your question! I've provided the information you need. If your inquiry has been resolved, I'll be ending this session shortly. Feel free to ask any follow-up questions now, or you can always start a new chat with the AI assistant or request a librarian again if you need more help later.";
+      const warningMessage = "Thank you for your question! I've provided the information you need. If your inquiry has been resolved, I'll be ending this session in 10 seconds. Feel free to ask any follow-up questions now, or you can always start a new chat with the AI assistant or request a librarian again if you need more help later.";
 
       try {
         const response = await fetch('/api/librarian/respond', {
@@ -1030,11 +1045,58 @@
         if (data.success) {
           // Immediately refresh to show the sent message
           refreshConversation();
+          
+          // Start 10-second countdown
+          let countdown = 10;
+          const warnBtn = document.querySelector('.warn-btn');
+          const originalText = warnBtn.textContent;
+          warnBtn.disabled = true;
+          warnBtn.textContent = `Ending in ${countdown}s...`;
+          
+          const countdownInterval = setInterval(() => {
+            countdown--;
+            warnBtn.textContent = `Ending in ${countdown}s...`;
+            
+            if (countdown <= 0) {
+              clearInterval(countdownInterval);
+              warnBtn.textContent = originalText;
+              warnBtn.disabled = false;
+              
+              // Automatically end the session
+              endSessionAutomatically();
+            }
+          }, 1000);
+          
+          // Store the interval so it can be cancelled if needed
+          endSessionTimeout = countdownInterval;
         } else {
           alert('Error sending warning: ' + data.error);
         }
       } catch (error) {
         alert('Error sending warning: ' + error.message);
+      }
+    }
+
+    async function endSessionAutomatically() {
+      if (!currentSessionId) return;
+
+      try {
+        const response = await fetch('/api/librarian/end-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: currentSessionId })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          closeModal();
+          loadNotifications(); // Refresh the list
+        } else {
+          console.error('Error ending session:', data.error);
+        }
+      } catch (error) {
+        console.error('Error ending session:', error.message);
       }
     }
 
