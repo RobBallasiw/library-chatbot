@@ -457,15 +457,26 @@
     <p style="font-size: 12px; opacity: 0.8; margin-top: 8px;">🔄 Auto-refreshes every 5 seconds</p>
   </div>
 
-  <!-- Notification Alert -->
-  <div id="notification-alert" class="notification-alert" style="display: none;">
+  <!-- Notification Alerts -->
+  <div id="notification-librarian" class="notification-alert" style="display: none; top: 20px;">
     <div class="notification-content">
       <span class="notification-icon">🔔</span>
       <div>
-        <strong id="notification-title">User Requesting Librarian!</strong>
-        <p id="notification-text">A user wants to talk with a librarian</p>
+        <strong>User Requesting Librarian!</strong>
+        <p id="notification-librarian-text">A user wants to talk with a librarian</p>
       </div>
-      <button onclick="dismissNotification()" class="dismiss-btn">✕</button>
+      <button onclick="dismissNotification('librarian')" class="dismiss-btn">✕</button>
+    </div>
+  </div>
+
+  <div id="notification-bot" class="notification-alert" style="display: none; top: 100px; background: #dbeafe; border-color: #3b82f6;">
+    <div class="notification-content">
+      <span class="notification-icon">💬</span>
+      <div>
+        <strong>New Chat Activity</strong>
+        <p id="notification-bot-text">Users started chatting with the bot</p>
+      </div>
+      <button onclick="dismissNotification('bot')" class="dismiss-btn">✕</button>
     </div>
   </div>
 
@@ -570,18 +581,16 @@
     }
 
     function showNotification(count, type = 'librarian') {
-      const alert = document.getElementById('notification-alert');
-      const text = document.getElementById('notification-text');
-      const title = document.getElementById('notification-title');
-      
       if (type === 'librarian') {
         // High priority - user requesting librarian
-        title.textContent = 'User Requesting Librarian!';
+        const alert = document.getElementById('notification-librarian');
+        const text = document.getElementById('notification-librarian-text');
+        
         text.textContent = count === 1 
           ? '1 user is requesting to talk with a librarian' 
           : `${count} users are requesting to talk with a librarian`;
-        alert.style.background = '#fef3c7';
-        alert.style.borderColor = '#f59e0b';
+        
+        alert.style.display = 'block';
         
         // Play sound for librarian requests
         if (notificationSound) {
@@ -591,28 +600,35 @@
             console.log('Could not play sound:', e);
           }
         }
+        
+        // Auto-dismiss after 10 seconds
+        setTimeout(() => {
+          alert.style.display = 'none';
+        }, 10000);
       } else {
         // Low priority - new bot conversation
-        title.textContent = 'New Chat Activity';
+        const alert = document.getElementById('notification-bot');
+        const text = document.getElementById('notification-bot-text');
+        
         text.textContent = count === 1 
           ? '1 user started chatting with the bot' 
           : `${count} users started chatting with the bot`;
-        alert.style.background = '#dbeafe';
-        alert.style.borderColor = '#3b82f6';
         
-        // No sound for bot conversations
+        alert.style.display = 'block';
+        
+        // Auto-dismiss after 8 seconds
+        setTimeout(() => {
+          alert.style.display = 'none';
+        }, 8000);
       }
-      
-      alert.style.display = 'block';
-      
-      // Auto-dismiss after 10 seconds
-      setTimeout(() => {
-        alert.style.display = 'none';
-      }, 10000);
     }
 
-    function dismissNotification() {
-      document.getElementById('notification-alert').style.display = 'none';
+    function dismissNotification(type) {
+      if (type === 'librarian') {
+        document.getElementById('notification-librarian').style.display = 'none';
+      } else {
+        document.getElementById('notification-bot').style.display = 'none';
+      }
     }
 
     async function loadNotifications() {
