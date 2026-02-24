@@ -472,33 +472,12 @@ async function handleLibrarianMessage(event) {
   // If not authorized and not a valid access request
   if (!isAuthorized) {
     console.log('');
-    console.log('⚠️  Unauthorized user - Message ignored');
-    console.log('💡 To request access, message: ' + requestKeyword);
+    console.log('⚠️  Unauthorized user - Message ignored (no response sent)');
+    console.log('💡 To request access, they should message: ' + requestKeyword);
     console.log('═══════════════════════════════════════════');
     console.log('');
     
-    // Send a generic message (don't reveal the keyword)
-    try {
-      const url = `https://graph.facebook.com/v18.0/me/messages?access_token=${process.env.FACEBOOK_PAGE_ACCESS_TOKEN}`;
-      
-      console.log('📤 Attempting to send generic message to PSID:', senderPsid);
-      
-      const response = await axios.post(url, {
-        recipient: { id: senderPsid },
-        message: {
-          text: `Thank you for your message! If you need assistance, please visit our website or contact us during business hours.`
-        }
-      });
-      
-      console.log('✅ Generic message sent successfully!');
-      console.log('📬 Response:', JSON.stringify(response.data, null, 2));
-    } catch (error) {
-      console.error('❌ Error sending message:');
-      console.error('   Status:', error.response?.status);
-      console.error('   Data:', JSON.stringify(error.response?.data, null, 2));
-      console.error('   Message:', error.message);
-    }
-    
+    // Silently ignore - don't send any response
     return;
   }
   
