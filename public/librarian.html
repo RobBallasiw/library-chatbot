@@ -643,7 +643,7 @@
       lastNotificationCount = activeCount;
       
       // Show subtle notification for new bot conversations
-      if (totalActive > lastActiveCount && lastActiveCount > 0) {
+      if (totalActive > lastActiveCount) {
         const newBotConversations = totalActive - lastActiveCount;
         if (newBotConversations > 0) {
           showNotification(newBotConversations, 'bot');
