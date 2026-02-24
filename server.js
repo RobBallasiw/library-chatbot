@@ -651,6 +651,21 @@ app.get('/api/librarian/notifications', (req, res) => {
   });
 });
 
+// API endpoint to get a single conversation
+app.get('/api/conversation/:sessionId', (req, res) => {
+  const { sessionId } = req.params;
+  const conversation = conversations.get(sessionId);
+  
+  if (conversation) {
+    res.json({
+      sessionId,
+      ...conversation
+    });
+  } else {
+    res.status(404).json({ error: 'Conversation not found' });
+  }
+});
+
 // API endpoint for librarian to respond
 app.post('/api/librarian/respond', (req, res) => {
   const { sessionId, message } = req.body;

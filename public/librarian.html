@@ -167,6 +167,160 @@
       margin-bottom: 16px;
       opacity: 0.3;
     }
+
+    /* Conversation Detail Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 18px;
+      color: #333;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+
+    .close-btn:hover {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .modal-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f8f9fa;
+    }
+
+    .message {
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      max-width: 80%;
+    }
+
+    .message.user {
+      background: #e5e7eb;
+      margin-right: auto;
+    }
+
+    .message.bot {
+      background: #dbeafe;
+      margin-right: auto;
+    }
+
+    .message.librarian {
+      background: #dcfce7;
+      margin-left: auto;
+    }
+
+    .message-role {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      opacity: 0.7;
+    }
+
+    .message-content {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .message-time {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+
+    .modal-input {
+      padding: 20px;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-input textarea {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: none;
+      min-height: 60px;
+    }
+
+    .modal-input textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .send-btn {
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      align-self: flex-end;
+    }
+
+    .send-btn:hover {
+      background: #5568d3;
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -205,7 +359,27 @@
     </div>
   </div>
 
+  <!-- Conversation Detail Modal -->
+  <div class="modal" id="conversation-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Conversation</h3>
+        <button class="close-btn" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-messages" id="modal-messages">
+        <!-- Messages will be loaded here -->
+      </div>
+      <div class="modal-input">
+        <textarea id="response-input" placeholder="Type your response..."></textarea>
+        <button class="send-btn" onclick="sendResponse()">Send</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    let currentSessionId = null;
+    let currentConversation = null;
+
     async function loadNotifications() {
       try {
         const response = await fetch('/api/librarian/notifications');
@@ -243,7 +417,7 @@
       }
 
       listEl.innerHTML = conversations.map(conv => `
-        <div class="conversation-item" onclick="viewConversation('${conv.sessionId}')">
+        <div class="conversation-item" data-session="${conv.sessionId}" onclick="viewConversation('${conv.sessionId}')">
           <div class="conversation-header">
             <span class="session-id">${conv.sessionId.substring(0, 20)}...</span>
             <span class="status-badge ${conv.status}">${conv.status === 'human' ? '🟡 Waiting' : '🤖 Bot'}</span>
@@ -259,8 +433,100 @@
     }
 
     function viewConversation(sessionId) {
-      alert(`View conversation: ${sessionId}\n\nFull conversation viewer coming soon!\n\nFor now, check your server console for conversation details.`);
+      currentSessionId = sessionId;
+      const conv = document.querySelector(`[data-session="${sessionId}"]`);
+      
+      // Fetch full conversation
+      fetch(`/api/conversation/${sessionId}`)
+        .then(res => res.json())
+        .then(data => {
+          currentConversation = data;
+          renderConversationModal(data);
+          document.getElementById('conversation-modal').classList.add('active');
+        })
+        .catch(error => {
+          alert('Error loading conversation: ' + error.message);
+        });
     }
+
+    function renderConversationModal(conversation) {
+      const titleEl = document.getElementById('modal-title');
+      const messagesEl = document.getElementById('modal-messages');
+      
+      titleEl.textContent = `Session: ${conversation.sessionId.substring(0, 30)}...`;
+      
+      if (!conversation.messages || conversation.messages.length === 0) {
+        messagesEl.innerHTML = '<div class="empty-state"><p>No messages yet</p></div>';
+        return;
+      }
+
+      messagesEl.innerHTML = conversation.messages.map(msg => `
+        <div class="message ${msg.role}">
+          <div class="message-role">${msg.role}</div>
+          <div class="message-content">${escapeHtml(msg.content)}</div>
+          <div class="message-time">${new Date(msg.timestamp).toLocaleString()}</div>
+        </div>
+      `).join('');
+      
+      // Scroll to bottom
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function closeModal() {
+      document.getElementById('conversation-modal').classList.remove('active');
+      currentSessionId = null;
+      currentConversation = null;
+      document.getElementById('response-input').value = '';
+    }
+
+    async function sendResponse() {
+      const input = document.getElementById('response-input');
+      const message = input.value.trim();
+      
+      if (!message || !currentSessionId) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/librarian/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: currentSessionId,
+            message: message
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          input.value = '';
+          // Reload conversation
+          viewConversation(currentSessionId);
+        } else {
+          alert('Error sending message: ' + data.error);
+        }
+      } catch (error) {
+        alert('Error sending message: ' + error.message);
+      }
+    }
+
+    // Allow Enter to send (Shift+Enter for new line)
+    document.addEventListener('DOMContentLoaded', () => {
+      const input = document.getElementById('response-input');
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendResponse();
+        }
+      });
+    });
 
     // Auto-refresh every 5 seconds
     setInterval(loadNotifications, 5000);
