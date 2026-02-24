@@ -173,6 +173,108 @@
       opacity: 0.3;
     }
 
+    /* Notification Alert */
+    .notification-alert {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      z-index: 2000;
+      animation: slideIn 0.3s ease-out, pulse 2s infinite;
+      max-width: 400px;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 10px 40px rgba(245, 158, 11, 0.3);
+      }
+      50% {
+        box-shadow: 0 10px 40px rgba(245, 158, 11, 0.6);
+      }
+    }
+
+    .notification-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .notification-icon {
+      font-size: 32px;
+      animation: ring 1s infinite;
+    }
+
+    @keyframes ring {
+      0%, 100% { transform: rotate(0deg); }
+      10%, 30% { transform: rotate(-10deg); }
+      20%, 40% { transform: rotate(10deg); }
+    }
+
+    .notification-content strong {
+      color: #92400e;
+      font-size: 16px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .notification-content p {
+      color: #78350f;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .dismiss-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #92400e;
+      padding: 4px;
+      margin-left: auto;
+    }
+
+    .dismiss-btn:hover {
+      color: #78350f;
+    }
+
+    /* User Avatar */
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 16px;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .conversation-item.waiting {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+    }
+
+    .conversation-item.waiting:hover {
+      background: #fde68a;
+    }
+
     /* Conversation Detail Modal */
     .modal {
       display: none;
@@ -352,6 +454,19 @@
   <div class="header">
     <h1>📚 Librarian Dashboard</h1>
     <p>Monitor and respond to chat conversations</p>
+    <p style="font-size: 12px; opacity: 0.8; margin-top: 8px;">🔄 Auto-refreshes every 5 seconds</p>
+  </div>
+
+  <!-- Notification Alert -->
+  <div id="notification-alert" class="notification-alert" style="display: none;">
+    <div class="notification-content">
+      <span class="notification-icon">🔔</span>
+      <div>
+        <strong>New Librarian Request!</strong>
+        <p id="notification-text">A user needs assistance</p>
+      </div>
+      <button onclick="dismissNotification()" class="dismiss-btn">✕</button>
+    </div>
   </div>
 
   <div class="stats">
@@ -407,6 +522,77 @@
   <script>
     let currentSessionId = null;
     let currentConversation = null;
+    let lastNotificationCount = 0;
+    let notificationSound = null;
+
+    // Create notification sound
+    function initNotificationSound() {
+      // Create a simple beep sound using Web Audio API
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      notificationSound = () => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+      };
+    }
+
+    // Initialize on first user interaction
+    document.addEventListener('click', () => {
+      if (!notificationSound) initNotificationSound();
+    }, { once: true });
+
+    function getColorForSession(sessionId) {
+      // Generate consistent color based on session ID
+      const colors = [
+        '#667eea', '#764ba2', '#f093fb', '#4facfe',
+        '#43e97b', '#fa709a', '#fee140', '#30cfd0'
+      ];
+      const hash = sessionId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      return colors[hash % colors.length];
+    }
+
+    function getInitials(sessionId) {
+      // Generate initials from session ID
+      const parts = sessionId.split('_');
+      return parts[parts.length - 1].substring(0, 2).toUpperCase();
+    }
+
+    function showNotification(count) {
+      const alert = document.getElementById('notification-alert');
+      const text = document.getElementById('notification-text');
+      
+      text.textContent = count === 1 ? 'A user needs assistance' : `${count} users need assistance`;
+      alert.style.display = 'block';
+      
+      // Play sound
+      if (notificationSound) {
+        try {
+          notificationSound();
+        } catch (e) {
+          console.log('Could not play sound:', e);
+        }
+      }
+      
+      // Auto-dismiss after 10 seconds
+      setTimeout(() => {
+        alert.style.display = 'none';
+      }, 10000);
+    }
+
+    function dismissNotification() {
+      document.getElementById('notification-alert').style.display = 'none';
+    }
 
     async function loadNotifications() {
       try {
@@ -427,6 +613,12 @@
       document.getElementById('active-count').textContent = data.activeConversations.length;
       document.getElementById('pending-count').textContent = activeCount;
       document.getElementById('message-count').textContent = totalMessages;
+      
+      // Check for new pending requests
+      if (activeCount > lastNotificationCount && lastNotificationCount > 0) {
+        showNotification(activeCount);
+      }
+      lastNotificationCount = activeCount;
     }
 
     function renderConversations(conversations) {
@@ -444,10 +636,18 @@
         return;
       }
 
-      listEl.innerHTML = conversations.map(conv => `
-        <div class="conversation-item" data-session="${conv.sessionId}" onclick="viewConversation('${conv.sessionId}')">
+      listEl.innerHTML = conversations.map(conv => {
+        const color = getColorForSession(conv.sessionId);
+        const initials = getInitials(conv.sessionId);
+        const isWaiting = conv.status === 'human';
+        
+        return `
+        <div class="conversation-item ${isWaiting ? 'waiting' : ''}" data-session="${conv.sessionId}" onclick="viewConversation('${conv.sessionId}')">
           <div class="conversation-header">
-            <span class="session-id">${conv.sessionId.substring(0, 20)}...</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div class="user-avatar" style="background: ${color};">${initials}</div>
+              <span class="session-id">${conv.sessionId.substring(0, 20)}...</span>
+            </div>
             <span class="status-badge ${conv.status}">
               ${conv.status === 'human' ? '🟡 Waiting' : conv.status === 'responded' ? '✅ Responded' : '🤖 Bot'}
             </span>
@@ -459,7 +659,8 @@
             ${new Date(conv.startTime).toLocaleString()} • ${conv.messageCount} messages
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     function viewConversation(sessionId) {
