@@ -1,4 +1,5 @@
 const messagesContainer = document.getElementById('messages');
+const chatContainer = document.getElementById('chat-container');
 const userInput = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
 const chatWidget = document.getElementById('chat-widget');
@@ -37,8 +38,8 @@ function addMessage(content, isUser) {
   messageDiv.textContent = content;
   messagesContainer.appendChild(messageDiv);
   
-  // Force immediate scroll to bottom
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  // Scroll the chat container (not messages container)
+  chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
 function showTypingIndicator() {
@@ -47,7 +48,9 @@ function showTypingIndicator() {
   typingDiv.id = 'typing';
   typingDiv.innerHTML = '<span></span><span></span><span></span>';
   messagesContainer.appendChild(typingDiv);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  
+  // Scroll the chat container
+  chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
 function removeTypingIndicator() {
@@ -204,7 +207,7 @@ async function checkForNewMessages() {
       lastMessageCount = data.messages.length;
       
       // Force scroll to bottom after adding messages
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      chatContainer.scrollTop = chatContainer.scrollHeight;
       
       // Check if session was ended (status changed back to bot)
       if (data.status === 'bot' && conversationStatus !== 'bot') {
