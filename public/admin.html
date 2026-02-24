@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Librarian Management</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f5f7fa;
+      padding: 20px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      opacity: 0.9;
+    }
+
+    .section {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      padding: 20px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-header h2 {
+      font-size: 20px;
+    }
+
+    .badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge.success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .list-item {
+      padding: 20px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    .item-info {
+      flex: 1;
+    }
+
+    .psid {
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .item-meta {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-approve {
+      background: #22c55e;
+      color: white;
+    }
+
+    .btn-approve:hover {
+      background: #16a34a;
+    }
+
+    .btn-remove {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-remove:hover {
+      background: #dc2626;
+    }
+
+    .btn-copy {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-copy:hover {
+      background: #2563eb;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: #999;
+    }
+
+    .alert {
+      padding: 16px 20px;
+      margin: 20px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .alert.success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .alert.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .alert.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    .refresh-btn {
+      padding: 8px 16px;
+      background: #dc2626;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .refresh-btn:hover {
+      background: #b91c1c;
+    }
+
+    .code-block {
+      background: #1f2937;
+      color: #f3f4f6;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      margin: 16px 20px;
+      overflow-x: auto;
+      word-break: break-all;
+    }
+
+    #keyword-display {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    #keyword-display .btn-copy {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    #keyword-display .btn-copy:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔐 Admin Dashboard</h1>
+    <p>Manage librarian access and permissions</p>
+  </div>
+
+  <div id="alert-container"></div>
+
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <h2>Authorized Librarians</h2>
+      </div>
+      <span class="badge success" id="authorized-count">0</span>
+    </div>
+    <div id="authorized-list">
+      <div class="empty-state">No authorized librarians yet</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <h2>Pending Requests</h2>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <span class="badge" id="pending-count">0</span>
+        <button class="refresh-btn" onclick="loadData()">🔄 Refresh</button>
+      </div>
+    </div>
+    <div id="pending-list">
+      <div class="empty-state">No pending requests</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <h2>Access Request Keyword</h2>
+    </div>
+    <div class="alert info">
+      ℹ️ Share this keyword with staff who need librarian access. They must message it to your Facebook Page to request access.
+    </div>
+    <div class="code-block" id="keyword-display" style="display: flex; justify-content: space-between; align-items: center;">
+      <span id="keyword-text">Loading...</span>
+      <button class="btn btn-copy" onclick="copyKeyword()" style="margin: 0;">📋 Copy Keyword</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <h2>Current Configuration</h2>
+    </div>
+    <div class="alert info">
+      ℹ️ Copy this and paste it into your .env file, then restart the server
+    </div>
+    <div class="code-block" id="env-config">
+      LIBRARIAN_PSID=
+    </div>
+  </div>
+
+  <script>
+    let authorizedLibrarians = [];
+    let pendingRequests = [];
+    let keyword = '';
+
+    async function loadData() {
+      try {
+        const response = await fetch('/api/admin/librarians');
+        const data = await response.json();
+        
+        authorizedLibrarians = data.authorized;
+        pendingRequests = data.pending;
+        keyword = data.keyword;
+        
+        renderAuthorized();
+        renderPending();
+        updateEnvConfig();
+        updateKeywordDisplay();
+      } catch (error) {
+        showAlert('Error loading data: ' + error.message, 'error');
+      }
+    }
+
+    function updateKeywordDisplay() {
+      const keywordText = document.getElementById('keyword-text');
+      keywordText.textContent = keyword || 'REQUEST_LIBRARIAN_ACCESS';
+    }
+
+    function copyKeyword() {
+      const keywordToCopy = keyword || 'REQUEST_LIBRARIAN_ACCESS';
+      navigator.clipboard.writeText(keywordToCopy).then(() => {
+        showAlert('📋 Keyword copied! Share this with new librarians: ' + keywordToCopy, 'success');
+      });
+    }
+
+    function renderAuthorized() {
+      const listEl = document.getElementById('authorized-list');
+      const countEl = document.getElementById('authorized-count');
+      
+      countEl.textContent = authorizedLibrarians.length;
+      
+      if (authorizedLibrarians.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">No authorized librarians yet</div>';
+        return;
+      }
+
+      listEl.innerHTML = authorizedLibrarians.map(lib => `
+        <div class="list-item">
+          <div class="item-info">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              ${lib.profilePic ? `<img src="${lib.profilePic}" alt="${lib.name}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #667eea;">` : ''}
+              <div>
+                <div style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 2px;">${lib.name}</div>
+                <div class="psid" style="font-size: 12px; opacity: 0.7;">${lib.psid}</div>
+              </div>
+            </div>
+            <div class="item-meta">✅ Authorized - Receives notifications</div>
+          </div>
+          <div class="item-actions">
+            <button class="btn btn-copy" onclick="copyToClipboard('${lib.psid}')">📋 Copy PSID</button>
+            <button class="btn btn-remove" onclick="removeLibrarian('${lib.psid}', '${lib.name}')">Remove</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderPending() {
+      const listEl = document.getElementById('pending-list');
+      const countEl = document.getElementById('pending-count');
+      
+      countEl.textContent = pendingRequests.length;
+      
+      if (pendingRequests.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">No pending requests</div>';
+        return;
+      }
+
+      listEl.innerHTML = pendingRequests.map(req => `
+        <div class="list-item">
+          <div class="item-info">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              ${req.profilePic ? `<img src="${req.profilePic}" alt="${req.name}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fbbf24;">` : ''}
+              <div>
+                <div style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 2px;">${req.name}</div>
+                <div class="psid" style="font-size: 12px; opacity: 0.7;">${req.psid}</div>
+              </div>
+            </div>
+            <div class="item-meta">
+              ${req.requestedAccess ? '🔑 Access requested • ' : ''}
+              Last message: ${new Date(req.lastMessage).toLocaleString()} • 
+              Messages: ${req.messageCount}
+            </div>
+          </div>
+          <div class="item-actions">
+            <button class="btn btn-approve" onclick="approveLibrarian('${req.psid}', '${req.name}')">✅ Approve</button>
+            <button class="btn btn-copy" onclick="copyToClipboard('${req.psid}')">📋 Copy PSID</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateEnvConfig() {
+      const configEl = document.getElementById('env-config');
+      if (authorizedLibrarians.length === 0) {
+        configEl.textContent = 'LIBRARIAN_PSID=';
+      } else {
+        const psids = authorizedLibrarians.map(lib => lib.psid).join(',');
+        configEl.textContent = 'LIBRARIAN_PSID=' + psids;
+      }
+    }
+
+    async function approveLibrarian(psid, name) {
+      if (!confirm(`Approve ${name} as a librarian?`)) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/admin/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ psid })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showAlert(`✅ ${name} approved! Copy the new config and update your .env file, then restart the server.`, 'success');
+          loadData();
+        } else {
+          showAlert('Error: ' + data.error, 'error');
+        }
+      } catch (error) {
+        showAlert('Error approving librarian: ' + error.message, 'error');
+      }
+    }
+
+    async function removeLibrarian(psid, name) {
+      if (!confirm(`Remove ${name}? They will no longer receive notifications.`)) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/admin/remove', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ psid })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showAlert(`✅ ${name} removed! Copy the new config and update your .env file, then restart the server.`, 'success');
+          loadData();
+        } else {
+          showAlert('Error: ' + data.error, 'error');
+        }
+      } catch (error) {
+        showAlert('Error removing librarian: ' + error.message, 'error');
+      }
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showAlert('📋 Copied to clipboard: ' + text, 'success');
+      });
+    }
+
+    function showAlert(message, type) {
+      const container = document.getElementById('alert-container');
+      const alert = document.createElement('div');
+      alert.className = `alert ${type}`;
+      alert.textContent = message;
+      container.appendChild(alert);
+      
+      setTimeout(() => {
+        alert.remove();
+      }, 5000);
+    }
+
+    // Auto-refresh every 10 seconds
+    setInterval(loadData, 10000);
+    
+    // Initial load
+    loadData();
+  </script>
+</body>
+</html>

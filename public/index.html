@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library Assistant</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Your library website content goes here -->
+  <div class="page-content">
+    <h1>Welcome to the Library</h1>
+    <p>Browse our collection, check hours, and more...</p>
+    <p><a href="/privacy-policy.html">Privacy Policy</a> | <a href="/terms-of-service.html">Terms of Service</a></p>
+  </div>
+
+  <!-- Floating Chat Widget -->
+  <div id="chat-widget" class="chat-widget">
+    <div class="chat-header">
+      <div class="header-content">
+        <span class="bot-avatar">📚</span>
+        <div>
+          <h3>Library Assistant</h3>
+          <span class="status"><span class="status-dot"></span>AI Assistant</span>
+        </div>
+      </div>
+      <button id="close-chat" class="close-btn" aria-label="Close chat">✕</button>
+    </div>
+    
+    <div id="chat-container">
+      <div id="messages"></div>
+    </div>
+    
+    <div class="action-bar">
+      <button id="request-librarian" class="librarian-btn" aria-label="Talk to librarian">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Talk to Librarian
+      </button>
+    </div>
+    
+    <div class="input-area">
+      <input 
+        type="text" 
+        id="user-input" 
+        placeholder="Type your question..."
+        aria-label="Chat input"
+      >
+      <button id="send-btn" aria-label="Send message">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Chat Toggle Button -->
+  <button id="chat-toggle" class="chat-toggle" aria-label="Open chat">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    <span class="notification-badge">1</span>
+  </button>
+  
+  <script src="script.js"></script>
+</body>
+</html>
