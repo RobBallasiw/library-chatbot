@@ -271,13 +271,21 @@
 
   <div class="section">
     <div class="section-header">
-      <h2>Current Configuration</h2>
+      <h2>⚠️ Important: Update Configuration</h2>
     </div>
-    <div class="alert info">
-      ℹ️ Copy this and paste it into your .env file, then restart the server
+    <div class="alert error">
+      <strong>Action Required!</strong> After approving or removing librarians, you MUST update the environment variable on Render:
+      <ol style="margin-top: 10px; margin-left: 20px;">
+        <li>Go to <a href="https://dashboard.render.com" target="_blank" style="color: #991b1b; text-decoration: underline;">Render Dashboard</a></li>
+        <li>Click on your <strong>library-chatbot</strong> service</li>
+        <li>Go to <strong>Environment</strong> tab</li>
+        <li>Update <strong>LIBRARIAN_PSID</strong> with the value below</li>
+        <li>Click <strong>Save Changes</strong> (service will auto-redeploy)</li>
+      </ol>
     </div>
-    <div class="code-block" id="env-config">
-      LIBRARIAN_PSID=
+    <div class="code-block" id="env-config" style="display: flex; justify-content: space-between; align-items: center;">
+      <span id="config-text">LIBRARIAN_PSID=</span>
+      <button class="btn btn-copy" onclick="copyConfig()" style="margin: 0;">📋 Copy Value</button>
     </div>
   </div>
 
@@ -383,13 +391,21 @@
     }
 
     function updateEnvConfig() {
-      const configEl = document.getElementById('env-config');
+      const configEl = document.getElementById('config-text');
       if (authorizedLibrarians.length === 0) {
         configEl.textContent = 'LIBRARIAN_PSID=';
       } else {
         const psids = authorizedLibrarians.map(lib => lib.psid).join(',');
         configEl.textContent = 'LIBRARIAN_PSID=' + psids;
       }
+    }
+
+    function copyConfig() {
+      const configText = document.getElementById('config-text').textContent;
+      const value = configText.replace('LIBRARIAN_PSID=', '');
+      navigator.clipboard.writeText(value).then(() => {
+        showAlert('📋 Configuration copied! Now update it on Render Dashboard → Environment tab', 'success');
+      });
     }
 
     async function approveLibrarian(psid, name) {
@@ -407,8 +423,12 @@
         const data = await response.json();
         
         if (data.success) {
-          showAlert(`✅ ${name} approved! Copy the new config and update your .env file, then restart the server.`, 'success');
+          showAlert(`✅ ${name} approved! Now scroll down and copy the configuration to update on Render.`, 'success');
           loadData();
+          // Scroll to config section
+          setTimeout(() => {
+            document.getElementById('env-config').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 500);
         } else {
           showAlert('Error: ' + data.error, 'error');
         }
@@ -432,8 +452,12 @@
         const data = await response.json();
         
         if (data.success) {
-          showAlert(`✅ ${name} removed! Copy the new config and update your .env file, then restart the server.`, 'success');
+          showAlert(`✅ ${name} removed! Now scroll down and copy the configuration to update on Render.`, 'success');
           loadData();
+          // Scroll to config section
+          setTimeout(() => {
+            document.getElementById('env-config').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 500);
         } else {
           showAlert('Error: ' + data.error, 'error');
         }
