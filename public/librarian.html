@@ -473,8 +473,8 @@
     <div class="notification-content">
       <span class="notification-icon">💬</span>
       <div>
-        <strong>New Chat Activity</strong>
-        <p id="notification-bot-text">Users started chatting with the bot</p>
+        <strong>Active Bot Conversations</strong>
+        <p id="notification-bot-text">Users chatting with the bot</p>
       </div>
       <button onclick="dismissNotification('bot')" class="dismiss-btn">✕</button>
     </div>
@@ -536,6 +536,8 @@
     let lastNotificationCount = 0;
     let lastActiveCount = 0;
     let notificationSound = null;
+    let librarianNotificationTimeout = null;
+    let botNotificationTimeout = null;
 
     // Create notification sound
     function initNotificationSound() {
@@ -601,33 +603,45 @@
           }
         }
         
-        // Auto-dismiss after 10 seconds
-        setTimeout(() => {
-          alert.style.display = 'none';
-        }, 10000);
+        // Clear previous timeout and set new one
+        if (librarianNotificationTimeout) {
+          clearTimeout(librarianNotificationTimeout);
+        }
+        // Don't auto-dismiss - let updateStats handle it based on count
+        librarianNotificationTimeout = null;
       } else {
-        // Low priority - new bot conversation
+        // Low priority - bot conversations
         const alert = document.getElementById('notification-bot');
         const text = document.getElementById('notification-bot-text');
         
         text.textContent = count === 1 
-          ? '1 user started chatting with the bot' 
-          : `${count} users started chatting with the bot`;
+          ? '1 user chatting with the bot' 
+          : `${count} users chatting with the bot`;
         
         alert.style.display = 'block';
         
-        // Auto-dismiss after 8 seconds
-        setTimeout(() => {
-          alert.style.display = 'none';
-        }, 8000);
+        // Don't auto-dismiss - let updateStats handle it based on count
+        // Clear any existing timeout
+        if (botNotificationTimeout) {
+          clearTimeout(botNotificationTimeout);
+          botNotificationTimeout = null;
+        }
       }
     }
 
     function dismissNotification(type) {
       if (type === 'librarian') {
-        document.getElementById('notification-librarian').style.display = 'none';
+        const alert = document.getElementById('notification-librarian');
+        alert.style.display = 'none';
+        if (librarianNotificationTimeout) {
+          clearTimeout(librarianNotificationTimeout);
+        }
       } else {
-        document.getElementById('notification-bot').style.display = 'none';
+        const alert = document.getElementById('notification-bot');
+        alert.style.display = 'none';
+        if (botNotificationTimeout) {
+          clearTimeout(botNotificationTimeout);
+        }
       }
     }
 
@@ -645,6 +659,7 @@
 
     function updateStats(data) {
       const activeCount = data.activeConversations.filter(c => c.status === 'human').length;
+      const botCount = data.activeConversations.filter(c => c.status === 'bot' || c.status === 'responded').length;
       const totalActive = data.activeConversations.length;
       const totalMessages = data.activeConversations.reduce((sum, c) => sum + c.messageCount, 0);
       
@@ -652,19 +667,28 @@
       document.getElementById('pending-count').textContent = activeCount;
       document.getElementById('message-count').textContent = totalMessages;
       
-      // Show notification for new librarian requests (status = 'human')
-      if (activeCount > lastNotificationCount) {
+      // Always show/update librarian notification if there are pending requests
+      if (activeCount > 0) {
         showNotification(activeCount, 'librarian');
+      } else {
+        // Hide notification if no more pending requests
+        dismissNotification('librarian');
+      }
+      
+      // Track changes for sound
+      if (activeCount > lastNotificationCount) {
+        // New request - sound already played in showNotification
       }
       lastNotificationCount = activeCount;
       
-      // Show subtle notification for new bot conversations
-      if (totalActive > lastActiveCount) {
-        const newBotConversations = totalActive - lastActiveCount;
-        if (newBotConversations > 0) {
-          showNotification(newBotConversations, 'bot');
-        }
+      // Always show/update bot notification if there are active bot conversations
+      if (botCount > 0) {
+        showNotification(botCount, 'bot');
+      } else {
+        // Hide notification if no more bot conversations
+        dismissNotification('bot');
       }
+      
       lastActiveCount = totalActive;
     }
 
