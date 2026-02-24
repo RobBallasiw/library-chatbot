@@ -735,7 +735,7 @@
       }
       
       const unreadLibrarian = data.activeConversations.filter(c => 
-        c.status === 'human' && !viewedConversations.has(c.sessionId)
+        c.status === 'human'
       ).length;
       
       const unreadBot = data.activeConversations.filter(c => 
@@ -750,7 +750,7 @@
       document.getElementById('pending-count').textContent = totalPending;
       document.getElementById('message-count').textContent = totalMessages;
       
-      // Show notification for unread librarian requests
+      // Show notification for librarian requests (always show, regardless of viewed status)
       if (unreadLibrarian > 0) {
         // Play sound if count increased
         const shouldPlaySound = unreadLibrarian > lastNotificationCount;
@@ -854,7 +854,7 @@
     function updateNotificationCountsImmediate() {
       // Use cached data to update counts immediately
       const unreadLibrarian = cachedConversations.filter(c => 
-        c.status === 'human' && !viewedConversations.has(c.sessionId)
+        c.status === 'human'
       ).length;
       
       const unreadBot = cachedConversations.filter(c => 
@@ -1053,9 +1053,26 @@
           warnBtn.disabled = true;
           warnBtn.textContent = `Ending in ${countdown}s...`;
           
-          const countdownInterval = setInterval(() => {
+          const countdownInterval = setInterval(async () => {
             countdown--;
             warnBtn.textContent = `Ending in ${countdown}s...`;
+            
+            // Send countdown message to user
+            if (countdown > 0) {
+              try {
+                await fetch('/api/librarian/respond', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    sessionId: currentSessionId,
+                    message: `Session ending in ${countdown} second${countdown !== 1 ? 's' : ''}...`
+                  })
+                });
+                refreshConversation();
+              } catch (error) {
+                console.error('Error sending countdown:', error);
+              }
+            }
             
             if (countdown <= 0) {
               clearInterval(countdownInterval);
