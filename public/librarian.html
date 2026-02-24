@@ -468,6 +468,26 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    .warn-btn {
+      padding: 12px 24px;
+      background: #f59e0b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .warn-btn:hover {
+      background: #d97706;
+    }
+
+    .warn-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -544,6 +564,7 @@
         <textarea id="response-input" placeholder="Type your response..."></textarea>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <button class="send-btn" onclick="sendResponse()">Send</button>
+          <button class="warn-btn" onclick="sendWarning()">Warn Before Ending</button>
           <button class="end-session-btn" onclick="endSession()">End Session</button>
         </div>
       </div>
@@ -986,6 +1007,34 @@
         }
       } catch (error) {
         alert('Error sending message: ' + error.message);
+      }
+    }
+
+    async function sendWarning() {
+      if (!currentSessionId) return;
+
+      const warningMessage = "Thank you for your question! I've provided the information you need. If your inquiry has been resolved, I'll be ending this session shortly. Feel free to ask any follow-up questions now, or you can always start a new chat with the AI assistant or request a librarian again if you need more help later.";
+
+      try {
+        const response = await fetch('/api/librarian/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: currentSessionId,
+            message: warningMessage
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          // Immediately refresh to show the sent message
+          refreshConversation();
+        } else {
+          alert('Error sending warning: ' + data.error);
+        }
+      } catch (error) {
+        alert('Error sending warning: ' + error.message);
       }
     }
 
