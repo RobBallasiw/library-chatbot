@@ -814,7 +814,7 @@
     <!-- Search and Filter Controls -->
     <div class="search-filter-bar">
       <div class="search-box">
-        <input type="text" id="search-input" placeholder="🔍 Search conversations..." oninput="filterConversations()">
+        <input type="text" id="search-input" placeholder="🔍 Search conversations..." oninput="debouncedFilterConversations()">
       </div>
       <div class="filter-controls">
         <select id="status-filter" onchange="filterConversations()">
@@ -1093,6 +1093,15 @@
     // Store original conversations for filtering
     let allConversations = [];
     let filteredConversations = [];
+    let filterDebounceTimer = null;
+
+    // Debounced filter function
+    function debouncedFilterConversations() {
+      if (filterDebounceTimer) {
+        clearTimeout(filterDebounceTimer);
+      }
+      filterDebounceTimer = setTimeout(filterConversations, 300);
+    }
 
     // Filter conversations based on search and filters
     function filterConversations() {
@@ -1456,14 +1465,6 @@
         const response = await fetch(`/api/conversation/${currentSessionId}`);
         const data = await response.json();
         
-        console.log('Refresh check:', {
-          currentMessages: currentConversation?.messages?.length || 0,
-          newMessages: data.messages?.length || 0,
-          currentStatus: currentConversation?.status,
-          newStatus: data.status,
-          countdown: data.countdown
-        });
-        
         // Check if countdown was cancelled (user sent a message)
         if (endSessionTimeout && !data.countdown) {
           console.log('⏹️ Countdown cancelled by user message');
@@ -1478,13 +1479,28 @@
           }
         }
         
-        // Check if there are new messages or status changed
+        // Check if there are new messages, status changed, or feedback changed
         const hasNewMessages = !currentConversation || 
                                data.messages.length !== currentConversation.messages.length ||
                                data.status !== currentConversation.status;
         
+        const oldThumbsUp = currentConversation?.feedback?.thumbsUp || 0;
+        const oldThumbsDown = currentConversation?.feedback?.thumbsDown || 0;
+        const newThumbsUp = data.feedback?.thumbsUp || 0;
+        const newThumbsDown = data.feedback?.thumbsDown || 0;
+        
+        const hasFeedbackChanged = oldThumbsUp !== newThumbsUp || oldThumbsDown !== newThumbsDown;
+        
+        console.log('Refresh check:', {
+          messages: `${currentConversation?.messages?.length || 0} → ${data.messages?.length || 0}`,
+          status: `${currentConversation?.status} → ${data.status}`,
+          feedback: `${oldThumbsUp}👍 ${oldThumbsDown}👎 → ${newThumbsUp}👍 ${newThumbsDown}👎`,
+          hasNewMessages,
+          hasFeedbackChanged
+        });
+        
         if (hasNewMessages) {
-          console.log('✅ Updating conversation view');
+          console.log('✅ Updating conversation view (messages/status changed)');
           const messagesEl = document.getElementById('modal-messages');
           
           currentConversation = data;
@@ -1492,8 +1508,13 @@
           
           // Always scroll to bottom on refresh
           messagesEl.scrollTop = messagesEl.scrollHeight;
+        } else if (hasFeedbackChanged) {
+          console.log('✅ Updating sentiment indicator (feedback changed)');
+          currentConversation = data;
+          updateSentimentIndicator(data);
         } else {
-          console.log('⏭️ No changes detected');
+          // Still update currentConversation to keep data fresh
+          currentConversation = data;
         }
       } catch (error) {
         console.error('Error refreshing conversation:', error);
@@ -1537,16 +1558,16 @@
         quickReplies.style.display = 'block';
       }
       
-      if (!conversation.messages || conversation.messages.length === 0) {
+      if (!conversation || !conversation.messages || conversation.messages.length === 0) {
         messagesEl.innerHTML = '<div class="empty-state"><p>No messages yet</p></div>';
         return;
       }
 
       messagesEl.innerHTML = conversation.messages.map(msg => `
-        <div class="message ${msg.role}">
-          <div class="message-role">${msg.role}</div>
-          <div class="message-content">${escapeHtml(msg.content)}</div>
-          <div class="message-time">${new Date(msg.timestamp).toLocaleString()}</div>
+        <div class="message ${msg.role || 'unknown'}">
+          <div class="message-role">${msg.role || 'unknown'}</div>
+          <div class="message-content">${escapeHtml(msg.content || '')}</div>
+          <div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'Unknown time'}</div>
         </div>
       `).join('');
       

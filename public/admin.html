@@ -1413,13 +1413,22 @@
       return div.innerHTML;
     }
 
-    // Search functionality
+    // Search functionality with debounce
+    let searchDebounceTimer = null;
     document.addEventListener('DOMContentLoaded', () => {
       const searchInput = document.getElementById('template-search');
       if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-          searchQuery = e.target.value.trim();
-          renderCategories();
+          // Clear previous timer
+          if (searchDebounceTimer) {
+            clearTimeout(searchDebounceTimer);
+          }
+          
+          // Debounce search by 300ms
+          searchDebounceTimer = setTimeout(() => {
+            searchQuery = e.target.value.trim();
+            renderCategories();
+          }, 300);
         });
       }
     });

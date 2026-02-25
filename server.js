@@ -6,6 +6,7 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 
 dotenv.config();
 
@@ -14,6 +15,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const ollama = new Ollama({ host: 'http://localhost:11434' });
+
+// Enable gzip compression
+app.use(compression());
 
 // Rate limiting
 const apiLimiter = rateLimit({
@@ -57,7 +61,10 @@ const librarianLimiter = rateLimit({
 });
 
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('public', {
+  maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
+  etag: true
+}));
 
 // Apply rate limiting to API routes
 // Order matters: more specific routes first, then general
