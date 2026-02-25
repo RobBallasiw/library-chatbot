@@ -219,6 +219,288 @@
     #keyword-display .btn-copy:hover {
       background: rgba(255, 255, 255, 0.3);
     }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      border-color: #dc2626;
+      color: #dc2626;
+    }
+
+    .tab-btn.active {
+      background: #dc2626;
+      border-color: #dc2626;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Category Item */
+    .category-item {
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .category-header {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .category-header:hover {
+      background: #f8f9fa;
+    }
+
+    .category-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .category-icon {
+      font-size: 24px;
+    }
+
+    .category-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .template-list {
+      padding: 0 20px 20px 60px;
+      display: none;
+    }
+
+    .template-list.expanded {
+      display: block;
+    }
+
+    .template-item {
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .template-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .template-preview {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 400px;
+    }
+
+    .btn-primary {
+      background: #dc2626;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .btn-primary:hover {
+      background: #b91c1c;
+    }
+
+    .btn-secondary {
+      background: #3b82f6;
+      color: white;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .btn-secondary:hover {
+      background: #2563eb;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 4px;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    .btn-icon:hover {
+      opacity: 1;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 18px;
+      color: #333;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #dc2626;
+    }
+
+    .modal-footer {
+      padding: 20px;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn-cancel {
+      padding: 10px 20px;
+      background: #e5e7eb;
+      color: #333;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-cancel:hover {
+      background: #d1d5db;
+    }
+
+    .btn-save {
+      padding: 10px 20px;
+      background: #dc2626;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .btn-save:hover {
+      background: #b91c1c;
+    }
   </style>
 </head>
 <body>
@@ -231,6 +513,15 @@
   </div>
 
   <div id="alert-container"></div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('librarians')">👥 Librarians</button>
+    <button class="tab-btn" onclick="switchTab('responses')">💬 Canned Responses</button>
+  </div>
+
+  <!-- Librarians Tab -->
+  <div id="librarians-tab" class="tab-content active">
 
   <div class="section">
     <div class="section-header">
@@ -269,6 +560,77 @@
     <div class="code-block" id="keyword-display" style="display: flex; justify-content: space-between; align-items: center;">
       <span id="keyword-text">Loading...</span>
       <button class="btn btn-copy" onclick="copyKeyword()" style="margin: 0;">📋 Copy Keyword</button>
+    </div>
+  </div>
+
+  </div><!-- End librarians-tab -->
+
+  <!-- Canned Responses Tab -->
+  <div id="responses-tab" class="tab-content">
+    
+    <div class="section">
+      <div class="section-header">
+        <h2>Manage Quick Reply Templates</h2>
+        <button class="btn btn-primary" onclick="showAddCategoryModal()">+ Add Category</button>
+      </div>
+      <div id="categories-list">
+        <div class="empty-state">Loading templates...</div>
+      </div>
+    </div>
+
+  </div><!-- End responses-tab -->
+
+  <!-- Edit Template Modal -->
+  <div class="modal" id="template-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="template-modal-title">Edit Template</h3>
+        <button class="btn-icon" onclick="closeTemplateModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Template Name</label>
+          <input type="text" id="template-name" placeholder="e.g., Regular Hours">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="template-category">
+            <!-- Options loaded dynamically -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Template Text</label>
+          <textarea id="template-text" placeholder="Enter the template text..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeTemplateModal()">Cancel</button>
+        <button class="btn-save" onclick="saveTemplate()">Save Template</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Category Modal -->
+  <div class="modal" id="category-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add New Category</h3>
+        <button class="btn-icon" onclick="closeCategoryModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Category Name</label>
+          <input type="text" id="category-name" placeholder="e.g., Events">
+        </div>
+        <div class="form-group">
+          <label>Category Icon (Emoji)</label>
+          <input type="text" id="category-icon" placeholder="e.g., 🎉" maxlength="2">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeCategoryModal()">Cancel</button>
+        <button class="btn-save" onclick="saveCategory()">Add Category</button>
+      </div>
     </div>
   </div>
 
@@ -500,6 +862,254 @@
     // Initial load
     loadData().then(() => {
       updateStatusIndicator(false);
+    });
+
+    // ============================================
+    // CANNED RESPONSES MANAGEMENT
+    // ============================================
+
+    let cannedResponsesData = null;
+    let currentEditingTemplate = null;
+    let currentEditingCategory = null;
+
+    // Tab switching
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(tabName + '-tab').classList.add('active');
+
+      // Load canned responses if switching to that tab
+      if (tabName === 'responses' && !cannedResponsesData) {
+        loadCannedResponses();
+      }
+    }
+
+    // Load canned responses
+    async function loadCannedResponses() {
+      try {
+        const response = await fetch('/api/canned-responses');
+        cannedResponsesData = await response.json();
+        renderCategories();
+      } catch (error) {
+        showAlert('Error loading canned responses: ' + error.message, 'error');
+      }
+    }
+
+    // Render categories
+    function renderCategories() {
+      const container = document.getElementById('categories-list');
+      
+      if (!cannedResponsesData || !cannedResponsesData.categories || cannedResponsesData.categories.length === 0) {
+        container.innerHTML = '<div class="empty-state">No categories yet. Click "Add Category" to create one.</div>';
+        return;
+      }
+
+      container.innerHTML = cannedResponsesData.categories.map((category, catIndex) => `
+        <div class="category-item">
+          <div class="category-header" onclick="toggleCategory('${category.id}')">
+            <div class="category-title">
+              <span class="category-icon">${category.icon}</span>
+              <span>${category.name}</span>
+              <span class="badge">${category.templates.length} templates</span>
+            </div>
+            <div class="category-actions" onclick="event.stopPropagation()">
+              <button class="btn-secondary" onclick="showAddTemplateModal('${category.id}')">+ Add Template</button>
+              <button class="btn-icon" onclick="toggleCategory('${category.id}')">▼</button>
+            </div>
+          </div>
+          <div class="template-list" id="templates-${category.id}">
+            ${category.templates.map((template, tmpIndex) => `
+              <div class="template-item">
+                <div>
+                  <div class="template-name">${template.name}</div>
+                  <div class="template-preview">${template.text.substring(0, 80)}...</div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn-secondary" onclick="editTemplate('${category.id}', '${template.id}')">Edit</button>
+                  <button class="btn-danger" onclick="deleteTemplate('${category.id}', '${template.id}')">Delete</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Toggle category expansion
+    function toggleCategory(categoryId) {
+      const templateList = document.getElementById('templates-' + categoryId);
+      templateList.classList.toggle('expanded');
+    }
+
+    // Show add template modal
+    function showAddTemplateModal(categoryId) {
+      currentEditingTemplate = null;
+      currentEditingCategory = categoryId;
+      
+      document.getElementById('template-modal-title').textContent = 'Add New Template';
+      document.getElementById('template-name').value = '';
+      document.getElementById('template-text').value = '';
+      
+      // Populate category dropdown
+      const categorySelect = document.getElementById('template-category');
+      categorySelect.innerHTML = cannedResponsesData.categories.map(cat => 
+        `<option value="${cat.id}" ${cat.id === categoryId ? 'selected' : ''}>${cat.icon} ${cat.name}</option>`
+      ).join('');
+      
+      document.getElementById('template-modal').classList.add('active');
+    }
+
+    // Edit template
+    function editTemplate(categoryId, templateId) {
+      const category = cannedResponsesData.categories.find(c => c.id === categoryId);
+      const template = category.templates.find(t => t.id === templateId);
+      
+      currentEditingTemplate = { categoryId, templateId };
+      currentEditingCategory = categoryId;
+      
+      document.getElementById('template-modal-title').textContent = 'Edit Template';
+      document.getElementById('template-name').value = template.name;
+      document.getElementById('template-text').value = template.text;
+      
+      // Populate category dropdown
+      const categorySelect = document.getElementById('template-category');
+      categorySelect.innerHTML = cannedResponsesData.categories.map(cat => 
+        `<option value="${cat.id}" ${cat.id === categoryId ? 'selected' : ''}>${cat.icon} ${cat.name}</option>`
+      ).join('');
+      
+      document.getElementById('template-modal').classList.add('active');
+    }
+
+    // Save template
+    async function saveTemplate() {
+      const name = document.getElementById('template-name').value.trim();
+      const text = document.getElementById('template-text').value.trim();
+      const categoryId = document.getElementById('template-category').value;
+      
+      if (!name || !text) {
+        showAlert('Please fill in all fields', 'error');
+        return;
+      }
+      
+      const category = cannedResponsesData.categories.find(c => c.id === categoryId);
+      
+      if (currentEditingTemplate) {
+        // Edit existing template
+        const oldCategory = cannedResponsesData.categories.find(c => c.id === currentEditingTemplate.categoryId);
+        const templateIndex = oldCategory.templates.findIndex(t => t.id === currentEditingTemplate.templateId);
+        
+        // If category changed, move template
+        if (currentEditingTemplate.categoryId !== categoryId) {
+          const template = oldCategory.templates.splice(templateIndex, 1)[0];
+          template.name = name;
+          template.text = text;
+          category.templates.push(template);
+        } else {
+          // Update in same category
+          oldCategory.templates[templateIndex].name = name;
+          oldCategory.templates[templateIndex].text = text;
+        }
+      } else {
+        // Add new template
+        const newTemplate = {
+          id: 'template-' + Date.now(),
+          name: name,
+          text: text
+        };
+        category.templates.push(newTemplate);
+      }
+      
+      // Save to server
+      await saveCannedResponses();
+      closeTemplateModal();
+      renderCategories();
+      showAlert('Template saved successfully!', 'success');
+    }
+
+    // Delete template
+    async function deleteTemplate(categoryId, templateId) {
+      if (!confirm('Delete this template?')) return;
+      
+      const category = cannedResponsesData.categories.find(c => c.id === categoryId);
+      category.templates = category.templates.filter(t => t.id !== templateId);
+      
+      await saveCannedResponses();
+      renderCategories();
+      showAlert('Template deleted', 'success');
+    }
+
+    // Show add category modal
+    function showAddCategoryModal() {
+      document.getElementById('category-name').value = '';
+      document.getElementById('category-icon').value = '';
+      document.getElementById('category-modal').classList.add('active');
+    }
+
+    // Save category
+    async function saveCategory() {
+      const name = document.getElementById('category-name').value.trim();
+      const icon = document.getElementById('category-icon').value.trim();
+      
+      if (!name || !icon) {
+        showAlert('Please fill in all fields', 'error');
+        return;
+      }
+      
+      const newCategory = {
+        id: name.toLowerCase().replace(/\s+/g, '-'),
+        name: name,
+        icon: icon,
+        templates: []
+      };
+      
+      cannedResponsesData.categories.push(newCategory);
+      
+      await saveCannedResponses();
+      closeCategoryModal();
+      renderCategories();
+      showAlert('Category added successfully!', 'success');
+    }
+
+    // Save canned responses to server
+    async function saveCannedResponses() {
+      try {
+        const response = await fetch('/api/canned-responses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cannedResponsesData)
+        });
+        
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to save');
+        }
+      } catch (error) {
+        showAlert('Error saving: ' + error.message, 'error');
+        throw error;
+      }
+    }
+
+    // Close modals
+    function closeTemplateModal() {
+      document.getElementById('template-modal').classList.remove('active');
+      currentEditingTemplate = null;
+    }
+
+    function closeCategoryModal() {
+      document.getElementById('category-modal').classList.remove('active');
+    }
+
+    // Close modals on outside click
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('active');
+        }
+      });
     });
   </script>
 </body>
