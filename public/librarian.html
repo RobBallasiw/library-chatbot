@@ -1157,6 +1157,21 @@
       const input = document.getElementById('response-input');
       input.value = template.text;
       input.focus();
+      
+      // Track usage
+      trackTemplateUsage(templateId);
+    }
+
+    // Track template usage
+    function trackTemplateUsage(templateId) {
+      let stats = JSON.parse(localStorage.getItem('templateUsageStats') || '{}');
+      if (!stats[templateId]) {
+        stats[templateId] = { count: 0, lastUsed: null };
+      }
+      stats[templateId].count++;
+      stats[templateId].lastUsed = new Date().toISOString();
+      localStorage.setItem('templateUsageStats', JSON.stringify(stats));
+      console.log('📊 Template used:', templateId, 'Total uses:', stats[templateId].count);
     }
 
     // Close dropdowns when clicking outside

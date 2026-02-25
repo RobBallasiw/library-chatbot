@@ -192,6 +192,61 @@ const pendingLibrarianRequests = new Map();
 const librarianProfiles = new Map();
 // psid -> { name: string, profilePic: string }
 
+// Analytics data
+const analytics = {
+  totalConversations: 0,
+  totalMessages: 0,
+  librarianRequests: 0,
+  averageResponseTime: 0,
+  conversationsByStatus: { bot: 0, human: 0, responded: 0, viewed: 0, closed: 0 },
+  messagesPerDay: {},
+  conversationsPerDay: {},
+  responseTimeHistory: [],
+  startTime: new Date()
+};
+
+// Track analytics
+function trackConversationStart(sessionId) {
+  analytics.totalConversations++;
+  const today = new Date().toISOString().split('T')[0];
+  analytics.conversationsPerDay[today] = (analytics.conversationsPerDay[today] || 0) + 1;
+  logger.log('📊 New conversation tracked:', sessionId);
+}
+
+function trackMessage() {
+  analytics.totalMessages++;
+  const today = new Date().toISOString().split('T')[0];
+  analytics.messagesPerDay[today] = (analytics.messagesPerDay[today] || 0) + 1;
+}
+
+function trackLibrarianRequest() {
+  analytics.librarianRequests++;
+}
+
+function trackResponseTime(sessionId, responseTime) {
+  analytics.responseTimeHistory.push({
+    sessionId,
+    responseTime,
+    timestamp: new Date()
+  });
+  
+  // Keep only last 100 response times
+  if (analytics.responseTimeHistory.length > 100) {
+    analytics.responseTimeHistory.shift();
+  }
+  
+  // Calculate average
+  const sum = analytics.responseTimeHistory.reduce((acc, item) => acc + item.responseTime, 0);
+  analytics.averageResponseTime = Math.round(sum / analytics.responseTimeHistory.length);
+}
+
+function updateStatusCounts() {
+  analytics.conversationsByStatus = { bot: 0, human: 0, responded: 0, viewed: 0, closed: 0 };
+  for (const conv of conversations.values()) {
+    analytics.conversationsByStatus[conv.status] = (analytics.conversationsByStatus[conv.status] || 0) + 1;
+  }
+}
+
 // Fetch user profile from Facebook Graph API
 async function fetchUserProfile(psid, forceRefresh = false) {
   // Check cache first (unless force refresh)
@@ -347,6 +402,8 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { message, history = [], sessionId } = req.body;
     
+    const startTime = Date.now();
+    
     // Get or create conversation
     if (!conversations.has(sessionId)) {
       conversations.set(sessionId, {
@@ -355,10 +412,12 @@ app.post('/api/chat', async (req, res) => {
         userId: null,
         startTime: new Date()
       });
+      trackConversationStart(sessionId);
     }
 
     const conversation = conversations.get(sessionId);
     conversation.messages.push({ role: 'user', content: message, timestamp: new Date() });
+    trackMessage();
 
     // If conversation is with human librarian (waiting or already responded), don't send bot response
     if (conversation.status === 'human' || conversation.status === 'responded') {
@@ -449,6 +508,12 @@ app.post('/api/chat', async (req, res) => {
       timestamp: new Date() 
     });
 
+    // Track response time
+    const responseTime = Date.now() - startTime;
+    trackResponseTime(sessionId, responseTime);
+    trackMessage();
+    updateStatusCounts();
+
     res.json({ 
       response: botResponse,
       success: true,
@@ -487,6 +552,10 @@ app.post('/api/request-librarian', async (req, res) => {
 
     const conversation = conversations.get(sessionId);
     conversation.status = 'human';
+    
+    // Track librarian request
+    trackLibrarianRequest();
+    updateStatusCounts();
     
     console.log('📊 Current conversation state:', {
       sessionId,
@@ -1017,6 +1086,58 @@ app.post('/api/canned-responses', (req, res) => {
   } else {
     res.status(500).json({ success: false, error: 'Failed to save' });
   }
+});
+
+// API endpoint to get analytics data
+app.get('/api/analytics', (req, res) => {
+  // Update status counts before sending
+  updateStatusCounts();
+  
+  // Calculate uptime
+  const uptime = Date.now() - analytics.startTime.getTime();
+  const uptimeHours = Math.floor(uptime / (1000 * 60 * 60));
+  const uptimeMinutes = Math.floor((uptime % (1000 * 60 * 60)) / (1000 * 60));
+  
+  // Get last 7 days of data for charts
+  const last7Days = [];
+  const today = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+    last7Days.push({
+      date: dateStr,
+      conversations: analytics.conversationsPerDay[dateStr] || 0,
+      messages: analytics.messagesPerDay[dateStr] || 0
+    });
+  }
+  
+  // Get active conversations
+  const activeConversations = Array.from(conversations.entries()).map(([id, conv]) => ({
+    sessionId: id,
+    status: conv.status,
+    messageCount: conv.messages.length,
+    startTime: conv.startTime,
+    duration: Math.floor((Date.now() - new Date(conv.startTime).getTime()) / 1000)
+  }));
+  
+  res.json({
+    summary: {
+      totalConversations: analytics.totalConversations,
+      totalMessages: analytics.totalMessages,
+      librarianRequests: analytics.librarianRequests,
+      averageResponseTime: analytics.averageResponseTime,
+      activeConversations: conversations.size,
+      uptime: `${uptimeHours}h ${uptimeMinutes}m`
+    },
+    conversationsByStatus: analytics.conversationsByStatus,
+    last7Days: last7Days,
+    activeConversations: activeConversations,
+    recentResponseTimes: analytics.responseTimeHistory.slice(-10).map(rt => ({
+      responseTime: rt.responseTime,
+      timestamp: rt.timestamp
+    }))
+  });
 });
 
 const PORT = process.env.PORT || 3000;

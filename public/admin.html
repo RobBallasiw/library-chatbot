@@ -68,6 +68,25 @@
       color: #166534;
     }
 
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .stat-card h3 {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .number {
+      font-size: 32px;
+      font-weight: 600;
+      color: #667eea;
+    }
+
     .list-item {
       padding: 20px;
       border-bottom: 1px solid #f0f0f0;
@@ -328,6 +347,87 @@
       max-width: 400px;
     }
 
+    .template-item {
+      position: relative;
+    }
+
+    .template-item:hover .template-tooltip {
+      display: block;
+    }
+
+    .template-tooltip {
+      display: none;
+      position: absolute;
+      left: 0;
+      top: 100%;
+      background: #1f2937;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 400px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      margin-top: 8px;
+      white-space: pre-wrap;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .template-tooltip::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 20px;
+      width: 12px;
+      height: 12px;
+      background: #1f2937;
+      transform: rotate(45deg);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .usage-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #dbeafe;
+      color: #1e40af;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-left: 8px;
+    }
+
+    .usage-badge.popular {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .search-highlight {
+      background: #fef3c7;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+
+    .keyboard-hint {
+      font-size: 11px;
+      color: #999;
+      margin-left: 8px;
+      padding: 2px 6px;
+      background: #f3f4f6;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
     .btn-primary {
       background: #dc2626;
       color: white;
@@ -569,6 +669,7 @@
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('librarians')">👥 Librarians</button>
     <button class="tab-btn" onclick="switchTab('responses')">💬 Canned Responses</button>
+    <button class="tab-btn" onclick="switchTab('analytics')">📊 Analytics</button>
   </div>
 
   <!-- Librarians Tab -->
@@ -619,10 +720,37 @@
   <!-- Canned Responses Tab -->
   <div id="responses-tab" class="tab-content">
     
+    <!-- Usage Statistics -->
+    <div class="section" style="margin-bottom: 20px;">
+      <div class="section-header">
+        <h2>📊 Usage Statistics</h2>
+        <button class="btn-secondary" onclick="resetUsageStats()">Reset Stats</button>
+      </div>
+      <div style="padding: 20px;">
+        <div id="usage-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+          <div class="stat-card">
+            <h3>Total Uses</h3>
+            <div class="number" id="total-uses">0</div>
+          </div>
+          <div class="stat-card">
+            <h3>Most Popular</h3>
+            <div class="number" id="most-popular" style="font-size: 16px;">-</div>
+          </div>
+          <div class="stat-card">
+            <h3>Templates Used</h3>
+            <div class="number" id="templates-used">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="section">
       <div class="section-header">
         <h2>Manage Quick Reply Templates</h2>
-        <button class="btn btn-primary" onclick="showAddCategoryModal()">+ Add Category</button>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="template-search" placeholder="🔍 Search templates..." style="padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 6px; width: 250px;">
+          <button class="btn btn-primary" onclick="showAddCategoryModal()">+ Add Category</button>
+        </div>
       </div>
       <div id="categories-list">
         <div class="empty-state">Loading templates...</div>
@@ -630,6 +758,85 @@
     </div>
 
   </div><!-- End responses-tab -->
+
+  <!-- Analytics Tab -->
+  <div id="analytics-tab" class="tab-content">
+    
+    <!-- Summary Stats -->
+    <div class="section">
+      <div class="section-header">
+        <h2>📊 Overview</h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <span style="font-size: 12px; color: #666;" id="analytics-last-update">Never updated</span>
+          <button class="refresh-btn" onclick="loadAnalytics()">🔄 Refresh</button>
+        </div>
+      </div>
+      <div style="padding: 20px;">
+        <div id="analytics-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+          <div class="stat-card">
+            <h3>Total Conversations</h3>
+            <div class="number" id="stat-conversations">-</div>
+          </div>
+          <div class="stat-card">
+            <h3>Total Messages</h3>
+            <div class="number" id="stat-messages">-</div>
+          </div>
+          <div class="stat-card">
+            <h3>Librarian Requests</h3>
+            <div class="number" id="stat-requests">-</div>
+          </div>
+          <div class="stat-card">
+            <h3>Avg Response Time</h3>
+            <div class="number" id="stat-response-time">-</div>
+          </div>
+          <div class="stat-card">
+            <h3>Active Now</h3>
+            <div class="number" id="stat-active">-</div>
+          </div>
+          <div class="stat-card">
+            <h3>Uptime</h3>
+            <div class="number" id="stat-uptime" style="font-size: 20px;">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conversations by Status -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Conversations by Status</h2>
+      </div>
+      <div style="padding: 20px;">
+        <div id="status-breakdown" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Last 7 Days Activity -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Last 7 Days Activity</h2>
+      </div>
+      <div style="padding: 20px;">
+        <div id="activity-chart" style="min-height: 200px;">
+          <!-- Simple bar chart -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Conversations -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Active Conversations</h2>
+        <span class="badge" id="active-count">0</span>
+      </div>
+      <div id="active-conversations-list">
+        <div class="empty-state">No active conversations</div>
+      </div>
+    </div>
+
+  </div><!-- End analytics-tab -->
 
   <!-- Edit Template Modal -->
   <div class="modal" id="template-modal">
@@ -897,7 +1104,7 @@
       }
     }
 
-    // Auto-refresh every 10 seconds (reduced from 3 to minimize server load)
+    // Auto-refresh every 30 seconds for librarians tab
     let checkCount = 0;
     setInterval(() => {
       const previousHash = lastDataHash;
@@ -909,6 +1116,14 @@
         checkCount++;
       });
     }, 30000); // 30 seconds
+    
+    // Auto-refresh analytics every 10 seconds when on analytics tab
+    setInterval(() => {
+      const analyticsTab = document.getElementById('analytics-tab');
+      if (analyticsTab && analyticsTab.classList.contains('active')) {
+        loadAnalytics();
+      }
+    }, 10000); // 10 seconds
     
     // Initial load
     loadData().then(() => {
@@ -922,6 +1137,28 @@
     let cannedResponsesData = null;
     let currentEditingTemplate = null;
     let currentEditingCategory = null;
+    let templateUsageStats = JSON.parse(localStorage.getItem('templateUsageStats') || '{}');
+    let searchQuery = '';
+
+    // Save usage stats
+    function saveUsageStats() {
+      localStorage.setItem('templateUsageStats', JSON.stringify(templateUsageStats));
+    }
+
+    // Track template usage
+    function trackTemplateUsage(templateId) {
+      if (!templateUsageStats[templateId]) {
+        templateUsageStats[templateId] = { count: 0, lastUsed: null };
+      }
+      templateUsageStats[templateId].count++;
+      templateUsageStats[templateId].lastUsed = new Date().toISOString();
+      saveUsageStats();
+    }
+
+    // Get usage count
+    function getUsageCount(templateId) {
+      return templateUsageStats[templateId]?.count || 0;
+    }
 
     // Tab switching
     function switchTab(tabName) {
@@ -937,6 +1174,11 @@
       if (tabName === 'responses' && !cannedResponsesData) {
         loadCannedResponses();
       }
+      
+      // Load analytics if switching to that tab
+      if (tabName === 'analytics') {
+        loadAnalytics();
+      }
     }
 
     // Load canned responses
@@ -945,9 +1187,48 @@
         const response = await fetch('/api/canned-responses');
         cannedResponsesData = await response.json();
         renderCategories();
+        updateUsageStats();
       } catch (error) {
         showAlert('Error loading canned responses: ' + error.message, 'error');
       }
+    }
+
+    // Update usage statistics
+    function updateUsageStats() {
+      const totalUses = Object.values(templateUsageStats).reduce((sum, stat) => sum + stat.count, 0);
+      const templatesUsed = Object.keys(templateUsageStats).filter(id => templateUsageStats[id].count > 0).length;
+      
+      // Find most popular template
+      let mostPopular = '-';
+      let maxCount = 0;
+      for (const [templateId, stat] of Object.entries(templateUsageStats)) {
+        if (stat.count > maxCount) {
+          maxCount = stat.count;
+          // Find template name
+          for (const category of (cannedResponsesData?.categories || [])) {
+            const template = category.templates.find(t => t.id === templateId);
+            if (template) {
+              mostPopular = `${template.name} (${maxCount}×)`;
+              break;
+            }
+          }
+        }
+      }
+      
+      document.getElementById('total-uses').textContent = totalUses;
+      document.getElementById('most-popular').textContent = mostPopular;
+      document.getElementById('templates-used').textContent = templatesUsed;
+    }
+
+    // Reset usage stats
+    function resetUsageStats() {
+      if (!confirm('Reset all usage statistics? This cannot be undone.')) return;
+      
+      templateUsageStats = {};
+      saveUsageStats();
+      updateUsageStats();
+      renderCategories();
+      showAlert('Usage statistics reset', 'success');
     }
 
     // Render categories
@@ -959,36 +1240,91 @@
         return;
       }
 
-      container.innerHTML = cannedResponsesData.categories.map((category, catIndex) => `
+      // Filter categories and templates based on search
+      let filteredCategories = cannedResponsesData.categories.map(category => {
+        const filteredTemplates = category.templates.filter(template => {
+          if (!searchQuery) return true;
+          const query = searchQuery.toLowerCase();
+          return template.name.toLowerCase().includes(query) || 
+                 template.text.toLowerCase().includes(query);
+        });
+        return { ...category, templates: filteredTemplates };
+      }).filter(category => category.templates.length > 0);
+
+      if (filteredCategories.length === 0) {
+        container.innerHTML = '<div class="empty-state">No templates found matching "' + searchQuery + '"</div>';
+        return;
+      }
+
+      container.innerHTML = filteredCategories.map((category, catIndex) => {
+        // Calculate total usage for this category
+        const categoryUsage = category.templates.reduce((sum, t) => sum + getUsageCount(t.id), 0);
+        
+        return `
         <div class="category-item">
           <div class="category-header" onclick="toggleCategory('${category.id}')">
             <div class="category-title">
               <span class="category-icon">${category.icon}</span>
-              <span>${category.name}</span>
+              <span>${highlightSearch(category.name)}</span>
               <span class="badge">${category.templates.length} templates</span>
+              ${categoryUsage > 0 ? `<span class="usage-badge ${categoryUsage > 20 ? 'popular' : ''}">${categoryUsage} uses</span>` : ''}
+              <span class="keyboard-hint">Ctrl+${catIndex + 1}</span>
             </div>
             <div class="category-actions" onclick="event.stopPropagation()">
               <button class="btn-secondary" onclick="showAddTemplateModal('${category.id}')">+ Add Template</button>
               <button class="btn-icon" onclick="toggleCategory('${category.id}')">▼</button>
             </div>
           </div>
-          <div class="template-list" id="templates-${category.id}">
-            ${category.templates.map((template, tmpIndex) => `
+          <div class="template-list ${searchQuery ? 'expanded' : ''}" id="templates-${category.id}">
+            ${category.templates.map((template, tmpIndex) => {
+              const usageCount = getUsageCount(template.id);
+              return `
               <div class="template-item">
                 <div>
-                  <div class="template-name">${template.name}</div>
-                  <div class="template-preview">${template.text.substring(0, 80)}...</div>
+                  <div class="template-name">
+                    ${highlightSearch(template.name)}
+                    ${usageCount > 0 ? `<span class="usage-badge ${usageCount > 10 ? 'popular' : ''}">${usageCount} uses</span>` : ''}
+                  </div>
+                  <div class="template-preview">${highlightSearch(template.text.substring(0, 80))}...</div>
+                  <div class="template-tooltip">${escapeHtml(template.text)}</div>
                 </div>
                 <div style="display: flex; gap: 8px;">
                   <button class="btn-secondary" onclick="editTemplate('${category.id}', '${template.id}')">Edit</button>
                   <button class="btn-danger" onclick="deleteTemplate('${category.id}', '${template.id}')">Delete</button>
                 </div>
               </div>
-            `).join('')}
+            `;
+            }).join('')}
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
+
+    // Highlight search terms
+    function highlightSearch(text) {
+      if (!searchQuery) return text;
+      const regex = new RegExp(`(${searchQuery})`, 'gi');
+      return text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+
+    // Escape HTML for tooltip
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Search functionality
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('template-search');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          searchQuery = e.target.value.trim();
+          renderCategories();
+        });
+      }
+    });
 
     // Toggle category expansion
     function toggleCategory(categoryId) {
@@ -1162,6 +1498,206 @@
         }
       });
     });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Only on responses tab
+      if (!document.getElementById('responses-tab').classList.contains('active')) return;
+      
+      // Ctrl+1 through Ctrl+6 to expand categories
+      if (e.ctrlKey && e.key >= '1' && e.key <= '6') {
+        e.preventDefault();
+        const categoryIndex = parseInt(e.key) - 1;
+        if (cannedResponsesData && cannedResponsesData.categories[categoryIndex]) {
+          const categoryId = cannedResponsesData.categories[categoryIndex].id;
+          toggleCategory(categoryId);
+          // Scroll to category
+          document.getElementById('templates-' + categoryId)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+      
+      // Ctrl+F to focus search
+      if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault();
+        document.getElementById('template-search')?.focus();
+      }
+      
+      // Escape to clear search
+      if (e.key === 'Escape' && searchQuery) {
+        const searchInput = document.getElementById('template-search');
+        if (searchInput) {
+          searchInput.value = '';
+          searchQuery = '';
+          renderCategories();
+        }
+      }
+    });
+
+    // ============================================
+    // ANALYTICS MANAGEMENT
+    // ============================================
+
+    let analyticsData = null;
+
+    // Load analytics data
+    async function loadAnalytics() {
+      try {
+        const response = await fetch('/api/analytics');
+        analyticsData = await response.json();
+        renderAnalytics();
+        
+        // Update last refresh time
+        const now = new Date().toLocaleTimeString();
+        const lastUpdateEl = document.getElementById('analytics-last-update');
+        if (lastUpdateEl) {
+          lastUpdateEl.textContent = 'Last updated: ' + now;
+        }
+        
+        const refreshBtn = document.querySelector('#analytics-tab .refresh-btn');
+        if (refreshBtn) {
+          const originalText = refreshBtn.textContent;
+          refreshBtn.textContent = '✅ Updated';
+          setTimeout(() => {
+            refreshBtn.textContent = originalText;
+          }, 1000);
+        }
+      } catch (error) {
+        showAlert('Error loading analytics: ' + error.message, 'error');
+      }
+    }
+
+    // Render analytics
+    function renderAnalytics() {
+      if (!analyticsData) return;
+
+      // Summary stats
+      document.getElementById('stat-conversations').textContent = analyticsData.summary.totalConversations;
+      document.getElementById('stat-messages').textContent = analyticsData.summary.totalMessages;
+      document.getElementById('stat-requests').textContent = analyticsData.summary.librarianRequests;
+      document.getElementById('stat-response-time').textContent = analyticsData.summary.averageResponseTime + 'ms';
+      document.getElementById('stat-active').textContent = analyticsData.summary.activeConversations;
+      document.getElementById('stat-uptime').textContent = analyticsData.summary.uptime;
+
+      // Status breakdown
+      const statusBreakdown = document.getElementById('status-breakdown');
+      const statusLabels = {
+        bot: { label: 'Bot Handled', icon: '🤖', color: '#3b82f6' },
+        human: { label: 'Waiting', icon: '⏳', color: '#f59e0b' },
+        responded: { label: 'Responded', icon: '✅', color: '#10b981' },
+        viewed: { label: 'Viewed', icon: '👁️', color: '#8b5cf6' },
+        closed: { label: 'Closed', icon: '🔒', color: '#6b7280' }
+      };
+
+      statusBreakdown.innerHTML = Object.entries(analyticsData.conversationsByStatus)
+        .map(([status, count]) => {
+          const info = statusLabels[status] || { label: status, icon: '📊', color: '#667eea' };
+          return `
+            <div class="stat-card" style="border-left: 4px solid ${info.color};">
+              <h3>${info.icon} ${info.label}</h3>
+              <div class="number" style="color: ${info.color};">${count}</div>
+            </div>
+          `;
+        }).join('');
+
+      // Activity chart (simple bar chart)
+      renderActivityChart(analyticsData.last7Days);
+
+      // Active conversations
+      renderActiveConversations(analyticsData.activeConversations);
+    }
+
+    // Render simple activity chart
+    function renderActivityChart(data) {
+      const chartContainer = document.getElementById('activity-chart');
+      
+      if (!data || data.length === 0) {
+        chartContainer.innerHTML = '<div class="empty-state">No activity data</div>';
+        return;
+      }
+
+      const maxValue = Math.max(...data.map(d => Math.max(d.conversations, d.messages)));
+      
+      chartContainer.innerHTML = `
+        <div style="display: flex; gap: 10px; align-items: flex-end; height: 200px;">
+          ${data.map(day => {
+            const convHeight = maxValue > 0 ? (day.conversations / maxValue * 150) : 0;
+            const msgHeight = maxValue > 0 ? (day.messages / maxValue * 150) : 0;
+            const date = new Date(day.date);
+            const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            
+            return `
+              <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                <div style="display: flex; gap: 3px; align-items: flex-end; height: 150px;">
+                  <div style="width: 20px; background: #3b82f6; height: ${convHeight}px; border-radius: 4px 4px 0 0;" title="Conversations: ${day.conversations}"></div>
+                  <div style="width: 20px; background: #10b981; height: ${msgHeight}px; border-radius: 4px 4px 0 0;" title="Messages: ${day.messages}"></div>
+                </div>
+                <div style="font-size: 11px; color: #666; text-align: center;">${dateLabel}</div>
+                <div style="font-size: 10px; color: #999;">
+                  <span style="color: #3b82f6;">${day.conversations}</span> / 
+                  <span style="color: #10b981;">${day.messages}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        <div style="display: flex; gap: 20px; justify-content: center; margin-top: 15px; font-size: 12px;">
+          <div><span style="display: inline-block; width: 12px; height: 12px; background: #3b82f6; border-radius: 2px; margin-right: 5px;"></span>Conversations</div>
+          <div><span style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 2px; margin-right: 5px;"></span>Messages</div>
+        </div>
+      `;
+    }
+
+    // Render active conversations
+    function renderActiveConversations(conversations) {
+      const listEl = document.getElementById('active-conversations-list');
+      const countEl = document.getElementById('active-count');
+      
+      countEl.textContent = conversations.length;
+      
+      if (conversations.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">No active conversations</div>';
+        return;
+      }
+
+      const statusLabels = {
+        bot: { label: 'Bot', color: '#3b82f6' },
+        human: { label: 'Waiting for Librarian', color: '#f59e0b' },
+        responded: { label: 'Librarian Responded', color: '#10b981' },
+        viewed: { label: 'Viewed', color: '#8b5cf6' },
+        closed: { label: 'Closed', color: '#6b7280' }
+      };
+
+      listEl.innerHTML = conversations
+        .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
+        .map(conv => {
+          const statusInfo = statusLabels[conv.status] || { label: conv.status, color: '#667eea' };
+          const duration = formatDuration(conv.duration);
+          
+          return `
+            <div class="list-item">
+              <div class="item-info">
+                <div class="psid">${conv.sessionId}</div>
+                <div class="item-meta">
+                  <span style="color: ${statusInfo.color}; font-weight: 600;">● ${statusInfo.label}</span> • 
+                  ${conv.messageCount} messages • 
+                  Duration: ${duration} • 
+                  Started: ${new Date(conv.startTime).toLocaleString()}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+    }
+
+    // Format duration
+    function formatDuration(seconds) {
+      if (seconds < 60) return seconds + 's';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return minutes + 'm';
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return hours + 'h ' + remainingMinutes + 'm';
+    }
   </script>
 </body>
 </html>
