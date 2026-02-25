@@ -493,6 +493,122 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    /* Quick Replies */
+    .quick-replies {
+      padding: 12px 20px;
+      border-top: 1px solid #e0e0e0;
+      background: #f8f9fa;
+    }
+
+    .quick-replies-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .quick-reply-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .quick-reply-btn {
+      padding: 10px 12px;
+      background: #e0f2fe;
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #0369a1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+      position: relative;
+      z-index: 1;
+    }
+
+    .quick-reply-btn.dropdown-open {
+      z-index: 2001;
+    }
+
+    .quick-reply-btn:hover {
+      background: #bae6fd;
+      border-color: #7dd3fc;
+      transform: translateY(-1px);
+    }
+
+    .quick-reply-btn:active {
+      transform: translateY(0);
+    }
+
+    .quick-reply-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 250px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 2000;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .quick-reply-dropdown.active {
+      display: block;
+      animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .quick-reply-option {
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.2s;
+    }
+
+    .quick-reply-option:last-child {
+      border-bottom: none;
+    }
+
+    .quick-reply-option:hover {
+      background: #f8f9fa;
+    }
+
+    .quick-reply-option-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 4px;
+    }
+
+    .quick-reply-option-preview {
+      font-size: 12px;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   </style>
 </head>
 <body>
@@ -564,6 +680,12 @@
       </div>
       <div class="modal-messages" id="modal-messages">
         <!-- Messages will be loaded here -->
+      </div>
+      <div class="quick-replies">
+        <div class="quick-replies-label">💬 Quick Replies:</div>
+        <div class="quick-reply-buttons" id="quick-reply-buttons">
+          <!-- Quick reply buttons will be loaded here -->
+        </div>
       </div>
       <div class="modal-input">
         <textarea id="response-input" placeholder="Type your response..."></textarea>
@@ -903,6 +1025,101 @@
 
     let conversationPollingInterval = null;
     let endSessionTimeout = null; // Track countdown timer
+    let cannedResponsesData = null; // Store canned responses
+
+    // Load canned responses
+    async function loadCannedResponses() {
+      try {
+        const response = await fetch('/api/canned-responses');
+        cannedResponsesData = await response.json();
+        renderQuickReplyButtons();
+      } catch (error) {
+        console.error('Error loading canned responses:', error);
+      }
+    }
+
+    // Render quick reply buttons
+    function renderQuickReplyButtons() {
+      const container = document.getElementById('quick-reply-buttons');
+      if (!cannedResponsesData || !cannedResponsesData.categories) return;
+      
+      container.innerHTML = cannedResponsesData.categories.map(category => `
+        <div class="quick-reply-btn" data-category="${category.id}">
+          <span>${category.icon}</span>
+          <span>${category.name}</span>
+          <div class="quick-reply-dropdown" id="dropdown-${category.id}">
+            ${category.templates.map(template => `
+              <div class="quick-reply-option" data-template-id="${template.id}" data-category-id="${category.id}">
+                <div class="quick-reply-option-name">${template.name}</div>
+                <div class="quick-reply-option-preview">${template.text.substring(0, 60)}...</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+      
+      // Add click handlers
+      document.querySelectorAll('.quick-reply-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const categoryId = btn.dataset.category;
+          const dropdown = document.getElementById(`dropdown-${categoryId}`);
+          
+          // Close all other dropdowns and remove dropdown-open class
+          document.querySelectorAll('.quick-reply-dropdown').forEach(d => {
+            if (d !== dropdown) d.classList.remove('active');
+          });
+          document.querySelectorAll('.quick-reply-btn').forEach(b => {
+            if (b !== btn) b.classList.remove('dropdown-open');
+          });
+          
+          // Toggle this dropdown
+          dropdown.classList.toggle('active');
+          btn.classList.toggle('dropdown-open');
+        });
+      });
+      
+      // Add template click handlers
+      document.querySelectorAll('.quick-reply-option').forEach(option => {
+        option.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const categoryId = option.dataset.categoryId;
+          const templateId = option.dataset.templateId;
+          insertTemplate(categoryId, templateId);
+          
+          // Close dropdown and remove dropdown-open class
+          document.querySelectorAll('.quick-reply-dropdown').forEach(d => {
+            d.classList.remove('active');
+          });
+          document.querySelectorAll('.quick-reply-btn').forEach(b => {
+            b.classList.remove('dropdown-open');
+          });
+        });
+      });
+    }
+
+    // Insert template into text box
+    function insertTemplate(categoryId, templateId) {
+      const category = cannedResponsesData.categories.find(c => c.id === categoryId);
+      if (!category) return;
+      
+      const template = category.templates.find(t => t.id === templateId);
+      if (!template) return;
+      
+      const input = document.getElementById('response-input');
+      input.value = template.text;
+      input.focus();
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.quick-reply-dropdown').forEach(d => {
+        d.classList.remove('active');
+      });
+      document.querySelectorAll('.quick-reply-btn').forEach(b => {
+        b.classList.remove('dropdown-open');
+      });
+    });
 
     function startConversationPolling() {
       // Clear any existing polling
@@ -990,11 +1207,12 @@
       
       titleEl.textContent = `Session: ${conversation.sessionId.substring(0, 30)}... (${statusText})`;
       
-      // Disable input if conversation is closed
+      // Disable input and hide quick replies if conversation is closed
       const responseInput = document.getElementById('response-input');
       const sendBtn = document.querySelector('.send-btn');
       const warnBtn = document.querySelector('.warn-btn');
       const endBtn = document.querySelector('.end-session-btn');
+      const quickReplies = document.querySelector('.quick-replies');
       
       if (conversation.status === 'closed') {
         responseInput.disabled = true;
@@ -1002,12 +1220,14 @@
         sendBtn.disabled = true;
         warnBtn.disabled = true;
         endBtn.disabled = true;
+        quickReplies.style.display = 'none';
       } else {
         responseInput.disabled = false;
         responseInput.placeholder = 'Type your response...';
         sendBtn.disabled = false;
         warnBtn.disabled = false;
         endBtn.disabled = false;
+        quickReplies.style.display = 'block';
       }
       
       if (!conversation.messages || conversation.messages.length === 0) {
@@ -1251,6 +1471,7 @@
     
     // Initial load
     loadNotifications();
+    loadCannedResponses();
   </script>
 </body>
 </html>

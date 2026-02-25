@@ -19,6 +19,34 @@ app.use(express.static('public'));
 
 // Librarian data file
 const LIBRARIAN_DATA_FILE = path.join(__dirname, 'librarian-data.json');
+const CANNED_RESPONSES_FILE = path.join(__dirname, 'canned-responses.json');
+
+// Load canned responses
+function loadCannedResponses() {
+  try {
+    if (fs.existsSync(CANNED_RESPONSES_FILE)) {
+      const data = JSON.parse(fs.readFileSync(CANNED_RESPONSES_FILE, 'utf8'));
+      console.log('✅ Loaded canned responses:', data.categories.length, 'categories');
+      return data;
+    }
+  } catch (error) {
+    console.error('⚠️  Error loading canned responses:', error.message);
+  }
+  
+  return { categories: [] };
+}
+
+// Save canned responses
+function saveCannedResponses(data) {
+  try {
+    fs.writeFileSync(CANNED_RESPONSES_FILE, JSON.stringify(data, null, 2));
+    console.log('✅ Saved canned responses');
+    return true;
+  } catch (error) {
+    console.error('❌ Error saving canned responses:', error.message);
+    return false;
+  }
+}
 
 // Load or initialize librarian data
 function loadLibrarianData() {
@@ -60,6 +88,7 @@ function saveLibrarianData(data) {
 
 // Initialize librarian data
 let librarianData = loadLibrarianData();
+let cannedResponses = loadCannedResponses();
 
 // Cleanup old conversations to prevent memory leaks
 function cleanupOldConversations() {
@@ -859,6 +888,28 @@ app.post('/api/librarian/set-countdown', (req, res) => {
     res.json({ success: true });
   } else {
     res.status(404).json({ success: false, error: 'Conversation not found' });
+  }
+});
+
+// API endpoint to get canned responses
+app.get('/api/canned-responses', (req, res) => {
+  res.json(cannedResponses);
+});
+
+// API endpoint to save canned responses
+app.post('/api/canned-responses', (req, res) => {
+  const { categories } = req.body;
+  
+  if (!categories || !Array.isArray(categories)) {
+    return res.status(400).json({ success: false, error: 'Invalid data' });
+  }
+  
+  cannedResponses = { categories };
+  
+  if (saveCannedResponses(cannedResponses)) {
+    res.json({ success: true });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to save' });
   }
 });
 

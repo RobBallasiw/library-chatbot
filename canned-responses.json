@@ -1,0 +1,166 @@
+{
+  "categories": [
+    {
+      "id": "hours",
+      "name": "Hours",
+      "icon": "📅",
+      "templates": [
+        {
+          "id": "regular-hours",
+          "name": "Regular Hours",
+          "text": "Our library hours are:\nMonday-Thursday: 8:00 AM - 10:00 PM\nFriday: 8:00 AM - 6:00 PM\nSaturday: 10:00 AM - 5:00 PM\nSunday: 12:00 PM - 8:00 PM\n\nIs there anything else I can help you with?"
+        },
+        {
+          "id": "weekend-hours",
+          "name": "Weekend Hours",
+          "text": "Our weekend hours are:\nSaturday: 10:00 AM - 5:00 PM\nSunday: 12:00 PM - 8:00 PM\n\nWe're here to help! Let me know if you need anything else."
+        },
+        {
+          "id": "holiday-hours",
+          "name": "Holiday Hours",
+          "text": "During holidays, our hours may vary. Please check our website or call us at (555) 123-4567 for specific holiday hours.\n\nWe'll be happy to assist you when we're open!"
+        },
+        {
+          "id": "summer-hours",
+          "name": "Summer Hours",
+          "text": "Our summer hours (June-August) are:\nMonday-Friday: 9:00 AM - 6:00 PM\nSaturday: 10:00 AM - 3:00 PM\nSunday: Closed\n\nHow else can I assist you today?"
+        }
+      ]
+    },
+    {
+      "id": "resources",
+      "name": "Resources",
+      "icon": "📚",
+      "templates": [
+        {
+          "id": "find-books",
+          "name": "How to Find Books",
+          "text": "To find books in our library:\n\n1. Use our online catalog at library.example.com\n2. Search by title, author, or subject\n3. Note the call number and location\n4. Visit the shelf or request it at the desk\n\nNeed help finding something specific?"
+        },
+        {
+          "id": "digital-resources",
+          "name": "Digital Resources",
+          "text": "We offer many digital resources:\n\n• eBooks and audiobooks (OverDrive/Libby)\n• Online databases and journals\n• Streaming movies and music\n• Digital magazines\n\nAccess them with your library card at library.example.com/digital\n\nNeed help getting started?"
+        },
+        {
+          "id": "interlibrary-loan",
+          "name": "Interlibrary Loan",
+          "text": "Don't have what you need? We can request it from other libraries!\n\n• Free service for cardholders\n• Usually arrives in 1-2 weeks\n• Request online or ask at the desk\n\nWhat would you like us to request for you?"
+        },
+        {
+          "id": "database-access",
+          "name": "Database Access",
+          "text": "Access our research databases:\n\n• From library: Use any computer\n• From home: Login with your library card\n• Available 24/7\n\nPopular databases: JSTOR, ProQuest, EBSCOhost\n\nNeed help with a specific database?"
+        }
+      ]
+    },
+    {
+      "id": "tech-help",
+      "name": "Tech Help",
+      "icon": "💻",
+      "templates": [
+        {
+          "id": "wifi-access",
+          "name": "WiFi Access",
+          "text": "To connect to library WiFi:\n\nGuests:\nNetwork: LibraryGuest\nPassword: books2024\n\nCardholders:\nNetwork: Library-Members\nNo password needed\n\nHaving trouble connecting?"
+        },
+        {
+          "id": "printing",
+          "name": "Printing Instructions",
+          "text": "To print at the library:\n\n1. Send your document to library-print@example.com\n2. Go to any print station\n3. Enter your library card number\n4. Select your document and print\n\nCost: $0.10/page B&W, $0.25/page color\n\nNeed help with printing?"
+        },
+        {
+          "id": "computer-reservation",
+          "name": "Computer Reservations",
+          "text": "Reserve a computer:\n\n• Online: library.example.com/computers\n• In person: Ask at the desk\n• By phone: (555) 123-4567\n\nSessions are 2 hours, renewable if available.\n\nWould you like to reserve one now?"
+        },
+        {
+          "id": "scanner-help",
+          "name": "Scanner Help",
+          "text": "To use our scanners:\n\n1. Place document face-down on glass\n2. Select scan settings on screen\n3. Choose email or USB save\n4. Free for library users!\n\nNeed assistance with scanning?"
+        }
+      ]
+    },
+    {
+      "id": "locations",
+      "name": "Locations",
+      "icon": "🏢",
+      "templates": [
+        {
+          "id": "main-library",
+          "name": "Main Library Address",
+          "text": "Main Library Location:\n\n123 Library Street\nYour City, ST 12345\n\nPhone: (555) 123-4567\nEmail: info@library.example.com\n\nParking available in rear lot.\n\nHow can I help you today?"
+        },
+        {
+          "id": "branches",
+          "name": "Branch Locations",
+          "text": "We have 3 locations:\n\nMain Library: 123 Library St\nNorth Branch: 456 Oak Ave\nSouth Branch: 789 Maple Rd\n\nAll branches offer the same great services!\n\nWhich location works best for you?"
+        },
+        {
+          "id": "study-rooms",
+          "name": "Study Rooms",
+          "text": "Study rooms are available:\n\n• 6 rooms (seats 4-8 people)\n• Reserve online or at desk\n• 2-hour time slots\n• Free for cardholders\n• Whiteboards and outlets included\n\nWould you like to reserve a room?"
+        },
+        {
+          "id": "parking",
+          "name": "Parking Information",
+          "text": "Parking at the library:\n\n• Free parking lot behind building\n• 50 spaces available\n• Accessible parking near entrance\n• Street parking also available\n• Bike racks at front entrance\n\nSee you soon!"
+        }
+      ]
+    },
+    {
+      "id": "policies",
+      "name": "Policies",
+      "icon": "📖",
+      "templates": [
+        {
+          "id": "borrowing-limits",
+          "name": "Borrowing Limits",
+          "text": "Borrowing limits per card:\n\n• Books: 50 items, 3 weeks\n• DVDs: 5 items, 1 week\n• Magazines: 10 items, 2 weeks\n• eBooks: Unlimited!\n\nRenew online or by phone if no holds.\n\nWhat would you like to borrow?"
+        },
+        {
+          "id": "late-fees",
+          "name": "Late Fees",
+          "text": "Late fee policy:\n\n• Books: $0.25/day (max $5)\n• DVDs: $1.00/day (max $10)\n• No fees for eBooks (auto-return)\n\nWe offer a grace period of 3 days.\n\nQuestions about your account?"
+        },
+        {
+          "id": "renewal-policy",
+          "name": "Renewal Policy",
+          "text": "Renewing items:\n\n• Renew online, by phone, or in person\n• Up to 3 renewals per item\n• Cannot renew if item has holds\n• Automatic renewal available (opt-in)\n\nNeed help renewing something?"
+        },
+        {
+          "id": "guest-access",
+          "name": "Guest Access",
+          "text": "Visitors are welcome!\n\nGuests can:\n• Use WiFi and computers (1 hour)\n• Browse and read in library\n• Attend programs and events\n\nTo borrow items, get a free library card!\n\nWould you like to sign up?"
+        }
+      ]
+    },
+    {
+      "id": "research",
+      "name": "Research",
+      "icon": "🎓",
+      "templates": [
+        {
+          "id": "citation-help",
+          "name": "Citation Help",
+          "text": "Need help with citations?\n\n• We support MLA, APA, Chicago styles\n• Use our citation guides online\n• Citation tools available in databases\n• Ask a librarian for help!\n\nWhat citation style do you need?"
+        },
+        {
+          "id": "research-consultation",
+          "name": "Research Consultation",
+          "text": "Schedule a research consultation:\n\n• One-on-one help with librarian\n• 30-60 minute sessions\n• In-person or virtual\n• Free for all users\n\nBook online at library.example.com/research\n\nWhat's your research topic?"
+        },
+        {
+          "id": "subject-guides",
+          "name": "Subject Guides",
+          "text": "Check out our subject guides!\n\n• Curated resources by topic\n• Best databases for your subject\n• Recommended books and websites\n• Created by expert librarians\n\nView at library.example.com/guides\n\nWhat subject are you researching?"
+        },
+        {
+          "id": "thesis-support",
+          "name": "Thesis Support",
+          "text": "Thesis and dissertation support:\n\n• Research strategy sessions\n• Literature review help\n• Citation management (Zotero, EndNote)\n• Formatting assistance\n\nSchedule an appointment with our research team!\n\nHow can we support your thesis?"
+        }
+      ]
+    }
+  ]
+}
