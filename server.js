@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
@@ -14,8 +15,63 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const ollama = new Ollama({ host: 'http://localhost:11434' });
 
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const chatLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20, // Limit each IP to 20 chat messages per minute
+  message: 'Too many messages, please slow down.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use(express.json());
 app.use(express.static('public'));
+
+// Apply rate limiting to API routes
+app.use('/api/', apiLimiter);
+app.use('/api/chat', chatLimiter);
+
+// Configuration Constants
+const POLLING_INTERVALS = {
+  LIBRARIAN_DASHBOARD: 2000,      // 2 seconds
+  USER_CHAT: 3000,                // 3 seconds
+  ADMIN_DASHBOARD: 30000,         // 30 seconds (reduced from 10s)
+  CONVERSATION_REFRESH: 2000      // 2 seconds
+};
+
+const CLEANUP_INTERVALS = {
+  OLD_CONVERSATIONS: 15 * 60 * 1000,  // 15 minutes (reduced from 1 hour)
+  CLOSED_SESSIONS: 60 * 60 * 1000,    // 1 hour
+  INACTIVE_BOTS: 24 * 60 * 60 * 1000  // 24 hours
+};
+
+const LIMITS = {
+  MAX_CONVERSATIONS: 1000,
+  MAX_NOTIFICATIONS: 50,
+  MAX_MESSAGE_LENGTH: 5000,
+  CONVERSATION_HISTORY: 10
+};
+
+const TIMEOUTS = {
+  COUNTDOWN_WARNING: 10,  // 10 seconds
+  REFRESH_DELAY: 100      // 100ms
+};
+
+// Logger utility - only log in development
+const logger = {
+  log: process.env.NODE_ENV === 'production' ? () => {} : console.log,
+  error: console.error,
+  warn: console.warn,
+  info: console.info
+};
 
 // Librarian data file
 const LIBRARIAN_DATA_FILE = path.join(__dirname, 'librarian-data.json');
@@ -26,11 +82,11 @@ function loadCannedResponses() {
   try {
     if (fs.existsSync(CANNED_RESPONSES_FILE)) {
       const data = JSON.parse(fs.readFileSync(CANNED_RESPONSES_FILE, 'utf8'));
-      console.log('✅ Loaded canned responses:', data.categories.length, 'categories');
+      logger.log('✅ Loaded canned responses:', data.categories.length, 'categories');
       return data;
     }
   } catch (error) {
-    console.error('⚠️  Error loading canned responses:', error.message);
+    logger.error('⚠️  Error loading canned responses:', error.message);
   }
   
   return { categories: [] };
@@ -40,10 +96,10 @@ function loadCannedResponses() {
 function saveCannedResponses(data) {
   try {
     fs.writeFileSync(CANNED_RESPONSES_FILE, JSON.stringify(data, null, 2));
-    console.log('✅ Saved canned responses');
+    logger.log('✅ Saved canned responses');
     return true;
   } catch (error) {
-    console.error('❌ Error saving canned responses:', error.message);
+    logger.error('❌ Error saving canned responses:', error.message);
     return false;
   }
 }
@@ -92,33 +148,37 @@ let cannedResponses = loadCannedResponses();
 
 // Cleanup old conversations to prevent memory leaks
 function cleanupOldConversations() {
-  const ONE_HOUR = 60 * 60 * 1000;
   const now = Date.now();
   let cleaned = 0;
+  
+  // Check if we're over the limit
+  if (conversations.size > LIMITS.MAX_CONVERSATIONS) {
+    console.log(`⚠️ Conversation limit exceeded (${conversations.size}/${LIMITS.MAX_CONVERSATIONS}), forcing cleanup`);
+  }
   
   for (const [sessionId, conv] of conversations.entries()) {
     const age = now - new Date(conv.startTime).getTime();
     
     // Delete closed conversations older than 1 hour
-    if (conv.status === 'closed' && age > ONE_HOUR) {
+    if (conv.status === 'closed' && age > CLEANUP_INTERVALS.CLOSED_SESSIONS) {
       conversations.delete(sessionId);
       cleaned++;
     }
     
     // Delete inactive bot conversations older than 24 hours
-    if (conv.status === 'bot' && age > 24 * ONE_HOUR) {
+    if (conv.status === 'bot' && age > CLEANUP_INTERVALS.INACTIVE_BOTS) {
       conversations.delete(sessionId);
       cleaned++;
     }
   }
   
   if (cleaned > 0) {
-    console.log(`🗑️ Cleaned up ${cleaned} old conversations`);
+    console.log(`🗑️ Cleaned up ${cleaned} old conversations (${conversations.size} remaining)`);
   }
 }
 
-// Run cleanup every hour
-setInterval(cleanupOldConversations, 60 * 60 * 1000);
+// Run cleanup every 15 minutes (reduced from 1 hour)
+setInterval(cleanupOldConversations, CLEANUP_INTERVALS.OLD_CONVERSATIONS);
 
 // Store active conversations and their status
 const conversations = new Map();
@@ -242,7 +302,7 @@ async function sendToMessenger(message, conversationData) {
   });
 
   // Keep only last 50 notifications
-  if (librarianNotifications.length > 50) {
+  if (librarianNotifications.length > LIMITS.MAX_NOTIFICATIONS) {
     librarianNotifications.shift();
   }
 
@@ -331,7 +391,7 @@ app.post('/api/chat', async (req, res) => {
       { role: 'system', content: LIBRARY_CONTEXT }
     ];
     
-    const recentHistory = history.slice(-10);
+    const recentHistory = history.slice(-LIMITS.CONVERSATION_HISTORY);
     messages.push(...recentHistory);
     messages.push({ role: 'user', content: message });
 
@@ -842,8 +902,8 @@ app.post('/api/librarian/respond', (req, res) => {
     return res.status(400).json({ success: false, error: 'Invalid message' });
   }
   
-  if (message.length > 5000) {
-    return res.status(400).json({ success: false, error: 'Message too long (max 5000 characters)' });
+  if (message.length > LIMITS.MAX_MESSAGE_LENGTH) {
+    return res.status(400).json({ success: false, error: `Message too long (max ${LIMITS.MAX_MESSAGE_LENGTH} characters)` });
   }
   
   const conversation = conversations.get(sessionId);

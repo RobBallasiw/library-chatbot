@@ -376,3 +376,78 @@ body {
   0%, 60%, 100% { transform: translateY(0); }
   30% { transform: translateY(-10px); }
 }
+
+
+/* Loading State */
+body.loading {
+  cursor: wait;
+}
+
+body.loading::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.loading-spinner {
+  display: none;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+.loading .loading-spinner {
+  display: block;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .chat-widget {
+    width: calc(100vw - 20px);
+    height: calc(100vh - 120px);
+    right: 10px;
+    bottom: 80px;
+  }
+
+  .chat-toggle {
+    right: 20px;
+    bottom: 20px;
+  }
+
+  .page-content {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-widget {
+    width: 100vw;
+    height: 100vh;
+    right: 0;
+    bottom: 0;
+    border-radius: 0;
+  }
+
+  .action-bar {
+    flex-direction: column;
+  }
+
+  .librarian-btn {
+    width: 100%;
+  }
+}

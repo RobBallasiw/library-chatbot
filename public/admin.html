@@ -501,6 +501,57 @@
     .btn-save:hover {
       background: #b91c1c;
     }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      .header {
+        padding: 20px;
+      }
+
+      .header h1 {
+        font-size: 22px;
+      }
+
+      .tabs {
+        flex-direction: column;
+      }
+
+      .tab-btn {
+        width: 100%;
+      }
+
+      .quick-reply-buttons {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+
+      .modal-content {
+        width: 95%;
+        max-height: 95vh;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .conversation-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .item-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .item-actions button {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -857,7 +908,7 @@
         }
         checkCount++;
       });
-    }, 10000);
+    }, 30000); // 30 seconds
     
     // Initial load
     loadData().then(() => {
