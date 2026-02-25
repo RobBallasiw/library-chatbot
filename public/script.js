@@ -233,9 +233,9 @@ async function requestLibrarian() {
       updateStatusIndicator();
       addMessage(data.message, false, 'bot');
       
-      // Set message count to current history length (conversation was created with history)
-      // Add 1 for the "librarian notified" message we just added
-      lastMessageCount = conversationHistory.length + 1;
+      // Set message count to match server's conversation (which was created with history)
+      // The notification message we just added is NOT on the server yet
+      lastMessageCount = conversationHistory.length - 1;
       
       console.log('📊 Librarian requested, lastMessageCount set to:', lastMessageCount);
     } else {
