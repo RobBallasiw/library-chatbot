@@ -25,8 +25,8 @@ const apiLimiter = rateLimit({
 });
 
 const chatLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 30, // Limit each IP to 30 chat messages per minute (increased from 20)
+  windowMs: 30 * 1000, // 30 seconds (reduced from 1 minute)
+  max: 15, // Limit each IP to 15 chat messages per 30 seconds
   message: 'Too many messages, please slow down.',
   standardHeaders: true,
   legacyHeaders: false,

@@ -95,12 +95,9 @@ async function sendMessage() {
     if (response.status === 429) {
       removeTypingIndicator();
       
-      // Parse the response to get the message
-      const errorData = await response.json().catch(() => ({}));
-      
-      // Check Retry-After header if available
+      // Retry-After header is in seconds
       const retryAfter = response.headers.get('Retry-After');
-      const waitTime = retryAfter ? Math.ceil(retryAfter) : 60;
+      const waitTime = retryAfter ? parseInt(retryAfter) : 60;
       
       addMessage(`You're sending messages too quickly. Please wait ${waitTime} seconds before trying again.`, false, 'bot');
       
