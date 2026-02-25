@@ -26,7 +26,7 @@ const apiLimiter = rateLimit({
 
 const chatLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 20, // Limit each IP to 20 chat messages per minute
+  max: 30, // Limit each IP to 30 chat messages per minute (increased from 20)
   message: 'Too many messages, please slow down.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -314,6 +314,13 @@ YOU MUST NEVER HELP WITH:
 - Homework or assignment completion
 - Finding or recommending things that are NOT library resources
 
+HANDLING INAPPROPRIATE BEHAVIOR:
+- If user is rude, vulgar, or uses profanity: Politely decline and offer to help with library services only
+- If user makes inappropriate requests: "I can only help with library-related questions. If you need assistance, please ask respectfully about our books, services, or resources."
+- If behavior continues: "I'm here to help with library services only. If you'd like assistance, please ask a respectful question about our library."
+- Do NOT engage with inappropriate content, jokes, or off-topic conversations
+- Stay professional and redirect to library services
+
 CRITICAL: When asked about non-library topics:
 - DO NOT provide prices, lists, or recommendations
 - DO NOT try to help them find these things
@@ -327,9 +334,13 @@ Example responses for off-topic questions:
 - "I'm specifically designed to help with library services only. I can't assist with [topic], but I'd be happy to help you find books, research materials, or other library resources. What can I help you with today?"
 - "That's outside my area - I only handle library-related questions. Is there anything about our library services I can help you with?"
 
+Example responses for inappropriate behavior:
+- "I can only help with library-related questions. Please ask respectfully about our books, services, or resources."
+- "I'm here to assist with library services only. How can I help you find books or information today?"
+
 If you cannot fully help with a LIBRARY question or the user seems frustrated, suggest: "Would you like to speak with a librarian? They can provide more personalized assistance."
 
-Keep responses concise, friendly, and focused ONLY on library services. ALWAYS RESPOND IN ENGLISH ONLY.`;
+Keep responses concise, friendly, and focused ONLY on library services. ALWAYS RESPOND IN ENGLISH ONLY. Stay professional at all times.`;
 
 
 // Store librarian notifications in memory (in production, use a database)
@@ -403,6 +414,27 @@ app.post('/api/chat', async (req, res) => {
     const { message, history = [], sessionId } = req.body;
     
     const startTime = Date.now();
+    
+    // Content filtering - detect inappropriate content
+    const inappropriatePatterns = [
+      /\b(fuck|shit|bitch|ass|damn|cunt|dick|pussy|cock)\b/i,
+      /\b(sex|cum|porn|xxx|nude|naked)\b/i,
+      /daddy/i
+    ];
+    
+    const isInappropriate = inappropriatePatterns.some(pattern => pattern.test(message));
+    
+    if (isInappropriate) {
+      // Return a firm but polite response without calling the AI
+      const warningResponse = "I can only help with library-related questions. Please ask respectfully about our books, services, or resources.";
+      
+      res.json({
+        response: warningResponse,
+        success: true,
+        status: 'bot'
+      });
+      return;
+    }
     
     // Get or create conversation
     if (!conversations.has(sessionId)) {

@@ -94,8 +94,29 @@ async function sendMessage() {
     // Handle rate limiting
     if (response.status === 429) {
       removeTypingIndicator();
-      addMessage('⏱️ Please slow down. You\'re sending messages too quickly. Please wait a moment and try again.', false, 'bot');
-      sendBtn.disabled = false;
+      
+      // Check Retry-After header if available
+      const retryAfter = response.headers.get('Retry-After');
+      const waitTime = retryAfter ? Math.ceil(retryAfter / 1000) : 60;
+      
+      addMessage(`You're sending messages too quickly. Please wait ${waitTime} seconds before trying again.`, false, 'bot');
+      
+      // Disable send button temporarily
+      sendBtn.disabled = true;
+      const countdown = waitTime;
+      let remaining = countdown;
+      
+      const countdownInterval = setInterval(() => {
+        remaining--;
+        if (remaining > 0) {
+          sendBtn.textContent = `Wait ${remaining}s`;
+        } else {
+          clearInterval(countdownInterval);
+          sendBtn.textContent = 'Send';
+          sendBtn.disabled = false;
+        }
+      }, 1000);
+      
       userInput.focus();
       return;
     }
