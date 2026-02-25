@@ -347,6 +347,11 @@ async function checkForNewMessages() {
         
         // Update status to show session is closed
         statusIndicator.innerHTML = '<span class="status-dot" style="background: #6b7280;"></span>Session Closed';
+        
+        // Show rating modal after a short delay
+        setTimeout(() => {
+          showFeedbackModal();
+        }, 1000);
       }
     }
   } catch (error) {

@@ -849,7 +849,12 @@
   <div class="modal" id="conversation-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 id="modal-title">Conversation</h3>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <h3 id="modal-title">Conversation</h3>
+          <div id="sentiment-indicator" style="display: none; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+            <!-- Sentiment will be shown here -->
+          </div>
+        </div>
         <button class="close-btn" onclick="closeModal()">×</button>
       </div>
       <div class="modal-messages" id="modal-messages">
@@ -1506,6 +1511,9 @@
       
       titleEl.textContent = `Session: ${conversation.sessionId.substring(0, 30)}... (${statusText})`;
       
+      // Calculate and display sentiment based on feedback
+      updateSentimentIndicator(conversation);
+      
       // Disable input and hide quick replies if conversation is closed
       const responseInput = document.getElementById('response-input');
       const sendBtn = document.querySelector('.send-btn');
@@ -1544,6 +1552,63 @@
       
       // Force scroll to bottom immediately
       messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+    
+    function updateSentimentIndicator(conversation) {
+      const indicator = document.getElementById('sentiment-indicator');
+      
+      // Count thumbs up and down from feedback
+      let thumbsUp = 0;
+      let thumbsDown = 0;
+      
+      if (conversation.feedback) {
+        thumbsUp = conversation.feedback.thumbsUp || 0;
+        thumbsDown = conversation.feedback.thumbsDown || 0;
+      }
+      
+      const total = thumbsUp + thumbsDown;
+      
+      // Don't show if no feedback yet
+      if (total === 0) {
+        indicator.style.display = 'none';
+        return;
+      }
+      
+      // Calculate sentiment
+      const positiveRatio = thumbsUp / total;
+      let emoji, text, bgColor, textColor;
+      
+      if (positiveRatio >= 0.8) {
+        emoji = '😊';
+        text = 'Very Happy';
+        bgColor = '#d1fae5';
+        textColor = '#065f46';
+      } else if (positiveRatio >= 0.6) {
+        emoji = '🙂';
+        text = 'Happy';
+        bgColor = '#dbeafe';
+        textColor = '#1e40af';
+      } else if (positiveRatio >= 0.4) {
+        emoji = '😐';
+        text = 'Neutral';
+        bgColor = '#fef3c7';
+        textColor = '#92400e';
+      } else if (positiveRatio >= 0.2) {
+        emoji = '😕';
+        text = 'Unhappy';
+        bgColor = '#fed7aa';
+        textColor = '#9a3412';
+      } else {
+        emoji = '😞';
+        text = 'Very Unhappy';
+        bgColor = '#fecaca';
+        textColor = '#991b1b';
+      }
+      
+      indicator.innerHTML = `${emoji} ${text} <span style="opacity: 0.7; font-size: 12px;">(${thumbsUp}👍 ${thumbsDown}👎)</span>`;
+      indicator.style.backgroundColor = bgColor;
+      indicator.style.color = textColor;
+      indicator.style.display = 'inline-block';
     }
 
     function escapeHtml(text) {

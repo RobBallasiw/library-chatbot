@@ -1086,9 +1086,18 @@ app.get('/api/conversation/:sessionId', (req, res) => {
       console.log(`👁️ Conversation ${sessionId} marked as viewed`);
     }
     
+    // Calculate feedback for this conversation
+    const sessionFeedback = feedback.messages.filter(f => f.sessionId === sessionId);
+    const thumbsUp = sessionFeedback.filter(f => f.type === 'up').length;
+    const thumbsDown = sessionFeedback.filter(f => f.type === 'down').length;
+    
     res.json({
       sessionId,
-      ...conversation
+      ...conversation,
+      feedback: {
+        thumbsUp,
+        thumbsDown
+      }
     });
   } else {
     res.status(404).json({ error: 'Conversation not found' });
