@@ -91,6 +91,15 @@ async function sendMessage() {
       })
     });
 
+    // Handle rate limiting
+    if (response.status === 429) {
+      removeTypingIndicator();
+      addMessage('⏱️ Please slow down. You\'re sending messages too quickly. Please wait a moment and try again.', false, 'bot');
+      sendBtn.disabled = false;
+      userInput.focus();
+      return;
+    }
+
     const data = await response.json();
     removeTypingIndicator();
 
