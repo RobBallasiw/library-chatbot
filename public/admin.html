@@ -1117,13 +1117,13 @@
       });
     }, 30000); // 30 seconds
     
-    // Auto-refresh analytics every 10 seconds when on analytics tab
+    // Auto-refresh analytics every 5 seconds when on analytics tab (reduced from 10)
     setInterval(() => {
       const analyticsTab = document.getElementById('analytics-tab');
       if (analyticsTab && analyticsTab.classList.contains('active')) {
         loadAnalytics();
       }
-    }, 10000); // 10 seconds
+    }, 5000); // 5 seconds - faster updates
     
     // Initial load
     loadData().then(() => {
@@ -1177,6 +1177,16 @@
       
       // Load analytics if switching to that tab
       if (tabName === 'analytics') {
+        // Show loading state immediately
+        const statElements = ['stat-conversations', 'stat-messages', 'stat-requests', 'stat-response-time', 'stat-active', 'stat-uptime'];
+        statElements.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && el.textContent === '-') {
+            el.textContent = '...';
+          }
+        });
+        
+        // Load data
         loadAnalytics();
       }
     }
@@ -1538,13 +1548,35 @@
     // ============================================
 
     let analyticsData = null;
+    let lastAnalyticsHash = '';
+
+    // Hash analytics data to detect changes
+    function hashAnalytics(data) {
+      if (!data) return '';
+      return JSON.stringify({
+        summary: data.summary,
+        statusCounts: data.conversationsByStatus,
+        activeCount: data.activeConversations?.length || 0
+      });
+    }
 
     // Load analytics data
     async function loadAnalytics() {
       try {
         const response = await fetch('/api/analytics');
-        analyticsData = await response.json();
-        renderAnalytics();
+        const newData = await response.json();
+        
+        // Check if data actually changed
+        const newHash = hashAnalytics(newData);
+        const hasChanges = newHash !== lastAnalyticsHash;
+        
+        analyticsData = newData;
+        lastAnalyticsHash = newHash;
+        
+        // Only re-render if data changed
+        if (hasChanges || !document.getElementById('stat-conversations').textContent || document.getElementById('stat-conversations').textContent === '-') {
+          renderAnalytics();
+        }
         
         // Update last refresh time
         const now = new Date().toLocaleTimeString();
@@ -1553,13 +1585,16 @@
           lastUpdateEl.textContent = 'Last updated: ' + now;
         }
         
-        const refreshBtn = document.querySelector('#analytics-tab .refresh-btn');
-        if (refreshBtn) {
-          const originalText = refreshBtn.textContent;
-          refreshBtn.textContent = '✅ Updated';
-          setTimeout(() => {
-            refreshBtn.textContent = originalText;
-          }, 1000);
+        // Show visual feedback only if there were changes
+        if (hasChanges) {
+          const refreshBtn = document.querySelector('#analytics-tab .refresh-btn');
+          if (refreshBtn) {
+            const originalText = refreshBtn.textContent;
+            refreshBtn.textContent = '✅ Updated';
+            setTimeout(() => {
+              refreshBtn.textContent = originalText;
+            }, 1000);
+          }
         }
       } catch (error) {
         showAlert('Error loading analytics: ' + error.message, 'error');
