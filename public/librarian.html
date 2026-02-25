@@ -1275,13 +1275,9 @@
     let cachedConversations = [];
 
     function updateNotificationCountsImmediate() {
-      // Remove 'human' status conversations from viewedConversations (they need attention again)
-      cachedConversations.forEach(c => {
-        if (c.status === 'human' && viewedConversations.has(c.sessionId)) {
-          viewedConversations.delete(c.sessionId);
-          saveViewedConversations();
-        }
-      });
+      // Don't automatically remove 'human' status from viewedConversations
+      // Only remove if there are NEW messages since last view
+      // This prevents the red dot from reappearing just because status changed
       
       // Use cached data to update counts immediately
       const unreadLibrarian = cachedConversations.filter(c => 
@@ -1596,6 +1592,18 @@
           })
         });
 
+        // Handle rate limiting
+        if (response.status === 429) {
+          alert('Too many requests. Please wait a moment and try again.');
+          return;
+        }
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Server returned non-JSON response');
+        }
+
         const data = await response.json();
         
         if (data.success) {
@@ -1612,6 +1620,10 @@
 
     async function sendWarning() {
       if (!currentSessionId) return;
+      
+      // Prevent double-clicking
+      const warnBtn = document.querySelector('.warn-btn');
+      if (warnBtn.disabled) return;
 
       const warningMessage = "Thank you for your question! I've provided the information you need. If your inquiry has been resolved, I'll be ending this session in 10 seconds. Feel free to ask any follow-up questions now, or you can always start a new chat with the AI assistant or request a librarian again if you need more help later.";
 
@@ -1624,6 +1636,18 @@
             message: warningMessage
           })
         });
+
+        // Handle rate limiting
+        if (response.status === 429) {
+          alert('Too many requests. Please wait a moment and try again.');
+          return;
+        }
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Server returned non-JSON response');
+        }
 
         const data = await response.json();
         
@@ -1648,19 +1672,28 @@
           warnBtn.disabled = true;
           warnBtn.textContent = `Ending in ${countdown}s...`;
           
+          let countdownCancelled = false; // Flag to track if cancelled
+          
           const countdownInterval = setInterval(async () => {
-            // Check if countdown was cancelled on server
+            // Check if countdown was cancelled by user message
             try {
               const checkResponse = await fetch(`/api/conversation/${currentSessionId}`);
               const checkData = await checkResponse.json();
               
-              if (!checkData.countdown) {
-                // Countdown was cancelled
-                console.log('⏹️ Countdown cancelled by server');
+              if (!checkData.countdown || checkData.countdown <= 0) {
+                // User sent a message, countdown was cancelled
+                console.log('⏹️ Countdown cancelled - user sent message');
+                countdownCancelled = true;
                 clearInterval(countdownInterval);
                 endSessionTimeout = null;
                 warnBtn.textContent = originalText;
                 warnBtn.disabled = false;
+                
+                // Show notification to librarian
+                alert('⏹️ Countdown cancelled - User sent a message. Please continue assisting them.');
+                
+                // Refresh to show new messages
+                refreshConversation();
                 return;
               }
             } catch (error) {
@@ -1686,7 +1719,28 @@
               }
             }
             
-            if (countdown <= 0) {
+            if (countdown <= 0 && !countdownCancelled) {
+              // Double-check one more time before closing
+              try {
+                const finalCheckResponse = await fetch(`/api/conversation/${currentSessionId}`);
+                const finalCheckData = await finalCheckResponse.json();
+                
+                if (!finalCheckData.countdown || finalCheckData.countdown <= 0) {
+                  // User sent a message at the last second!
+                  console.log('⏹️ Countdown cancelled at last second - user sent message');
+                  clearInterval(countdownInterval);
+                  endSessionTimeout = null;
+                  warnBtn.textContent = originalText;
+                  warnBtn.disabled = false;
+                  
+                  alert('⏹️ Countdown cancelled - User sent a message. Please continue assisting them.');
+                  refreshConversation();
+                  return;
+                }
+              } catch (error) {
+                console.error('Error in final countdown check:', error);
+              }
+              
               clearInterval(countdownInterval);
               endSessionTimeout = null;
               warnBtn.textContent = originalText;

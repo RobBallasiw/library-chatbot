@@ -34,25 +34,8 @@ closeChat.addEventListener('click', () => {
 });
 
 function addMessage(content, isUser, sender = null) {
-  const messageDiv = document.createElement('div');
-  messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-  
-  // Add sender label for bot messages
-  if (!isUser && sender) {
-    const senderLabel = document.createElement('div');
-    senderLabel.className = 'message-sender';
-    senderLabel.textContent = sender === 'librarian' ? '👤 Librarian' : '🤖 AI Assistant';
-    messageDiv.appendChild(senderLabel);
-  }
-  
-  const contentDiv = document.createElement('div');
-  contentDiv.textContent = content;
-  messageDiv.appendChild(contentDiv);
-  
-  messagesContainer.appendChild(messageDiv);
-  
-  // Scroll the chat container (not messages container)
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  const messageId = isUser ? null : `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  addMessageWithFeedback(content, isUser, sender, messageId);
 }
 
 function showTypingIndicator() {
@@ -97,7 +80,13 @@ async function sendMessage() {
       
       // Retry-After header is in seconds
       const retryAfter = response.headers.get('Retry-After');
-      const waitTime = retryAfter ? parseInt(retryAfter) : 60;
+      let waitTime = retryAfter ? parseInt(retryAfter) : 30;
+      
+      // Cap wait time at 30 seconds (our window) to prevent display bugs
+      if (waitTime > 30) {
+        console.warn('Rate limit wait time too high:', waitTime, 'capping at 30s');
+        waitTime = 30;
+      }
       
       addMessage(`You're sending messages too quickly. Please wait ${waitTime} seconds before trying again.`, false, 'bot');
       
@@ -152,7 +141,7 @@ async function sendMessage() {
     }
   } catch (error) {
     removeTypingIndicator();
-    addMessage('Sorry, I could not connect to the server.', false);
+    addMessage('Sorry, I could not connect to the server.', false, 'bot');
     console.error('Error:', error);
   }
 
@@ -242,18 +231,17 @@ async function requestLibrarian() {
     if (data.success) {
       conversationStatus = 'human';
       updateStatusIndicator();
-      addMessage(data.message, false);
-      addMessage('Please describe your question and a librarian will respond shortly.', false);
+      addMessage(data.message, false, 'bot');
       
       // Initialize message count - start at 0 since conversation was just created
       lastMessageCount = 0;
     } else {
-      addMessage('Sorry, could not connect to a librarian. Please try again.', false);
+      addMessage('Sorry, could not connect to a librarian. Please try again.', false, 'bot');
       requestLibrarianBtn.disabled = false;
     }
   } catch (error) {
     removeTypingIndicator();
-    addMessage('Sorry, could not connect to a librarian.', false);
+    addMessage('Sorry, could not connect to a librarian.', false, 'bot');
     requestLibrarianBtn.disabled = false;
     console.error('Error:', error);
   }
@@ -392,10 +380,9 @@ function startNewChat() {
   // Reset status
   updateStatusIndicator();
   
-  // Show welcome message
+  // Show welcome message for new chat
   setTimeout(() => {
-    addMessage('Hello! I\'m your library assistant. How can I help you today?', false, 'bot');
-    addMessage('If you need personalized help, you can request to speak with a librarian anytime.', false, 'bot');
+    addMessage('Hello! I\'m your library assistant. How can I help you today?\n\nIf you need personalized help, you can request to speak with a librarian anytime.', false, 'bot');
   }, 300);
 }
 
@@ -410,11 +397,202 @@ userInput.addEventListener('keypress', (e) => {
   }
 });
 
-// Welcome message
+// Welcome message (only once on page load)
 setTimeout(() => {
-  addMessage('Hello! I\'m your library assistant. How can I help you today?', false, 'bot');
-  addMessage('If you need personalized help, you can request to speak with a librarian anytime.', false, 'bot');
+  addMessage('Hello! I\'m your library assistant. How can I help you today?\n\nIf you need personalized help, you can request to speak with a librarian anytime.', false, 'bot');
 }, 500);
 
 // Continuously check for librarian intervention (every 3 seconds)
 setInterval(checkForLibrarianIntervention, 3000);
+
+
+// ============================================
+// FEEDBACK SYSTEM
+// ============================================
+
+let selectedRating = 0;
+let messageFeedback = {}; // Store feedback for individual messages
+
+// Add feedback buttons to bot messages
+function addMessageWithFeedback(content, isUser, sender = null, messageId = null) {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+  
+  if (messageId) {
+    messageDiv.setAttribute('data-message-id', messageId);
+  }
+  
+  // Add sender label for bot messages
+  if (!isUser && sender) {
+    const senderLabel = document.createElement('div');
+    senderLabel.className = 'message-sender';
+    senderLabel.textContent = sender === 'librarian' ? '👤 Librarian' : '🤖 AI Assistant';
+    messageDiv.appendChild(senderLabel);
+  }
+  
+  const contentDiv = document.createElement('div');
+  contentDiv.textContent = content;
+  messageDiv.appendChild(contentDiv);
+  
+  // Add feedback buttons for bot messages (not librarian)
+  if (!isUser && sender === 'bot' && messageId) {
+    const feedbackDiv = document.createElement('div');
+    feedbackDiv.className = 'message-feedback';
+    feedbackDiv.innerHTML = `
+      <button class="feedback-btn thumbs-up" onclick="giveFeedback('${messageId}', 'up')" title="Helpful">
+        👍
+      </button>
+      <button class="feedback-btn thumbs-down" onclick="giveFeedback('${messageId}', 'down')" title="Not helpful">
+        👎
+      </button>
+    `;
+    messageDiv.appendChild(feedbackDiv);
+  }
+  
+  messagesContainer.appendChild(messageDiv);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+// Give feedback on a specific message
+function giveFeedback(messageId, type) {
+  messageFeedback[messageId] = type;
+  
+  // Update UI
+  const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (messageEl) {
+    const buttons = messageEl.querySelectorAll('.feedback-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    const activeBtn = messageEl.querySelector(`.feedback-btn.thumbs-${type}`);
+    if (activeBtn) {
+      activeBtn.classList.add('active');
+    }
+  }
+  
+  // Send feedback to server
+  fetch('/api/feedback/message', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId,
+      messageId,
+      type,
+      timestamp: new Date().toISOString()
+    })
+  }).catch(error => console.error('Error sending feedback:', error));
+}
+
+// Show feedback modal when conversation ends
+function showFeedbackModal() {
+  document.getElementById('feedback-modal').classList.add('active');
+  selectedRating = 0;
+  document.getElementById('feedback-comment').value = '';
+  
+  // Reset stars
+  document.querySelectorAll('.star').forEach(star => {
+    star.classList.remove('active');
+  });
+}
+
+// Close feedback modal
+function closeFeedbackModal() {
+  document.getElementById('feedback-modal').classList.remove('active');
+}
+
+// Handle star rating
+document.addEventListener('DOMContentLoaded', () => {
+  const stars = document.querySelectorAll('.star');
+  
+  stars.forEach(star => {
+    star.addEventListener('click', () => {
+      selectedRating = parseInt(star.getAttribute('data-rating'));
+      
+      // Update star display
+      stars.forEach((s, index) => {
+        if (index < selectedRating) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+    });
+    
+    // Hover effect
+    star.addEventListener('mouseenter', () => {
+      const rating = parseInt(star.getAttribute('data-rating'));
+      stars.forEach((s, index) => {
+        if (index < rating) {
+          s.style.color = '#ffc107';
+        } else {
+          s.style.color = '#ddd';
+        }
+      });
+    });
+  });
+  
+  // Reset on mouse leave
+  document.querySelector('.star-rating').addEventListener('mouseleave', () => {
+    stars.forEach((s, index) => {
+      if (index < selectedRating) {
+        s.style.color = '#ffc107';
+      } else {
+        s.style.color = '#ddd';
+      }
+    });
+  });
+});
+
+// Submit feedback
+async function submitFeedback() {
+  if (selectedRating === 0) {
+    alert('Please select a rating');
+    return;
+  }
+  
+  const comment = document.getElementById('feedback-comment').value.trim();
+  
+  try {
+    const response = await fetch('/api/feedback/conversation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId,
+        rating: selectedRating,
+        comment,
+        messageFeedback,
+        timestamp: new Date().toISOString()
+      })
+    });
+    
+    if (response.ok) {
+      // Show thank you message
+      const modalBody = document.querySelector('.feedback-modal-body');
+      modalBody.innerHTML = `
+        <div class="feedback-thank-you">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <h3>Thank You!</h3>
+          <p>Your feedback helps us improve our service.</p>
+          <button class="feedback-submit-btn" onclick="closeFeedbackModal()">Close</button>
+        </div>
+      `;
+      
+      // Auto-close after 3 seconds
+      setTimeout(() => {
+        closeFeedbackModal();
+      }, 3000);
+    }
+  } catch (error) {
+    console.error('Error submitting feedback:', error);
+    alert('Failed to submit feedback. Please try again.');
+  }
+}
+
+// Close modal on outside click
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('feedback-modal');
+  if (e.target === modal) {
+    closeFeedbackModal();
+  }
+});

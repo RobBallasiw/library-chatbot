@@ -670,6 +670,7 @@
     <button class="tab-btn active" onclick="switchTab('librarians')">👥 Librarians</button>
     <button class="tab-btn" onclick="switchTab('responses')">💬 Canned Responses</button>
     <button class="tab-btn" onclick="switchTab('analytics')">📊 Analytics</button>
+    <button class="tab-btn" onclick="switchTab('feedback')">⭐ Feedback</button>
   </div>
 
   <!-- Librarians Tab -->
@@ -838,6 +839,65 @@
 
   </div><!-- End analytics-tab -->
 
+  <!-- Feedback Tab -->
+  <div id="feedback-tab" class="tab-content">
+    
+    <!-- Summary Stats -->
+    <div class="section">
+      <div class="section-header">
+        <h2>⭐ Feedback Overview</h2>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span id="feedback-last-update" style="font-size: 12px; color: #6b7280;">Last updated: Never</span>
+          <button class="refresh-btn" onclick="loadFeedback()">🔄 Refresh</button>
+        </div>
+      </div>
+      <div style="padding: 20px;">
+        <div id="feedback-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+          <div class="stat-card">
+            <h3>Total Feedback</h3>
+            <div class="number" id="feedback-total">-</div>
+          </div>
+          <div class="stat-card">
+            <h3>Average Rating</h3>
+            <div class="number" id="feedback-avg" style="color: #ffc107;">-</div>
+          </div>
+          <div class="stat-card">
+            <h3>Thumbs Up</h3>
+            <div class="number" id="feedback-thumbs-up" style="color: #10b981;">-</div>
+          </div>
+          <div class="stat-card">
+            <h3>Thumbs Down</h3>
+            <div class="number" id="feedback-thumbs-down" style="color: #ef4444;">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rating Distribution -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Rating Distribution</h2>
+      </div>
+      <div style="padding: 20px;">
+        <div id="rating-distribution">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Feedback -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Recent Conversation Feedback</h2>
+        <span class="badge" id="recent-feedback-count">0</span>
+      </div>
+      <div id="recent-feedback-list">
+        <div class="empty-state">No feedback yet</div>
+      </div>
+    </div>
+
+  </div><!-- End feedback-tab -->
+
   <!-- Edit Template Modal -->
   <div class="modal" id="template-modal">
     <div class="modal-content">
@@ -905,6 +965,20 @@
     async function loadData() {
       try {
         const response = await fetch('/api/admin/librarians');
+        
+        // Handle rate limiting
+        if (response.status === 429) {
+          console.log('Rate limited, skipping this poll');
+          return; // Silently skip, will try again next interval
+        }
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('Non-JSON response received');
+          return;
+        }
+        
         const data = await response.json();
         
         // Check if data actually changed
@@ -924,7 +998,8 @@
         renderPending();
         updateKeywordDisplay();
       } catch (error) {
-        showAlert('Error loading data: ' + error.message, 'error');
+        console.error('Error loading data:', error);
+        // Don't show alert for every polling error, just log it
       }
     }
 
@@ -1125,6 +1200,14 @@
       }
     }, 5000); // 5 seconds - faster updates
     
+    // Auto-refresh feedback every 5 seconds when on feedback tab
+    setInterval(() => {
+      const feedbackTab = document.getElementById('feedback-tab');
+      if (feedbackTab && feedbackTab.classList.contains('active')) {
+        loadFeedback();
+      }
+    }, 5000); // 5 seconds - same as analytics
+    
     // Initial load
     loadData().then(() => {
       updateStatusIndicator(false);
@@ -1188,6 +1271,11 @@
         
         // Load data
         loadAnalytics();
+      }
+      
+      // Load feedback if switching to that tab
+      if (tabName === 'feedback') {
+        loadFeedback();
       }
     }
 
@@ -1564,6 +1652,20 @@
     async function loadAnalytics() {
       try {
         const response = await fetch('/api/analytics');
+        
+        // Handle rate limiting
+        if (response.status === 429) {
+          console.log('Rate limited, skipping analytics poll');
+          return;
+        }
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('Non-JSON response received');
+          return;
+        }
+        
         const newData = await response.json();
         
         // Check if data actually changed
@@ -1576,17 +1678,15 @@
         // Only re-render if data changed
         if (hasChanges || !document.getElementById('stat-conversations').textContent || document.getElementById('stat-conversations').textContent === '-') {
           renderAnalytics();
-        }
-        
-        // Update last refresh time
-        const now = new Date().toLocaleTimeString();
-        const lastUpdateEl = document.getElementById('analytics-last-update');
-        if (lastUpdateEl) {
-          lastUpdateEl.textContent = 'Last updated: ' + now;
-        }
-        
-        // Show visual feedback only if there were changes
-        if (hasChanges) {
+          
+          // Update last refresh time only when data changes
+          const now = new Date().toLocaleTimeString();
+          const lastUpdateEl = document.getElementById('analytics-last-update');
+          if (lastUpdateEl) {
+            lastUpdateEl.textContent = 'Last updated: ' + now;
+          }
+          
+          // Show visual feedback
           const refreshBtn = document.querySelector('#analytics-tab .refresh-btn');
           if (refreshBtn) {
             const originalText = refreshBtn.textContent;
@@ -1732,6 +1832,161 @@
       const hours = Math.floor(minutes / 60);
       const remainingMinutes = minutes % 60;
       return hours + 'h ' + remainingMinutes + 'm';
+    }
+
+    // ============================================
+    // FEEDBACK MANAGEMENT
+    // ============================================
+
+    let feedbackData = null;
+    let lastFeedbackHash = '';
+
+    // Hash function for feedback data
+    function hashFeedback(data) {
+      return JSON.stringify({
+        total: data.summary.totalFeedback,
+        avg: data.summary.averageRating,
+        up: data.summary.messageFeedbackStats.thumbsUp,
+        down: data.summary.messageFeedbackStats.thumbsDown,
+        recent: data.recentFeedback.length
+      });
+    }
+
+    // Load feedback data
+    async function loadFeedback() {
+      try {
+        const response = await fetch('/api/feedback');
+        
+        // Handle rate limiting
+        if (response.status === 429) {
+          console.log('Rate limited, skipping feedback poll');
+          return;
+        }
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('Non-JSON response received');
+          return;
+        }
+        
+        const newData = await response.json();
+        
+        // Check if data actually changed
+        const newHash = hashFeedback(newData);
+        const hasChanges = newHash !== lastFeedbackHash;
+        
+        feedbackData = newData;
+        lastFeedbackHash = newHash;
+        
+        // Only re-render if data changed or first load
+        if (hasChanges || !document.getElementById('feedback-total').textContent || document.getElementById('feedback-total').textContent === '-') {
+          renderFeedback();
+          
+          // Update last refresh time only when data changes
+          const now = new Date().toLocaleTimeString();
+          const lastUpdateEl = document.getElementById('feedback-last-update');
+          if (lastUpdateEl) {
+            lastUpdateEl.textContent = 'Last updated: ' + now;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading feedback:', error);
+      }
+    }
+
+    // Render feedback
+    function renderFeedback() {
+      if (!feedbackData) return;
+
+      // Summary stats
+      document.getElementById('feedback-total').textContent = feedbackData.summary.totalFeedback;
+      document.getElementById('feedback-avg').textContent = feedbackData.summary.averageRating + ' ⭐';
+      document.getElementById('feedback-thumbs-up').textContent = feedbackData.summary.messageFeedbackStats.thumbsUp;
+      document.getElementById('feedback-thumbs-down').textContent = feedbackData.summary.messageFeedbackStats.thumbsDown;
+
+      // Rating distribution
+      renderRatingDistribution(feedbackData.ratingDistribution);
+
+      // Recent feedback
+      renderRecentFeedback(feedbackData.recentFeedback);
+    }
+
+    // Render rating distribution bars
+    function renderRatingDistribution(distribution) {
+      const container = document.getElementById('rating-distribution');
+      const total = Object.values(distribution).reduce((sum, count) => sum + count, 0);
+      
+      if (total === 0) {
+        container.innerHTML = '<div class="empty-state">No ratings yet</div>';
+        return;
+      }
+
+      container.innerHTML = Object.entries(distribution)
+        .reverse() // Show 5 stars first
+        .map(([rating, count]) => {
+          const percentage = total > 0 ? (count / total * 100).toFixed(1) : 0;
+          const stars = '⭐'.repeat(parseInt(rating));
+          
+          return `
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <div style="width: 80px; font-size: 14px; color: #666;">${stars}</div>
+              <div style="flex: 1; background: #f0f0f0; height: 24px; border-radius: 12px; overflow: hidden;">
+                <div style="width: ${percentage}%; height: 100%; background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%); transition: width 0.3s;"></div>
+              </div>
+              <div style="width: 60px; text-align: right; font-size: 14px; color: #666;">
+                ${count} (${percentage}%)
+              </div>
+            </div>
+          `;
+        }).join('');
+    }
+
+    // Render recent feedback
+    function renderRecentFeedback(feedback) {
+      const listEl = document.getElementById('recent-feedback-list');
+      const countEl = document.getElementById('recent-feedback-count');
+      
+      countEl.textContent = feedback.length;
+      
+      if (feedback.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">No feedback yet</div>';
+        return;
+      }
+
+      listEl.innerHTML = feedback.map(item => {
+        const stars = '⭐'.repeat(item.rating);
+        const date = new Date(item.timestamp).toLocaleString();
+        const hasComment = item.comment && item.comment.trim().length > 0;
+        
+        return `
+          <div class="list-item">
+            <div class="item-info">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                <div style="font-size: 20px;">${stars}</div>
+                <div class="psid" style="font-size: 12px;">${item.sessionId.substring(0, 30)}...</div>
+              </div>
+              ${hasComment ? `
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-top: 8px;">
+                  <div style="font-size: 12px; color: #666; margin-bottom: 4px;">💬 Comment:</div>
+                  <div style="font-size: 14px; color: #333;">${escapeHtml(item.comment)}</div>
+                </div>
+              ` : ''}
+              <div class="item-meta" style="margin-top: 8px;">
+                ${date} • 
+                ${Object.keys(item.messageFeedback || {}).length} message feedback
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Escape HTML helper
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
   </script>
 </body>

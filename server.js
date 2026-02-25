@@ -22,22 +22,49 @@ const apiLimiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for localhost ONLY in development
+    if (process.env.NODE_ENV === 'production') {
+      return false; // Never skip in production
+    }
+    const ip = req.ip || req.connection.remoteAddress;
+    return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+  }
 });
 
 const chatLimiter = rateLimit({
-  windowMs: 30 * 1000, // 30 seconds (reduced from 1 minute)
+  windowMs: 30 * 1000, // 30 seconds
   max: 15, // Limit each IP to 15 chat messages per 30 seconds
   message: 'Too many messages, please slow down.',
   standardHeaders: true,
   legacyHeaders: false,
 });
 
+const librarianLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 500, // Very generous limit for librarians (increased from 100)
+  message: 'Too many requests. Please wait a moment.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for localhost ONLY in development
+    if (process.env.NODE_ENV === 'production') {
+      return false; // Never skip in production
+    }
+    const ip = req.ip || req.connection.remoteAddress;
+    return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+  }
+});
+
 app.use(express.json());
 app.use(express.static('public'));
 
 // Apply rate limiting to API routes
-app.use('/api/', apiLimiter);
-app.use('/api/chat', chatLimiter);
+// Order matters: more specific routes first, then general
+app.use('/api/chat', chatLimiter); // Strict limit for chat
+app.use('/api/librarian/*', librarianLimiter); // Generous limit for librarians
+app.use('/api/admin/*', librarianLimiter); // Generous limit for admin
+app.use('/api/*', apiLimiter); // Default limit for other endpoints
 
 // Configuration Constants
 const POLLING_INTERVALS = {
@@ -57,7 +84,7 @@ const LIMITS = {
   MAX_CONVERSATIONS: 1000,
   MAX_NOTIFICATIONS: 50,
   MAX_MESSAGE_LENGTH: 5000,
-  CONVERSATION_HISTORY: 10
+  CONVERSATION_HISTORY: 20  // Increased from 10 for better context
 };
 
 const TIMEOUTS = {
@@ -151,11 +178,24 @@ function cleanupOldConversations() {
   const now = Date.now();
   let cleaned = 0;
   
-  // Check if we're over the limit
+  // HARD LIMIT ENFORCEMENT: If over limit, force immediate cleanup
   if (conversations.size > LIMITS.MAX_CONVERSATIONS) {
-    console.log(`⚠️ Conversation limit exceeded (${conversations.size}/${LIMITS.MAX_CONVERSATIONS}), forcing cleanup`);
+    console.log(`⚠️ Conversation limit exceeded (${conversations.size}/${LIMITS.MAX_CONVERSATIONS}), forcing aggressive cleanup`);
+    
+    // Sort conversations by age and delete oldest until under limit
+    const sortedConvs = Array.from(conversations.entries())
+      .sort((a, b) => new Date(a[1].startTime) - new Date(b[1].startTime));
+    
+    const toDelete = conversations.size - LIMITS.MAX_CONVERSATIONS + 100; // Delete extra 100 for buffer
+    for (let i = 0; i < toDelete && i < sortedConvs.length; i++) {
+      conversations.delete(sortedConvs[i][0]);
+      cleaned++;
+    }
+    
+    console.log(`🗑️ Emergency cleanup: deleted ${cleaned} oldest conversations`);
   }
   
+  // Regular cleanup
   for (const [sessionId, conv] of conversations.entries()) {
     const age = now - new Date(conv.startTime).getTime();
     
@@ -497,16 +537,35 @@ app.post('/api/chat', async (req, res) => {
     conversation.messages.push({ role: 'user', content: message, timestamp: new Date() });
     trackMessage();
 
-    // If conversation is with human librarian (waiting or already responded), don't send bot response
-    if (conversation.status === 'human' || conversation.status === 'responded') {
+    // Cancel countdown if it exists (do this FIRST, before status checks)
+    if (conversation.countdown) {
+      delete conversation.countdown;
+      console.log('⏹️ Countdown cancelled - user sent a message');
+    }
+
+    // If conversation is with human librarian or closed, don't send bot response
+    if (conversation.status === 'human' || conversation.status === 'responded' || conversation.status === 'closed') {
+      // If closed, reopen the conversation since user is still chatting
+      if (conversation.status === 'closed') {
+        console.log('🔄 Reopening closed conversation - user sent message');
+        conversation.status = 'human';
+        
+        // Notify librarian
+        await sendToMessenger(
+          `User sent a new message in previously closed session ${sessionId}:\n\n${message}`,
+          { sessionId, ...conversation }
+        );
+        
+        res.json({
+          response: null,
+          success: true,
+          status: 'human'
+        });
+        return;
+      }
+      
       // Change status back to 'human' (waiting) since user sent a new message
       conversation.status = 'human';
-      
-      // Cancel countdown if it exists
-      if (conversation.countdown) {
-        delete conversation.countdown;
-        console.log('⏹️ Countdown cancelled - user sent a message');
-      }
       
       // Notify librarian of new message
       await sendToMessenger(
@@ -653,7 +712,7 @@ app.post('/api/request-librarian', async (req, res) => {
 
     res.json({ 
       success: true,
-      message: 'A librarian has been notified and will assist you shortly.'
+      message: 'A librarian has been notified and will assist you shortly. Please describe your question and they will respond as soon as possible.'
     });
   } catch (error) {
     console.error('Error:', error);
@@ -1215,6 +1274,85 @@ app.get('/api/analytics', (req, res) => {
       responseTime: rt.responseTime,
       timestamp: rt.timestamp
     }))
+  });
+});
+
+// Feedback storage
+const feedback = {
+  messages: [], // Individual message feedback
+  conversations: [] // Overall conversation feedback
+};
+
+// API endpoint for message feedback
+app.post('/api/feedback/message', (req, res) => {
+  const { sessionId, messageId, type, timestamp } = req.body;
+  
+  if (!sessionId || !messageId || !type) {
+    return res.status(400).json({ success: false, error: 'Missing required fields' });
+  }
+  
+  feedback.messages.push({
+    sessionId,
+    messageId,
+    type, // 'up' or 'down'
+    timestamp: timestamp || new Date().toISOString()
+  });
+  
+  logger.log('📊 Message feedback received:', { sessionId, messageId, type });
+  
+  res.json({ success: true });
+});
+
+// API endpoint for conversation feedback
+app.post('/api/feedback/conversation', (req, res) => {
+  const { sessionId, rating, comment, messageFeedback, timestamp } = req.body;
+  
+  if (!sessionId || !rating) {
+    return res.status(400).json({ success: false, error: 'Missing required fields' });
+  }
+  
+  feedback.conversations.push({
+    sessionId,
+    rating, // 1-5 stars
+    comment: comment || '',
+    messageFeedback: messageFeedback || {},
+    timestamp: timestamp || new Date().toISOString()
+  });
+  
+  logger.log('⭐ Conversation feedback received:', { sessionId, rating, hasComment: !!comment });
+  
+  res.json({ success: true });
+});
+
+// API endpoint to get feedback data (for admin dashboard)
+app.get('/api/feedback', (req, res) => {
+  const totalFeedback = feedback.conversations.length;
+  const averageRating = totalFeedback > 0
+    ? (feedback.conversations.reduce((sum, f) => sum + f.rating, 0) / totalFeedback).toFixed(1)
+    : 0;
+  
+  const ratingDistribution = {
+    1: feedback.conversations.filter(f => f.rating === 1).length,
+    2: feedback.conversations.filter(f => f.rating === 2).length,
+    3: feedback.conversations.filter(f => f.rating === 3).length,
+    4: feedback.conversations.filter(f => f.rating === 4).length,
+    5: feedback.conversations.filter(f => f.rating === 5).length
+  };
+  
+  const messageFeedbackStats = {
+    thumbsUp: feedback.messages.filter(f => f.type === 'up').length,
+    thumbsDown: feedback.messages.filter(f => f.type === 'down').length
+  };
+  
+  res.json({
+    summary: {
+      totalFeedback,
+      averageRating,
+      messageFeedbackStats
+    },
+    ratingDistribution,
+    recentFeedback: feedback.conversations.slice(-20).reverse(), // Last 20, newest first
+    recentMessageFeedback: feedback.messages.slice(-50).reverse() // Last 50, newest first
   });
 });
 
