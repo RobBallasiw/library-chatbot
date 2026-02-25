@@ -177,6 +177,11 @@ async function fetchUserProfile(psid, forceRefresh = false) {
 
 const LIBRARY_CONTEXT = `You are a helpful library assistant chatbot. Your ONLY purpose is to help with library-related topics.
 
+LANGUAGE RULE:
+- You MUST respond ONLY in ENGLISH
+- Even if the user writes in another language (Tagalog, Spanish, etc.), respond in ENGLISH
+- Politely inform non-English speakers that you only communicate in English
+
 YOU CAN HELP WITH:
 - Finding books, journals, and digital resources IN THE LIBRARY
 - Library hours, locations, and policies
@@ -186,7 +191,7 @@ YOU CAN HELP WITH:
 - Library events, programs, and workshops
 - Membership and library card information
 
-YOU MUST POLITELY DECLINE AND NOT HELP WITH:
+YOU MUST NEVER HELP WITH:
 - Questions unrelated to library services (cars, concrete, shopping, etc.)
 - General knowledge questions not related to using library resources
 - Personal advice, medical, legal, or financial topics
@@ -194,11 +199,14 @@ YOU MUST POLITELY DECLINE AND NOT HELP WITH:
 - Homework or assignment completion
 - Finding or recommending things that are NOT library resources
 
-CRITICAL: When asked about non-library topics (like cars, concrete, products, services outside the library):
+CRITICAL: When asked about non-library topics:
+- DO NOT provide prices, lists, or recommendations
 - DO NOT try to help them find these things
-- DO NOT suggest online searches or external resources
-- DO NOT offer to research it for them
+- DO NOT suggest where to buy or find these items
 - SIMPLY decline politely and redirect to library services
+
+If user writes in a non-English language, respond:
+"I apologize, but I can only communicate in English. Please ask your question in English, or you can request to speak with a librarian for assistance in other languages."
 
 Example responses for off-topic questions:
 - "I'm specifically designed to help with library services only. I can't assist with [topic], but I'd be happy to help you find books, research materials, or other library resources. What can I help you with today?"
@@ -206,7 +214,7 @@ Example responses for off-topic questions:
 
 If you cannot fully help with a LIBRARY question or the user seems frustrated, suggest: "Would you like to speak with a librarian? They can provide more personalized assistance."
 
-Keep responses concise, friendly, and focused ONLY on library services.`;
+Keep responses concise, friendly, and focused ONLY on library services. ALWAYS RESPOND IN ENGLISH ONLY.`;
 
 
 // Store librarian notifications in memory (in production, use a database)
@@ -337,14 +345,52 @@ app.post('/api/chat', async (req, res) => {
       }
     });
 
+    const botResponse = response.message.content;
+    
+    // Validation: Check if bot response contains forbidden content or non-English
+    const forbiddenPatterns = [
+      /\bP\s*\d+\.?\d*\s*(kila|per|each|unit)/i, // Prices with units
+      /\b(price|presyo|halaga)\s*[:=]\s*P?\s*\d+/i, // Price listings
+      /\b(concrete|semento)\s+(block|slab|mix)/i, // Construction materials
+      /\b(supplier|tindahan|store)\s+(ng|of|for)\s+(bato|concrete)/i, // Suppliers
+      /\bDPWH\b/i, // Department of Public Works
+      /\b(bili|buy|purchase)\s+(ng\s+)?(bato|concrete|semento)/i // Buying materials
+    ];
+    
+    // Check if response is in non-English (contains Tagalog words)
+    const tagalogWords = /\b(ako|ang|ng|sa|mga|ka|mo|ko|ba|po|opo|mayroon|kaming|puwede|pwede|oo|hindi|natin|atin|tungkol|masaya|akong|iyo|ngayon)\b/i;
+    const isNonEnglish = tagalogWords.test(botResponse);
+    
+    const containsForbiddenContent = forbiddenPatterns.some(pattern => pattern.test(botResponse));
+    
+    if (containsForbiddenContent || isNonEnglish) {
+      console.warn('⚠️ Bot response contained forbidden content or non-English, replacing with safe response');
+      console.warn('Original response:', botResponse.substring(0, 200));
+      
+      const safeResponse = "I apologize, but I can only communicate in English and help with library services only. Please ask your question in English about library-related topics (books, hours, services, etc.), or you can request to speak with a librarian for personalized assistance.";
+      
+      conversation.messages.push({ 
+        role: 'assistant', 
+        content: safeResponse, 
+        timestamp: new Date() 
+      });
+
+      res.json({ 
+        response: safeResponse,
+        success: true,
+        status: 'bot'
+      });
+      return;
+    }
+
     conversation.messages.push({ 
       role: 'assistant', 
-      content: response.message.content, 
+      content: botResponse, 
       timestamp: new Date() 
     });
 
     res.json({ 
-      response: response.message.content,
+      response: botResponse,
       success: true,
       status: 'bot'
     });
