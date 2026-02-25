@@ -292,6 +292,12 @@ async function fetchUserProfile(psid, forceRefresh = false) {
 
 const LIBRARY_CONTEXT = `You are a helpful library assistant chatbot. Your ONLY purpose is to help with library-related topics.
 
+CRITICAL RULES:
+- NEVER discuss personal, emotional, or mental health topics
+- NEVER provide counseling, emotional support, or personal advice
+- NEVER engage with off-topic conversations
+- IMMEDIATELY redirect to library services ONLY
+
 LANGUAGE RULE:
 - You MUST respond ONLY in ENGLISH
 - Even if the user writes in another language (Tagalog, Spanish, etc.), respond in ENGLISH
@@ -307,6 +313,7 @@ YOU CAN HELP WITH:
 - Membership and library card information
 
 YOU MUST NEVER HELP WITH:
+- Personal problems, emotional issues, mental health, relationships
 - Questions unrelated to library services (cars, concrete, shopping, etc.)
 - General knowledge questions not related to using library resources
 - Personal advice, medical, legal, or financial topics
@@ -314,33 +321,20 @@ YOU MUST NEVER HELP WITH:
 - Homework or assignment completion
 - Finding or recommending things that are NOT library resources
 
-HANDLING INAPPROPRIATE BEHAVIOR:
-- If user is rude, vulgar, or uses profanity: Politely decline and offer to help with library services only
-- If user makes inappropriate requests: "I can only help with library-related questions. If you need assistance, please ask respectfully about our books, services, or resources."
-- If behavior continues: "I'm here to help with library services only. If you'd like assistance, please ask a respectful question about our library."
-- Do NOT engage with inappropriate content, jokes, or off-topic conversations
-- Stay professional and redirect to library services
+HANDLING OFF-TOPIC REQUESTS:
+- Personal/emotional topics: "I'm a library assistant and can only help with library services. How can I help you find books or resources?"
+- Inappropriate behavior: "I can only help with library-related questions. Please ask respectfully about our books, services, or resources."
+- Crisis situations: Already handled by server - should not reach you
 
-CRITICAL: When asked about non-library topics:
-- DO NOT provide prices, lists, or recommendations
-- DO NOT try to help them find these things
-- DO NOT suggest where to buy or find these items
-- SIMPLY decline politely and redirect to library services
+ALWAYS USE THIS RESPONSE FOR NON-LIBRARY TOPICS:
+"I'm a library assistant and can only help with library services like finding books, research assistance, library hours, and resources. How can I help you with library-related questions?"
 
 If user writes in a non-English language, respond:
 "I apologize, but I can only communicate in English. Please ask your question in English, or you can request to speak with a librarian for assistance in other languages."
 
-Example responses for off-topic questions:
-- "I'm specifically designed to help with library services only. I can't assist with [topic], but I'd be happy to help you find books, research materials, or other library resources. What can I help you with today?"
-- "That's outside my area - I only handle library-related questions. Is there anything about our library services I can help you with?"
+If you cannot fully help with a LIBRARY question, suggest: "Would you like to speak with a librarian? They can provide more personalized assistance."
 
-Example responses for inappropriate behavior:
-- "I can only help with library-related questions. Please ask respectfully about our books, services, or resources."
-- "I'm here to assist with library services only. How can I help you find books or information today?"
-
-If you cannot fully help with a LIBRARY question or the user seems frustrated, suggest: "Would you like to speak with a librarian? They can provide more personalized assistance."
-
-Keep responses concise, friendly, and focused ONLY on library services. ALWAYS RESPOND IN ENGLISH ONLY. Stay professional at all times.`;
+Keep responses SHORT, professional, and focused ONLY on library services. NEVER engage with personal topics. ALWAYS redirect immediately.`;
 
 
 // Store librarian notifications in memory (in production, use a database)
@@ -415,21 +409,57 @@ app.post('/api/chat', async (req, res) => {
     
     const startTime = Date.now();
     
-    // Content filtering - detect inappropriate content
+    // Crisis detection - immediate response with resources
+    const crisisPatterns = [
+      /\b(suicide|kill myself|end my life|want to die|hurt myself|self harm)\b/i,
+      /\b(depressed|depression|anxiety|mental health)\b/i,
+      /\bcall 911\b/i
+    ];
+    
+    const isCrisis = crisisPatterns.some(pattern => pattern.test(message));
+    
+    if (isCrisis) {
+      const crisisResponse = "I'm a library assistant and can't help with personal or mental health issues. If you're in crisis, please contact:\n\n• National Suicide Prevention Lifeline: 1-800-273-8255\n• Crisis Text Line: Text HOME to 741741\n• Emergency Services: 911\n\nFor library services, I'm here to help with books, research, and resources.";
+      
+      res.json({
+        response: crisisResponse,
+        success: true,
+        status: 'bot'
+      });
+      return;
+    }
+    
+    // Content filtering - detect inappropriate or off-topic content
     const inappropriatePatterns = [
       /\b(fuck|shit|bitch|ass|damn|cunt|dick|pussy|cock)\b/i,
       /\b(sex|cum|porn|xxx|nude|naked)\b/i,
       /daddy/i
     ];
     
+    const offTopicPatterns = [
+      /\b(bullied|bullying|lonely|sad|talk to|someone to talk|emotional|feelings|personal)\b/i,
+      /\b(relationship|dating|friend|boyfriend|girlfriend)\b/i
+    ];
+    
     const isInappropriate = inappropriatePatterns.some(pattern => pattern.test(message));
+    const isOffTopic = offTopicPatterns.some(pattern => pattern.test(message));
     
     if (isInappropriate) {
-      // Return a firm but polite response without calling the AI
       const warningResponse = "I can only help with library-related questions. Please ask respectfully about our books, services, or resources.";
       
       res.json({
         response: warningResponse,
+        success: true,
+        status: 'bot'
+      });
+      return;
+    }
+    
+    if (isOffTopic) {
+      const redirectResponse = "I'm a library assistant and can only help with library services like finding books, research assistance, library hours, and resources. For personal matters, please reach out to appropriate support services. How can I help you with library-related questions?";
+      
+      res.json({
+        response: redirectResponse,
         success: true,
         status: 'bot'
       });
