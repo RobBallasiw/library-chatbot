@@ -233,8 +233,11 @@ async function requestLibrarian() {
       updateStatusIndicator();
       addMessage(data.message, false, 'bot');
       
-      // Initialize message count - start at 0 since conversation was just created
-      lastMessageCount = 0;
+      // Set message count to current history length (conversation was created with history)
+      // Add 1 for the "librarian notified" message we just added
+      lastMessageCount = conversationHistory.length + 1;
+      
+      console.log('📊 Librarian requested, lastMessageCount set to:', lastMessageCount);
     } else {
       addMessage('Sorry, could not connect to a librarian. Please try again.', false, 'bot');
       requestLibrarianBtn.disabled = false;

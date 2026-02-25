@@ -543,6 +543,12 @@ app.post('/api/chat', async (req, res) => {
     const conversation = conversations.get(sessionId);
     conversation.messages.push({ role: 'user', content: message, timestamp: new Date() });
     trackMessage();
+    
+    console.log(`💬 Message saved to conversation ${sessionId}:`, {
+      totalMessages: conversation.messages.length,
+      status: conversation.status,
+      latestMessage: message.substring(0, 50)
+    });
 
     // Cancel countdown if it exists (do this FIRST, before status checks)
     if (conversation.countdown) {
@@ -1314,6 +1320,11 @@ app.post('/api/feedback/message', (req, res) => {
     timestamp: timestamp || new Date().toISOString()
   });
   
+  // Keep only last 1000 message feedbacks to prevent memory leak
+  if (feedback.messages.length > 1000) {
+    feedback.messages.shift();
+  }
+  
   logger.log('📊 Message feedback received:', { sessionId, messageId, type });
   
   res.json({ success: true });
@@ -1334,6 +1345,11 @@ app.post('/api/feedback/conversation', (req, res) => {
     messageFeedback: messageFeedback || {},
     timestamp: timestamp || new Date().toISOString()
   });
+  
+  // Keep only last 500 conversation feedbacks to prevent memory leak
+  if (feedback.conversations.length > 500) {
+    feedback.conversations.shift();
+  }
   
   logger.log('⭐ Conversation feedback received:', { sessionId, rating, hasComment: !!comment });
   
