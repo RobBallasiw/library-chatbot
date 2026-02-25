@@ -61,6 +61,36 @@ function saveLibrarianData(data) {
 // Initialize librarian data
 let librarianData = loadLibrarianData();
 
+// Cleanup old conversations to prevent memory leaks
+function cleanupOldConversations() {
+  const ONE_HOUR = 60 * 60 * 1000;
+  const now = Date.now();
+  let cleaned = 0;
+  
+  for (const [sessionId, conv] of conversations.entries()) {
+    const age = now - new Date(conv.startTime).getTime();
+    
+    // Delete closed conversations older than 1 hour
+    if (conv.status === 'closed' && age > ONE_HOUR) {
+      conversations.delete(sessionId);
+      cleaned++;
+    }
+    
+    // Delete inactive bot conversations older than 24 hours
+    if (conv.status === 'bot' && age > 24 * ONE_HOUR) {
+      conversations.delete(sessionId);
+      cleaned++;
+    }
+  }
+  
+  if (cleaned > 0) {
+    console.log(`🗑️ Cleaned up ${cleaned} old conversations`);
+  }
+}
+
+// Run cleanup every hour
+setInterval(cleanupOldConversations, 60 * 60 * 1000);
+
 // Store active conversations and their status
 const conversations = new Map();
 // sessionId -> { status: 'bot'|'human', messages: [], userId: null, startTime: Date }
@@ -705,11 +735,12 @@ app.get('/api/librarian/notifications', (req, res) => {
 // API endpoint to get a single conversation
 app.get('/api/conversation/:sessionId', (req, res) => {
   const { sessionId } = req.params;
+  const { skipView } = req.query; // Add query parameter to skip auto-view
   const conversation = conversations.get(sessionId);
   
   if (conversation) {
-    // Mark as viewed if it's a bot conversation
-    if (conversation.status === 'bot') {
+    // Mark as viewed if it's a bot conversation (only if skipView is not set)
+    if (conversation.status === 'bot' && !skipView) {
       conversation.status = 'viewed';
       console.log(`👁️ Conversation ${sessionId} marked as viewed`);
     }
@@ -726,12 +757,41 @@ app.get('/api/conversation/:sessionId', (req, res) => {
 // API endpoint for librarian to respond
 app.post('/api/librarian/respond', (req, res) => {
   const { sessionId, message } = req.body;
+  
+  // Input validation
+  if (!sessionId || typeof sessionId !== 'string') {
+    return res.status(400).json({ success: false, error: 'Invalid sessionId' });
+  }
+  
+  if (!message || typeof message !== 'string' || message.trim().length === 0) {
+    return res.status(400).json({ success: false, error: 'Invalid message' });
+  }
+  
+  if (message.length > 5000) {
+    return res.status(400).json({ success: false, error: 'Message too long (max 5000 characters)' });
+  }
+  
   const conversation = conversations.get(sessionId);
   
   console.log('📤 Librarian responding to session:', sessionId);
-  console.log('💬 Message:', message);
+  console.log('💬 Message:', message.substring(0, 100) + (message.length > 100 ? '...' : ''));
+  console.log('📊 Current status:', conversation?.status);
   
   if (conversation) {
+    // If this is the first librarian response to a bot/viewed conversation, add takeover notification
+    const wasBot = conversation.status === 'bot' || conversation.status === 'viewed';
+    
+    if (wasBot) {
+      // Add system message to notify user
+      conversation.messages.push({
+        role: 'assistant',
+        content: '👤 A librarian is now assisting you. You can ask any questions and they will respond personally.',
+        timestamp: new Date()
+      });
+      console.log('📢 Added librarian takeover notification');
+    }
+    
+    // Add librarian's message
     conversation.messages.push({
       role: 'librarian',
       content: message,

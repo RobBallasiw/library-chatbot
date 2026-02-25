@@ -113,6 +113,11 @@ async function sendMessage() {
         conversationStatus = data.status;
         updateStatusIndicator();
       }
+      
+      // Check for new messages immediately after sending (in case librarian intervened)
+      if (conversationStatus === 'bot' || conversationStatus === 'viewed') {
+        setTimeout(checkForLibrarianIntervention, 1000);
+      }
     } else {
       addMessage('Sorry, I encountered an error. Please try again.', false, 'bot');
     }
@@ -127,6 +132,64 @@ async function sendMessage() {
   // Only focus input if not in librarian mode
   if (conversationStatus === 'bot') {
     userInput.focus();
+  }
+}
+
+async function checkForLibrarianIntervention() {
+  try {
+    const response = await fetch(`/api/conversation/${sessionId}?skipView=true`);
+    
+    if (!response.ok) {
+      return;
+    }
+    
+    const data = await response.json();
+    
+    // Check if status changed to 'responded' (librarian intervened)
+    if (data.status === 'responded' && conversationStatus !== 'responded') {
+      console.log('🔔 Librarian has intervened!');
+      conversationStatus = 'responded';
+      
+      // Update status indicator
+      statusIndicator.innerHTML = '<span class="status-dot human"></span>Connected to Librarian';
+      requestLibrarianBtn.style.display = 'none';
+      
+      // Get new messages from the conversation
+      if (data.messages && data.messages.length > lastMessageCount) {
+        const newMessages = data.messages.slice(lastMessageCount);
+        
+        console.log('New messages from librarian intervention:', newMessages);
+        
+        // Separate system messages and librarian messages
+        const systemMessages = newMessages.filter(msg => msg.role === 'assistant');
+        const librarianMessages = newMessages.filter(msg => msg.role === 'librarian');
+        
+        // Show system messages first (takeover notification)
+        systemMessages.forEach(msg => {
+          addMessage(msg.content, false, 'bot');
+          conversationHistory.push({ role: 'assistant', content: msg.content });
+        });
+        
+        // Show librarian messages after a brief delay (1.5 seconds)
+        setTimeout(() => {
+          librarianMessages.forEach(msg => {
+            addMessage(msg.content, false, 'librarian');
+            conversationHistory.push({ role: 'assistant', content: msg.content });
+          });
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }, 1500);
+        
+        lastMessageCount = data.messages.length;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+      
+      // Start polling for librarian messages
+      if (!pollingInterval) {
+        pollingInterval = setInterval(checkForNewMessages, 3000);
+      }
+    }
+  } catch (error) {
+    console.error('Error checking for librarian intervention:', error);
   }
 }
 
@@ -219,8 +282,20 @@ async function checkForNewMessages() {
           console.log('Adding librarian message:', msg.content);
           addMessage(msg.content, false, 'librarian');
           conversationHistory.push({ role: 'assistant', content: msg.content });
+          
+          // Update status to show connected to librarian
+          if (conversationStatus !== 'responded') {
+            conversationStatus = 'responded';
+            statusIndicator.innerHTML = '<span class="status-dot human"></span>Connected to Librarian';
+            requestLibrarianBtn.style.display = 'none';
+            
+            // Start polling if not already polling
+            if (!pollingInterval) {
+              pollingInterval = setInterval(checkForNewMessages, 3000);
+            }
+          }
         } else if (msg.role === 'assistant') {
-          // System message (like session ended)
+          // System message (like session ended or librarian takeover)
           console.log('Adding system message:', msg.content);
           addMessage(msg.content, false, 'bot');
           conversationHistory.push({ role: 'assistant', content: msg.content });
@@ -308,6 +383,9 @@ userInput.addEventListener('keypress', (e) => {
 
 // Welcome message
 setTimeout(() => {
-  addMessage('Hello! I\'m your library assistant. How can I help you today?', false);
-  addMessage('If you need personalized help, you can request to speak with a librarian anytime.', false);
+  addMessage('Hello! I\'m your library assistant. How can I help you today?', false, 'bot');
+  addMessage('If you need personalized help, you can request to speak with a librarian anytime.', false, 'bot');
 }, 500);
+
+// Continuously check for librarian intervention (every 3 seconds)
+setInterval(checkForLibrarianIntervention, 3000);

@@ -755,6 +755,14 @@
       document.getElementById('pending-count').textContent = totalPending;
       document.getElementById('message-count').textContent = totalMessages;
       
+      // Remove 'human' status conversations from viewedConversations (they need attention again)
+      data.activeConversations.forEach(c => {
+        if (c.status === 'human' && viewedConversations.has(c.sessionId)) {
+          viewedConversations.delete(c.sessionId);
+          saveViewedConversations();
+        }
+      });
+      
       // Show notification for librarian requests (always show, regardless of viewed status)
       if (unreadLibrarian > 0) {
         // Play sound if count increased
@@ -857,6 +865,14 @@
     let cachedConversations = [];
 
     function updateNotificationCountsImmediate() {
+      // Remove 'human' status conversations from viewedConversations (they need attention again)
+      cachedConversations.forEach(c => {
+        if (c.status === 'human' && viewedConversations.has(c.sessionId)) {
+          viewedConversations.delete(c.sessionId);
+          saveViewedConversations();
+        }
+      });
+      
       // Use cached data to update counts immediately
       const unreadLibrarian = cachedConversations.filter(c => 
         c.status === 'human'
@@ -877,6 +893,11 @@
         showNotification(unreadBot, 'bot');
       } else {
         dismissNotification('bot');
+      }
+      
+      // Re-render conversations to update yellow highlighting
+      if (cachedConversations && cachedConversations.length > 0) {
+        renderConversations(cachedConversations);
       }
     }
 
