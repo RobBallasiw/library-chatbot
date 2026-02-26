@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Librarian Dashboard - Mobile</title>
+  <link rel="stylesheet" href="librarian-mobile.css">
+</head>
+<body>
+  
+  <!-- Header -->
+  <header class="mobile-header">
+    <div class="header-content">
+      <h1>📚 Dashboard</h1>
+      <button class="refresh-btn" onclick="loadNotifications()" id="refresh-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+        </svg>
+      </button>
+    </div>
+    <div class="header-meta">
+      <span class="status-badge">
+        <span class="status-dot"></span>
+        Auto-refresh: 2s
+      </span>
+    </div>
+  </header>
+
+  <!-- Stats Cards -->
+  <div class="stats-container">
+    <div class="stat-card">
+      <div class="stat-icon">💬</div>
+      <div class="stat-info">
+        <div class="stat-value" id="active-count">0</div>
+        <div class="stat-label">Active</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-info">
+        <div class="stat-value" id="pending-count">0</div>
+        <div class="stat-label">Pending</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📨</div>
+      <div class="stat-info">
+        <div class="stat-value" id="message-count">0</div>
+        <div class="stat-label">Messages</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <select id="status-filter" onchange="filterConversations()">
+      <option value="all">All Status</option>
+      <option value="human">⏳ Waiting</option>
+      <option value="responded">✅ Responded</option>
+      <option value="bot">🤖 Bot</option>
+      <option value="viewed">👁️ Viewed</option>
+      <option value="closed">🔒 Closed</option>
+    </select>
+    <select id="sort-by" onchange="filterConversations()">
+      <option value="newest">Newest First</option>
+      <option value="oldest">Oldest First</option>
+    </select>
+  </div>
+
+  <!-- Conversations List -->
+  <div class="conversations-container" id="conversation-list">
+    <div class="empty-state">
+      <div class="empty-icon">💬</div>
+      <p>No conversations yet</p>
+    </div>
+  </div>
+
+  <!-- Conversation Modal -->
+  <div class="modal" id="conversation-modal">
+    <div class="modal-header">
+      <button class="back-btn" onclick="closeModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div class="modal-title">
+        <h3 id="modal-session-id">Conversation</h3>
+        <span class="modal-status" id="modal-status"></span>
+      </div>
+      <button class="menu-btn" onclick="toggleActionMenu()">⋮</button>
+    </div>
+
+    <!-- Action Menu -->
+    <div class="action-menu" id="action-menu">
+      <button class="action-menu-item warn" onclick="sendWarning(); toggleActionMenu();">
+        ⚠️ Warn (10s countdown)
+      </button>
+      <button class="action-menu-item danger" onclick="endSession(); toggleActionMenu();">
+        🔒 End Session
+      </button>
+    </div>
+
+    <div class="modal-messages" id="modal-messages">
+      <!-- Messages will be loaded here -->
+    </div>
+
+    <!-- Quick Replies -->
+    <div class="quick-replies" id="quick-replies">
+      <div class="quick-replies-header">
+        <span>💬 Quick Replies</span>
+        <button class="toggle-replies-btn" onclick="toggleQuickReplies()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 15l-6-6-6 6"/>
+          </svg>
+        </button>
+      </div>
+      <div class="quick-replies-content" id="quick-replies-content">
+        <!-- Quick reply buttons will be loaded here -->
+      </div>
+    </div>
+
+    <div class="modal-input">
+      <textarea id="response-input" placeholder="Type your response..." rows="3"></textarea>
+      <button class="send-btn" onclick="sendResponse()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Notification Badge -->
+  <div class="notification-badge" id="notification-badge" style="display: none;">
+    <span id="notification-count">0</span>
+  </div>
+
+  <script src="librarian-mobile.js"></script>
+</body>
+</html>
