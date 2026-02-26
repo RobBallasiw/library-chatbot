@@ -494,7 +494,9 @@ async function sendToMessenger(message, conversationData) {
         recipient: { id: librarianPsid },
         message: {
           text: `🔔 New Librarian Request!\n\nSession: ${conversationData.sessionId}\n\n${message}\n\nView dashboard: ${process.env.WEBHOOK_URL?.replace('/webhook', '/librarian') || 'http://localhost:3000/librarian'}`
-        }
+        },
+        messaging_type: 'MESSAGE_TAG',
+        tag: 'ACCOUNT_UPDATE'
       });
 
       console.log(`✅ Messenger notification sent to librarian: ${librarianPsid}`);
