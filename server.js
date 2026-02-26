@@ -60,7 +60,7 @@ const chatLimiter = rateLimit({
 
 const librarianLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 500, // Very generous limit for librarians (increased from 100)
+  max: 1000, // Very generous limit - 1000 requests per minute
   message: 'Too many requests. Please wait a moment.',
   standardHeaders: true,
   legacyHeaders: false,
