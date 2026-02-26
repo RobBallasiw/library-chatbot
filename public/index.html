@@ -11,7 +11,7 @@
   <div class="page-content">
     <h1>Welcome to the Library</h1>
     <p>Browse our collection, check hours, and more...</p>
-    <p><a href="/mobile.html">📱 Mobile Version</a> | <a href="/privacy-policy.html">Privacy Policy</a> | <a href="/terms-of-service.html">Terms of Service</a></p>
+    <p><a href="/privacy-policy.html">Privacy Policy</a> | <a href="/terms-of-service.html">Terms of Service</a></p>
   </div>
 
   <!-- Floating Chat Widget -->
@@ -97,16 +97,6 @@
     </div>
   </div>
   
-  <script>
-    // Auto-redirect mobile devices to mobile version
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      // Check if user explicitly wants desktop version
-      const urlParams = new URLSearchParams(window.location.search);
-      if (!urlParams.has('desktop')) {
-        window.location.href = '/mobile.html';
-      }
-    }
-  </script>
   <script src="script.js"></script>
 </body>
 </html>
