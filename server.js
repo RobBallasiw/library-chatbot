@@ -44,8 +44,8 @@ const apiLimiter = rateLimit({
 });
 
 const chatLimiter = rateLimit({
-  windowMs: 60 * 1000, // 60 seconds (increased window)
-  max: 30, // 30 messages per minute (more generous)
+  windowMs: 60 * 1000, // 60 seconds
+  max: 50, // 50 messages per minute (very generous)
   message: 'Too many messages, please slow down.',
   standardHeaders: true,
   legacyHeaders: false,
