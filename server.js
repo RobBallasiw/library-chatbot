@@ -99,6 +99,24 @@ const TIMEOUTS = {
   REFRESH_DELAY: 100      // 100ms
 };
 
+/**
+ * CONVERSATION STATUS STATE MACHINE
+ * 
+ * Status transitions:
+ * - bot → viewed (when librarian views conversation)
+ * - bot → human (when user requests librarian)
+ * - human → responded (when librarian sends first reply)
+ * - responded → human (when user replies back)
+ * - any → closed (when librarian ends session)
+ * 
+ * Status meanings:
+ * - bot: AI assistant handling conversation
+ * - viewed: Librarian has viewed but not responded
+ * - human: User requested librarian, waiting for response
+ * - responded: Librarian has replied, conversation active
+ * - closed: Session ended by librarian
+ */
+
 // Logger utility - only log in development
 const logger = {
   log: process.env.NODE_ENV === 'production' ? () => {} : console.log,
@@ -596,6 +614,8 @@ app.post('/api/chat', async (req, res) => {
     }
 
     // Bot response
+    // TODO: Add graceful degradation - if Ollama is down, queue message for retry
+    // or provide fallback response directing user to librarian
     const messages = [
       { role: 'system', content: LIBRARY_CONTEXT }
     ];
@@ -706,12 +726,6 @@ app.post('/api/request-librarian', async (req, res) => {
     // Track librarian request
     trackLibrarianRequest();
     updateStatusCounts();
-    
-    console.log('📊 Current conversation state:', {
-      sessionId,
-      messageCount: conversation.messages.length,
-      status: conversation.status
-    });
 
     // Notify librarian via Messenger
     const conversationSummary = history.slice(-5).map(m => 
@@ -958,11 +972,7 @@ app.get('/api/admin/librarians', async (req, res) => {
   const authorizedPsids = getAuthorizedLibrarians();
   const pendingList = Array.from(pendingLibrarianRequests.values());
   
-  console.log('📊 Fetching librarian data:', {
-    authorizedCount: authorizedPsids.length,
-    pendingCount: pendingList.length,
-    authorizedPsids: authorizedPsids
-  });
+  logger.log('Fetching librarian data - authorized:', authorizedPsids.length, 'pending:', pendingList.length);
   
   // Fetch names for all PSIDs (use cache)
   const authorizedWithNames = await Promise.all(
@@ -1136,9 +1146,7 @@ app.post('/api/librarian/respond', (req, res) => {
   
   const conversation = conversations.get(sessionId);
   
-  console.log('📤 Librarian responding to session:', sessionId);
-  console.log('💬 Message:', message.substring(0, 100) + (message.length > 100 ? '...' : ''));
-  console.log('📊 Current status:', conversation?.status);
+  logger.log('Librarian responding to session:', sessionId);
   
   if (conversation) {
     // If this is the first librarian response to a bot/viewed conversation, add takeover notification
@@ -1164,9 +1172,7 @@ app.post('/api/librarian/respond', (req, res) => {
     // Change status to 'responded' to indicate librarian has replied
     conversation.status = 'responded';
     
-    console.log('✅ Message added. Total messages:', conversation.messages.length);
-    console.log('📊 Status changed to: responded');
-    console.log('📊 All messages:', conversation.messages.map(m => ({ role: m.role, preview: m.content.substring(0, 50) })));
+    logger.log('Message added. Total messages:', conversation.messages.length);
     
     res.json({ success: true });
   } else {

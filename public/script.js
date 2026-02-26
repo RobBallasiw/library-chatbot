@@ -16,6 +16,7 @@ let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).subst
 let conversationStatus = 'bot';
 let lastMessageCount = 0;
 let pollingInterval = null;
+let consecutiveErrors = 0; // Track polling failures
 
 // Toggle chat widget
 chatToggle.addEventListener('click', () => {
@@ -275,12 +276,8 @@ async function checkForNewMessages() {
     
     const data = await response.json();
     
-    console.log('Polling check:', {
-      totalMessages: data.messages?.length || 0,
-      lastMessageCount: lastMessageCount,
-      hasNewMessages: (data.messages?.length || 0) > lastMessageCount,
-      countdown: data.countdown
-    });
+    // Reset error counter on successful fetch
+    consecutiveErrors = 0;
     
     // Update status indicator with countdown if present
     if (data.countdown && data.countdown > 0) {
@@ -295,11 +292,8 @@ async function checkForNewMessages() {
       // New messages arrived
       const newMessages = data.messages.slice(lastMessageCount);
       
-      console.log('New messages detected:', newMessages);
-      
       newMessages.forEach(msg => {
         if (msg.role === 'librarian') {
-          console.log('Adding librarian message:', msg.content);
           addMessage(msg.content, false, 'librarian');
           conversationHistory.push({ role: 'assistant', content: msg.content });
           
@@ -316,7 +310,6 @@ async function checkForNewMessages() {
           }
         } else if (msg.role === 'assistant') {
           // System message (like session ended or librarian takeover)
-          console.log('Adding system message:', msg.content);
           addMessage(msg.content, false, 'bot');
           conversationHistory.push({ role: 'assistant', content: msg.content });
         }
@@ -329,7 +322,6 @@ async function checkForNewMessages() {
       
       // Check if session was ended (status changed to closed)
       if (data.status === 'closed' && conversationStatus !== 'bot') {
-        console.log('Session ended by librarian');
         conversationStatus = 'closed';
         statusIndicator.classList.remove('countdown');
         
@@ -359,6 +351,13 @@ async function checkForNewMessages() {
     }
   } catch (error) {
     console.error('Error checking for new messages:', error);
+    consecutiveErrors++;
+    
+    // Show error indicator after 3 consecutive failures
+    if (consecutiveErrors >= 3) {
+      statusIndicator.innerHTML = '<span class="status-dot" style="background: #ef4444;"></span>Connection Error';
+      statusIndicator.classList.add('error');
+    }
   }
 }
 
