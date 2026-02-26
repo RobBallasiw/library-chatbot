@@ -85,7 +85,8 @@ app.use(express.static('public', {
 
 // Apply rate limiting to API routes
 // Order matters: more specific routes first, then general
-app.use('/api/chat', chatLimiter); // Strict limit for chat
+// Removed chat rate limiting - too restrictive for normal conversation
+// app.use('/api/chat', chatLimiter); // Disabled - causing UX issues
 app.use('/api/librarian/*', librarianLimiter); // Generous limit for librarians
 app.use('/api/admin/*', librarianLimiter); // Generous limit for admin
 app.use('/api/conversation/*', librarianLimiter); // Generous limit for conversation endpoints
