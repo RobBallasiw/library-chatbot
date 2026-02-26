@@ -42,10 +42,30 @@ const apiLimiter = rateLimit({
 
 const chatLimiter = rateLimit({
   windowMs: 30 * 1000, // 30 seconds
-  max: 15, // Limit each IP to 15 chat messages per 30 seconds
+  max: 20, // Increased from 15 to 20 messages per 30 seconds
   message: 'Too many messages, please slow down.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for localhost in development
+    if (process.env.NODE_ENV !== 'production') {
+      const ip = req.ip || req.connection.remoteAddress;
+      if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') {
+        return true;
+      }
+    }
+    
+    // Skip rate limiting if user is in active librarian conversation
+    const { sessionId } = req.body;
+    if (sessionId) {
+      const conversation = conversations.get(sessionId);
+      if (conversation && (conversation.status === 'human' || conversation.status === 'responded')) {
+        return true; // Don't rate limit during librarian conversations
+      }
+    }
+    
+    return false;
+  }
 });
 
 const librarianLimiter = rateLimit({
