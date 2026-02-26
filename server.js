@@ -490,10 +490,12 @@ async function sendToMessenger(message, conversationData) {
   
   for (const librarianPsid of authorizedLibrarians) {
     try {
+      const baseUrl = process.env.WEBHOOK_URL?.replace('/webhook', '') || 'http://localhost:3000';
+      
       await axios.post(url, {
         recipient: { id: librarianPsid },
         message: {
-          text: `🔔 New Librarian Request!\n\nSession: ${conversationData.sessionId}\n\n${message}\n\nView dashboard: ${process.env.WEBHOOK_URL?.replace('/webhook', '/librarian') || 'http://localhost:3000/librarian'}`
+          text: `🔔 New Librarian Request!\n\nSession: ${conversationData.sessionId}\n\n${message}\n\n📱 Mobile: ${baseUrl}/librarian-mobile\n💻 Desktop: ${baseUrl}/librarian`
         },
         messaging_type: 'MESSAGE_TAG',
         tag: 'ACCOUNT_UPDATE'
@@ -939,7 +941,10 @@ async function handleLibrarianMessage(event) {
   }
   
   console.log('✅ Authorized librarian message received');
-  console.log('💡 Librarians should use the web dashboard to respond: ' + (process.env.WEBHOOK_URL?.replace('/webhook', '/librarian') || 'http://localhost:3000/librarian'));
+  const baseUrl = process.env.WEBHOOK_URL?.replace('/webhook', '') || 'http://localhost:3000';
+  console.log('💡 Librarians should use the web dashboard to respond:');
+  console.log('   📱 Mobile: ' + baseUrl + '/librarian-mobile');
+  console.log('   💻 Desktop: ' + baseUrl + '/librarian');
   console.log('═══════════════════════════════════════════');
   console.log('');
   
@@ -965,6 +970,11 @@ app.get('/api/conversation-status/:sessionId', (req, res) => {
 // Librarian Dashboard - View all active conversations
 app.get('/librarian', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'librarian.html'));
+});
+
+// Librarian Mobile Dashboard - Mobile-optimized version
+app.get('/librarian-mobile', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'librarian-mobile.html'));
 });
 
 // Admin Dashboard - Manage librarian access
