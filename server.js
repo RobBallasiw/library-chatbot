@@ -1,5 +1,5 @@
 import express from 'express';
-import { Ollama } from 'ollama';
+import Groq from 'groq-sdk';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import axios from 'axios';
@@ -14,7 +14,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const ollama = new Ollama({ host: 'http://localhost:11434' });
+
+// Initialize Groq client
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY
+});
 
 // Enable gzip compression
 app.use(compression());
@@ -613,9 +617,7 @@ app.post('/api/chat', async (req, res) => {
       return;
     }
 
-    // Bot response
-    // TODO: Add graceful degradation - if Ollama is down, queue message for retry
-    // or provide fallback response directing user to librarian
+    // Bot response using Groq API
     const messages = [
       { role: 'system', content: LIBRARY_CONTEXT }
     ];
@@ -624,17 +626,15 @@ app.post('/api/chat', async (req, res) => {
     messages.push(...recentHistory);
     messages.push({ role: 'user', content: message });
 
-    const response = await ollama.chat({
-      model: 'llama3.2',
+    const response = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
       messages: messages,
-      stream: false,
-      options: {
-        temperature: 0.7,
-        top_p: 0.9
-      }
+      temperature: 0.7,
+      max_tokens: 1024,
+      top_p: 0.9
     });
 
-    const botResponse = response.message.content;
+    const botResponse = response.choices[0].message.content;
     
     // Validation: Check if bot response contains forbidden content or non-English
     const forbiddenPatterns = [
