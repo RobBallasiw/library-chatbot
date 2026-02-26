@@ -410,7 +410,12 @@ setTimeout(() => {
 }, 500);
 
 // Continuously check for librarian intervention (every 3 seconds)
-setInterval(checkForLibrarianIntervention, 3000);
+// Only check if user is still in bot mode
+setInterval(() => {
+  if (conversationStatus === 'bot' || conversationStatus === 'viewed') {
+    checkForLibrarianIntervention();
+  }
+}, 3000);
 
 
 // ============================================
