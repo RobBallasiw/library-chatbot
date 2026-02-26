@@ -85,6 +85,8 @@ app.use(express.static('public', {
 app.use('/api/chat', chatLimiter); // Strict limit for chat
 app.use('/api/librarian/*', librarianLimiter); // Generous limit for librarians
 app.use('/api/admin/*', librarianLimiter); // Generous limit for admin
+app.use('/api/conversation/*', librarianLimiter); // Generous limit for conversation endpoints
+app.use('/api/canned-responses', librarianLimiter); // Generous limit for canned responses
 app.use('/api/*', apiLimiter); // Default limit for other endpoints
 
 // Configuration Constants
