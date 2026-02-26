@@ -81,6 +81,36 @@ function filterConversations() {
   renderConversations();
 }
 
+// Generate avatar for session
+function generateAvatar(sessionId) {
+  // Use DiceBear API for consistent avatars based on session ID
+  const style = 'avataaars'; // or 'bottts', 'identicon', 'initials'
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${sessionId}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+}
+
+// Get initials from session ID for fallback
+function getInitials(sessionId) {
+  const parts = sessionId.split('-');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return sessionId.substring(0, 2).toUpperCase();
+}
+
+// Get color from session ID
+function getColorFromSession(sessionId) {
+  const colors = [
+    '#667eea', '#764ba2', '#f093fb', '#4facfe',
+    '#43e97b', '#fa709a', '#fee140', '#30cfd0',
+    '#a8edea', '#fed6e3', '#fbc2eb', '#a6c1ee'
+  ];
+  let hash = 0;
+  for (let i = 0; i < sessionId.length; i++) {
+    hash = sessionId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
 // Render conversations list
 function renderConversations() {
   const container = document.getElementById('conversation-list');
@@ -99,12 +129,23 @@ function renderConversations() {
     const lastMsg = conv.lastMessage?.content || 'No messages yet';
     const timeAgo = getTimeAgo(new Date(conv.startTime));
     const statusClass = conv.status === 'human' ? 'waiting' : conv.status === 'responded' ? 'responded' : '';
+    const avatarUrl = generateAvatar(conv.sessionId);
+    const initials = getInitials(conv.sessionId);
+    const bgColor = getColorFromSession(conv.sessionId);
     
     return `
       <div class="conversation-card ${statusClass}" onclick="openConversation('${conv.sessionId}')">
         <div class="conversation-header">
-          <div class="session-id">${conv.sessionId}</div>
-          <span class="status-tag ${conv.status}">${getStatusLabel(conv.status)}</span>
+          <div class="user-info">
+            <div class="user-avatar" style="background: ${bgColor}">
+              <img src="${avatarUrl}" alt="User" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <span class="avatar-initials" style="display: none;">${initials}</span>
+            </div>
+            <div class="session-details">
+              <div class="session-id">${conv.sessionId}</div>
+              <span class="status-tag ${conv.status}">${getStatusLabel(conv.status)}</span>
+            </div>
+          </div>
         </div>
         <div class="conversation-preview">${lastMsg}</div>
         <div class="conversation-meta">
@@ -146,10 +187,24 @@ async function openConversation(sessionId) {
     const response = await fetch(`/api/conversation/${sessionId}`);
     const data = await response.json();
     
-    // Update modal header
-    document.getElementById('modal-session-id').textContent = sessionId;
-    document.getElementById('modal-status').textContent = getStatusLabel(data.status);
-    document.getElementById('modal-status').className = `modal-status status-tag ${data.status}`;
+    const avatarUrl = generateAvatar(sessionId);
+    const initials = getInitials(sessionId);
+    const bgColor = getColorFromSession(sessionId);
+    
+    // Update modal header with avatar
+    const modalTitle = document.getElementById('modal-title');
+    modalTitle.innerHTML = `
+      <div class="modal-user-info">
+        <div class="user-avatar" style="background: ${bgColor}">
+          <img src="${avatarUrl}" alt="User" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <span class="avatar-initials" style="display: none;">${initials}</span>
+        </div>
+        <div>
+          <h3 id="modal-session-id">${sessionId}</h3>
+          <span class="modal-status status-tag ${data.status}" id="modal-status">${getStatusLabel(data.status)}</span>
+        </div>
+      </div>
+    `;
     
     // Render messages
     renderMessages(data.messages);
