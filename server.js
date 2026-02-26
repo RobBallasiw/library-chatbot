@@ -985,6 +985,16 @@ app.get('/api/test/webhook-status', (req, res) => {
   });
 });
 
+// Health check endpoint (prevents Render from sleeping)
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    uptime: Math.floor((Date.now() - analytics.startTime.getTime()) / 1000),
+    conversations: conversations.size,
+    groqConfigured: !!process.env.GROQ_API_KEY
+  });
+});
+
 // API endpoint for admin to get librarian data
 app.get('/api/admin/librarians', async (req, res) => {
   const authorizedPsids = getAuthorizedLibrarians();

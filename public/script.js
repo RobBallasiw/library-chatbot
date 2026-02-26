@@ -65,6 +65,10 @@ async function sendMessage() {
   showTypingIndicator();
 
   try {
+    // Add timeout for slow server response (Render wake-up)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -72,8 +76,11 @@ async function sendMessage() {
         message,
         history: conversationHistory,
         sessionId
-      })
+      }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     // Handle rate limiting
     if (response.status === 429) {
@@ -142,7 +149,13 @@ async function sendMessage() {
     }
   } catch (error) {
     removeTypingIndicator();
-    addMessage('Sorry, I could not connect to the server.', false, 'bot');
+    
+    // Check if it's a timeout error
+    if (error.name === 'AbortError') {
+      addMessage('The server is taking longer than expected. This might be because the service is waking up. Please try again in a moment.', false, 'bot');
+    } else {
+      addMessage('Sorry, I could not connect to the server. Please check your internet connection and try again.', false, 'bot');
+    }
     console.error('Error:', error);
   }
 
@@ -406,7 +419,28 @@ userInput.addEventListener('keypress', (e) => {
 
 // Welcome message (only once on page load)
 setTimeout(() => {
-  addMessage('Hello! I\'m your library assistant. How can I help you today?\n\nIf you need personalized help, you can request to speak with a librarian anytime.', false, 'bot');
+  // Check if server is awake by making a lightweight request
+  fetch('/api/conversation-status/' + sessionId)
+    .then(() => {
+      // Server is awake, show welcome message
+      addMessage('Hello! I\'m your library assistant. How can I help you today?\n\nIf you need personalized help, you can request to speak with a librarian anytime.', false, 'bot');
+    })
+    .catch(() => {
+      // Server might be waking up
+      addMessage('Hello! I\'m your library assistant. The service is starting up, please wait a moment...', false, 'bot');
+      
+      // Retry after 5 seconds
+      setTimeout(() => {
+        fetch('/api/conversation-status/' + sessionId)
+          .then(() => {
+            removeTypingIndicator();
+            addMessage('Ready! How can I help you today?\n\nIf you need personalized help, you can request to speak with a librarian anytime.', false, 'bot');
+          })
+          .catch(() => {
+            addMessage('Service is still starting. Please refresh the page in a moment.', false, 'bot');
+          });
+      }, 5000);
+    });
 }, 500);
 
 // Continuously check for librarian intervention (every 3 seconds)
