@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Library Assistant</title>
+  <link rel="stylesheet" href="mobile-style.css">
+</head>
+<body>
+  <!-- Mobile Fullscreen Chat -->
+  <div class="mobile-chat">
+    <!-- Header -->
+    <div class="mobile-header">
+      <div class="header-left">
+        <div class="bot-avatar">📚</div>
+        <div class="header-info">
+          <h3>Library Assistant</h3>
+          <div class="status" id="status-indicator">
+            <span class="status-dot"></span>
+            <span>AI Assistant</span>
+          </div>
+        </div>
+      </div>
+      <button class="menu-btn" id="menu-btn" aria-label="Menu">⋮</button>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="messages-container" id="messages-container">
+      <div id="messages"></div>
+    </div>
+
+    <!-- Action Bar (Talk to Librarian / New Chat) -->
+    <div class="action-bar" id="action-bar">
+      <button class="librarian-btn" id="request-librarian">
+        👤 Talk to Librarian
+      </button>
+      <button class="new-chat-btn" id="new-chat-btn" style="display: none;">
+        ✨ Start New Chat
+      </button>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-area">
+      <textarea 
+        id="user-input" 
+        placeholder="Type your question..."
+        rows="1"
+      ></textarea>
+      <button id="send-btn" aria-label="Send">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Menu Overlay -->
+  <div class="menu-overlay" id="menu-overlay">
+    <div class="menu-content">
+      <div class="menu-header">
+        <h3>Menu</h3>
+        <button class="close-menu-btn" id="close-menu-btn">×</button>
+      </div>
+      <div class="menu-items">
+        <button class="menu-item" id="new-chat-menu">
+          <span class="menu-icon">✨</span>
+          <span>Start New Chat</span>
+        </button>
+        <button class="menu-item" id="librarian-menu">
+          <span class="menu-icon">👤</span>
+          <span>Talk to Librarian</span>
+        </button>
+        <a href="/?desktop=1" class="menu-item">
+          <span class="menu-icon">🖥️</span>
+          <span>Desktop Version</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback Modal -->
+  <div class="feedback-modal" id="feedback-modal">
+    <div class="feedback-modal-content">
+      <div class="feedback-modal-header">
+        <h3>Rate Your Experience</h3>
+        <button class="feedback-close-btn" onclick="closeFeedbackModal()">×</button>
+      </div>
+      <div class="feedback-modal-body">
+        <p>How was your conversation?</p>
+        <div class="star-rating">
+          <span class="star" data-rating="1">★</span>
+          <span class="star" data-rating="2">★</span>
+          <span class="star" data-rating="3">★</span>
+          <span class="star" data-rating="4">★</span>
+          <span class="star" data-rating="5">★</span>
+        </div>
+        <textarea 
+          id="feedback-comment" 
+          placeholder="Any additional comments? (optional)"
+          rows="3"
+        ></textarea>
+        <div class="feedback-actions">
+          <button class="feedback-skip-btn" onclick="closeFeedbackModal()">Skip</button>
+          <button class="feedback-submit-btn" onclick="submitFeedback()">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="mobile-script.js"></script>
+</body>
+</html>
