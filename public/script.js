@@ -15,11 +15,16 @@ let isFirstOpen = true;
 let sessionId = generateSessionId();
 let conversationStatus = 'bot';
 
-// Generate shorter, more readable session ID
+// Generate human-friendly session ID
 function generateSessionId() {
-  const timestamp = Date.now().toString(36); // Base36 timestamp (shorter)
-  const random = Math.random().toString(36).substr(2, 5); // 5 random chars
-  return `chat-${timestamp}-${random}`;
+  const adjectives = ['happy', 'bright', 'swift', 'calm', 'wise', 'kind', 'bold', 'cool', 'warm', 'smart'];
+  const nouns = ['panda', 'tiger', 'eagle', 'dolphin', 'fox', 'owl', 'bear', 'wolf', 'lion', 'hawk'];
+  
+  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+  const num = Math.floor(Math.random() * 9999);
+  
+  return `${adj}-${noun}-${num}`;
 }
 let lastMessageCount = 0;
 let pollingInterval = null;
