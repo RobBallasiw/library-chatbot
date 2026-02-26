@@ -41,8 +41,8 @@ const apiLimiter = rateLimit({
 });
 
 const chatLimiter = rateLimit({
-  windowMs: 30 * 1000, // 30 seconds
-  max: 20, // Increased from 15 to 20 messages per 30 seconds
+  windowMs: 60 * 1000, // 60 seconds (increased window)
+  max: 30, // 30 messages per minute (more generous)
   message: 'Too many messages, please slow down.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -54,16 +54,6 @@ const chatLimiter = rateLimit({
         return true;
       }
     }
-    
-    // Skip rate limiting if user is in active librarian conversation
-    const { sessionId } = req.body;
-    if (sessionId) {
-      const conversation = conversations.get(sessionId);
-      if (conversation && (conversation.status === 'human' || conversation.status === 'responded')) {
-        return true; // Don't rate limit during librarian conversations
-      }
-    }
-    
     return false;
   }
 });
