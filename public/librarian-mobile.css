@@ -207,6 +207,7 @@ body {
   font-weight: 600;
   color: var(--gray-900);
   font-family: 'Courier New', monospace;
+  word-break: break-all;
 }
 
 .status-tag {

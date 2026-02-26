@@ -103,7 +103,7 @@ function renderConversations() {
     return `
       <div class="conversation-card ${statusClass}" onclick="openConversation('${conv.sessionId}')">
         <div class="conversation-header">
-          <div class="session-id">${conv.sessionId.substring(0, 20)}...</div>
+          <div class="session-id">${conv.sessionId}</div>
           <span class="status-tag ${conv.status}">${getStatusLabel(conv.status)}</span>
         </div>
         <div class="conversation-preview">${lastMsg}</div>
@@ -147,7 +147,7 @@ async function openConversation(sessionId) {
     const data = await response.json();
     
     // Update modal header
-    document.getElementById('modal-session-id').textContent = sessionId.substring(0, 25) + '...';
+    document.getElementById('modal-session-id').textContent = sessionId;
     document.getElementById('modal-status').textContent = getStatusLabel(data.status);
     document.getElementById('modal-status').className = `modal-status status-tag ${data.status}`;
     

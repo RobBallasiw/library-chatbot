@@ -12,8 +12,15 @@ const statusIndicator = document.querySelector('.status');
 
 let conversationHistory = [];
 let isFirstOpen = true;
-let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+let sessionId = generateSessionId();
 let conversationStatus = 'bot';
+
+// Generate shorter, more readable session ID
+function generateSessionId() {
+  const timestamp = Date.now().toString(36); // Base36 timestamp (shorter)
+  const random = Math.random().toString(36).substr(2, 5); // 5 random chars
+  return `chat-${timestamp}-${random}`;
+}
 let lastMessageCount = 0;
 let pollingInterval = null;
 let consecutiveErrors = 0; // Track polling failures
@@ -376,7 +383,7 @@ async function checkForNewMessages() {
 
 function startNewChat() {
   // Generate new session ID
-  sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  sessionId = generateSessionId();
   
   // Reset conversation state
   conversationHistory = [];
