@@ -71,6 +71,16 @@ async function sendMessage() {
   const message = userInput.value.trim();
   if (!message) return;
 
+  // Stop typing indicator when sending
+  if (isUserTyping) {
+    isUserTyping = false;
+    sendTypingStatus(false);
+  }
+  if (typingTimeout) {
+    clearTimeout(typingTimeout);
+    typingTimeout = null;
+  }
+
   addMessage(message, true);
   userInput.value = '';
   sendBtn.disabled = true;

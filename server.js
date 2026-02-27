@@ -222,6 +222,7 @@ let cannedResponses = loadCannedResponses();
 function cleanupOldConversations() {
   const now = Date.now();
   let cleaned = 0;
+  const deletedSessions = [];
   
   // HARD LIMIT ENFORCEMENT: If over limit, force immediate cleanup
   if (conversations.size > LIMITS.MAX_CONVERSATIONS) {
@@ -233,7 +234,9 @@ function cleanupOldConversations() {
     
     const toDelete = conversations.size - LIMITS.MAX_CONVERSATIONS + 100; // Delete extra 100 for buffer
     for (let i = 0; i < toDelete && i < sortedConvs.length; i++) {
-      conversations.delete(sortedConvs[i][0]);
+      const sessionId = sortedConvs[i][0];
+      conversations.delete(sessionId);
+      deletedSessions.push(sessionId);
       cleaned++;
     }
     
@@ -247,13 +250,22 @@ function cleanupOldConversations() {
     // Delete closed conversations older than 1 hour
     if (conv.status === 'closed' && age > CLEANUP_INTERVALS.CLOSED_SESSIONS) {
       conversations.delete(sessionId);
+      deletedSessions.push(sessionId);
       cleaned++;
     }
     
     // Delete inactive bot conversations older than 24 hours
     if (conv.status === 'bot' && age > CLEANUP_INTERVALS.INACTIVE_BOTS) {
       conversations.delete(sessionId);
+      deletedSessions.push(sessionId);
       cleaned++;
+    }
+  }
+  
+  // Clean up typing status for deleted conversations
+  for (const sessionId of deletedSessions) {
+    if (typingStatus.has(sessionId)) {
+      typingStatus.delete(sessionId);
     }
   }
   

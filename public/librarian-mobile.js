@@ -212,6 +212,9 @@ async function openConversation(sessionId) {
     // Show modal
     document.getElementById('conversation-modal').classList.add('active');
     
+    // Start typing check
+    startTypingCheck();
+    
     // Scroll to bottom
     setTimeout(() => {
       const messagesContainer = document.getElementById('modal-messages');
@@ -253,6 +256,9 @@ function closeModal() {
   document.getElementById('conversation-modal').classList.remove('active');
   currentSessionId = null;
   document.getElementById('response-input').value = '';
+  
+  // Stop typing check
+  stopTypingCheck();
 }
 
 // Toggle action menu
@@ -267,6 +273,9 @@ async function sendResponse() {
   const message = input.value.trim();
   
   if (!message || !currentSessionId) return;
+  
+  // Stop typing indicator when sending
+  stopLibrarianTyping();
   
   try {
     const response = await fetch('/api/librarian/respond', {
@@ -428,6 +437,108 @@ function playNotificationSound() {
   }
 }
 
+// Typing indicator functionality for mobile
+let librarianTypingTimeout = null;
+let isLibrarianTyping = false;
+
+// Send librarian typing status
+async function sendLibrarianTypingStatus(isTyping) {
+  if (!currentSessionId) return;
+  
+  try {
+    await fetch(`/api/typing/${currentSessionId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isTyping, role: 'librarian' })
+    });
+  } catch (error) {
+    console.error('Error sending typing status:', error);
+  }
+}
+
+// Stop librarian typing
+function stopLibrarianTyping() {
+  if (isLibrarianTyping) {
+    isLibrarianTyping = false;
+    sendLibrarianTypingStatus(false);
+  }
+  if (librarianTypingTimeout) {
+    clearTimeout(librarianTypingTimeout);
+    librarianTypingTimeout = null;
+  }
+}
+
+// Check for user typing status
+async function checkUserTypingStatus() {
+  if (!currentSessionId) return;
+  
+  try {
+    const response = await fetch(`/api/typing/${currentSessionId}`);
+    const data = await response.json();
+    
+    if (data.user) {
+      showUserTypingIndicator();
+    } else {
+      hideUserTypingIndicator();
+    }
+  } catch (error) {
+    console.error('Error checking typing status:', error);
+  }
+}
+
+// Show user typing indicator
+function showUserTypingIndicator() {
+  const messagesEl = document.getElementById('modal-messages');
+  
+  // Remove existing typing indicator if any
+  hideUserTypingIndicator();
+  
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'message user-message';
+  typingDiv.id = 'user-typing-indicator';
+  typingDiv.style.opacity = '0.7';
+  typingDiv.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #666;">
+      <span>User is typing</span>
+      <span class="typing-dot"></span>
+      <span class="typing-dot"></span>
+      <span class="typing-dot"></span>
+    </div>
+  `;
+  messagesEl.appendChild(typingDiv);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// Hide user typing indicator
+function hideUserTypingIndicator() {
+  const indicator = document.getElementById('user-typing-indicator');
+  if (indicator) indicator.remove();
+}
+
+// Check typing status when conversation is open
+let typingCheckInterval = null;
+
+function startTypingCheck() {
+  if (typingCheckInterval) {
+    clearInterval(typingCheckInterval);
+  }
+  typingCheckInterval = setInterval(() => {
+    if (currentSessionId) {
+      checkUserTypingStatus();
+    }
+  }, 2000);
+}
+
+function stopTypingCheck() {
+  if (typingCheckInterval) {
+    clearInterval(typingCheckInterval);
+    typingCheckInterval = null;
+  }
+  hideUserTypingIndicator();
+  stopLibrarianTyping();
+}
+
+
 // Auto-refresh every 2 seconds
 setInterval(loadNotifications, 2000);
 
@@ -438,10 +549,30 @@ loadCannedResponses();
 // Collapse quick replies by default
 document.getElementById('quick-replies').classList.add('collapsed');
 
-// Handle textarea auto-resize
+// Handle textarea auto-resize and typing indicator
 document.getElementById('response-input').addEventListener('input', function() {
   this.style.height = 'auto';
   this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  
+  // Typing indicator
+  if (!currentSessionId) return;
+  
+  const hasText = this.value.trim().length > 0;
+  
+  if (hasText && !isLibrarianTyping) {
+    isLibrarianTyping = true;
+    sendLibrarianTypingStatus(true);
+  }
+  
+  // Clear existing timeout
+  if (librarianTypingTimeout) {
+    clearTimeout(librarianTypingTimeout);
+  }
+  
+  // Set new timeout to stop typing indicator
+  librarianTypingTimeout = setTimeout(() => {
+    stopLibrarianTyping();
+  }, 3000); // Stop after 3 seconds of no typing
 });
 
 // Handle Enter key to send (Shift+Enter for new line)
