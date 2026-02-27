@@ -107,6 +107,7 @@
     .stat-item:hover {
       border-color: #3b82f6;
       transform: translateX(4px);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
     }
 
     .stat-label {
@@ -583,12 +584,28 @@
       border-left: 3px solid #f59e0b;
     }
 
+    .conversation-item.waiting .session-id {
+      color: #fbbf24 !important;
+    }
+
+    .conversation-item.waiting .conversation-preview {
+      color: #fcd34d !important;
+    }
+
+    .conversation-item.waiting .conversation-time {
+      color: #fbbf24 !important;
+    }
+
     .conversation-item.waiting::before {
       background: #f59e0b !important;
     }
 
     .conversation-item.waiting:hover {
       background: rgba(245, 158, 11, 0.15) !important;
+    }
+
+    .conversation-item.waiting.active {
+      background: rgba(245, 158, 11, 0.2) !important;
     }
 
     .unread-indicator {
