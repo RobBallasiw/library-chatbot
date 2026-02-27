@@ -766,6 +766,53 @@
       margin-top: 4px;
     }
 
+    /* Typing indicator in modal */
+    .typing-indicator-msg {
+      padding: 12px 18px;
+      border-radius: 14px;
+      max-width: 80%;
+      border: 1px solid #334155;
+      background: #1e293b;
+      margin-right: auto;
+    }
+
+    .typing-dots {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .typing-label {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .typing-dots .dot {
+      width: 6px;
+      height: 6px;
+      background: #3b82f6;
+      border-radius: 50%;
+      animation: typingBounce 1.4s infinite;
+    }
+
+    .typing-dots .dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dots .dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    .typing-dots .dot:nth-child(4) {
+      animation-delay: 0.6s;
+    }
+
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
     .modal-input {
       padding: 20px 32px;
       border-top: 1px solid #334155;
@@ -1840,6 +1887,9 @@
         const response = await fetch(`/api/conversation/${currentSessionId}`);
         const data = await response.json();
         
+        // Check for user typing status
+        checkUserTypingStatus();
+        
         // Check if countdown was cancelled (user sent a message)
         if (endSessionTimeout && !data.countdown) {
           console.log('⏹️ Countdown cancelled by user message');
@@ -2050,6 +2100,112 @@
       currentSessionId = null;
       currentConversation = null;
       document.getElementById('response-input').value = '';
+      
+      // Stop sending typing indicator
+      stopLibrarianTyping();
+    }
+
+    // Typing indicator for librarian
+    let librarianTypingTimeout = null;
+    let isLibrarianTyping = false;
+
+    // Send librarian typing status
+    async function sendLibrarianTypingStatus(isTyping) {
+      if (!currentSessionId) return;
+      
+      try {
+        await fetch(`/api/typing/${currentSessionId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isTyping, role: 'librarian' })
+        });
+      } catch (error) {
+        console.error('Error sending typing status:', error);
+      }
+    }
+
+    // Stop librarian typing
+    function stopLibrarianTyping() {
+      if (isLibrarianTyping) {
+        isLibrarianTyping = false;
+        sendLibrarianTypingStatus(false);
+      }
+      if (librarianTypingTimeout) {
+        clearTimeout(librarianTypingTimeout);
+        librarianTypingTimeout = null;
+      }
+    }
+
+    // Add input event listener for typing indicator
+    document.addEventListener('DOMContentLoaded', () => {
+      const responseInput = document.getElementById('response-input');
+      
+      responseInput.addEventListener('input', () => {
+        if (!currentSessionId) return;
+        
+        const hasText = responseInput.value.trim().length > 0;
+        
+        if (hasText && !isLibrarianTyping) {
+          isLibrarianTyping = true;
+          sendLibrarianTypingStatus(true);
+        }
+        
+        // Clear existing timeout
+        if (librarianTypingTimeout) {
+          clearTimeout(librarianTypingTimeout);
+        }
+        
+        // Set new timeout to stop typing indicator
+        librarianTypingTimeout = setTimeout(() => {
+          stopLibrarianTyping();
+        }, 3000); // Stop after 3 seconds of no typing
+      });
+    });
+
+    // Show user typing indicator in modal
+    function showUserTypingIndicator() {
+      const messagesEl = document.getElementById('modal-messages');
+      
+      // Remove existing typing indicator if any
+      hideUserTypingIndicator();
+      
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'message user typing-indicator-msg';
+      typingDiv.id = 'user-typing-indicator';
+      typingDiv.innerHTML = `
+        <div class="typing-dots">
+          <span class="typing-label">User is typing</span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      `;
+      messagesEl.appendChild(typingDiv);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // Hide user typing indicator
+    function hideUserTypingIndicator() {
+      const indicator = document.getElementById('user-typing-indicator');
+      if (indicator) indicator.remove();
+    }
+
+    // Check for user typing status during conversation refresh
+    async function checkUserTypingStatus() {
+      if (!currentSessionId) return;
+      
+      try {
+        const response = await fetch(`/api/typing/${currentSessionId}`);
+        const data = await response.json();
+        
+        if (data.user) {
+          showUserTypingIndicator();
+        } else {
+          hideUserTypingIndicator();
+        }
+      } catch (error) {
+        console.error('Error checking typing status:', error);
+      }
     }
 
     async function sendResponse() {
@@ -2059,6 +2215,9 @@
       if (!message || !currentSessionId) {
         return;
       }
+
+      // Stop typing indicator when sending
+      stopLibrarianTyping();
 
       try {
         const response = await fetch('/api/librarian/respond', {

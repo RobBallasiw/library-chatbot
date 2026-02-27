@@ -429,6 +429,98 @@ userInput.addEventListener('keypress', (e) => {
   }
 });
 
+// Typing indicator functionality
+let typingTimeout = null;
+let isUserTyping = false;
+
+userInput.addEventListener('input', () => {
+  // Only send typing indicator if connected to librarian
+  if (conversationStatus !== 'human' && conversationStatus !== 'responded') {
+    return;
+  }
+  
+  const hasText = userInput.value.trim().length > 0;
+  
+  if (hasText && !isUserTyping) {
+    isUserTyping = true;
+    sendTypingStatus(true);
+  }
+  
+  // Clear existing timeout
+  if (typingTimeout) {
+    clearTimeout(typingTimeout);
+  }
+  
+  // Set new timeout to stop typing indicator
+  typingTimeout = setTimeout(() => {
+    if (isUserTyping) {
+      isUserTyping = false;
+      sendTypingStatus(false);
+    }
+  }, 3000); // Stop after 3 seconds of no typing
+});
+
+// Send typing status to server
+async function sendTypingStatus(isTyping) {
+  try {
+    await fetch(`/api/typing/${sessionId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isTyping, role: 'user' })
+    });
+  } catch (error) {
+    console.error('Error sending typing status:', error);
+  }
+}
+
+// Check for librarian typing status
+function checkLibrarianTyping() {
+  // Only check if connected to librarian
+  if (conversationStatus !== 'human' && conversationStatus !== 'responded') {
+    return;
+  }
+  
+  fetch(`/api/typing/${sessionId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.librarian) {
+        showLibrarianTyping();
+      } else {
+        hideLibrarianTyping();
+      }
+    })
+    .catch(error => {
+      console.error('Error checking typing status:', error);
+    });
+}
+
+// Show librarian typing indicator
+function showLibrarianTyping() {
+  // Remove existing typing indicator if any
+  hideLibrarianTyping();
+  
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'message bot-message typing-indicator';
+  typingDiv.id = 'librarian-typing';
+  typingDiv.innerHTML = '<span class="typing-label">Librarian is typing</span><span></span><span></span><span></span>';
+  messagesContainer.appendChild(typingDiv);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+// Hide librarian typing indicator
+function hideLibrarianTyping() {
+  const typing = document.getElementById('librarian-typing');
+  if (typing) typing.remove();
+}
+
+// Check for librarian typing every 2 seconds when connected
+setInterval(() => {
+  if (conversationStatus === 'human' || conversationStatus === 'responded') {
+    checkLibrarianTyping();
+  }
+}, 2000);
+
+
 // Welcome message (only once on page load)
 setTimeout(() => {
   // Check if server is awake by making a lightweight request

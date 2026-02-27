@@ -269,6 +269,30 @@ setInterval(cleanupOldConversations, CLEANUP_INTERVALS.OLD_CONVERSATIONS);
 const conversations = new Map();
 // sessionId -> { status: 'bot'|'human', messages: [], userId: null, startTime: Date }
 
+// Store typing status for real-time indicators
+const typingStatus = new Map();
+// sessionId -> { user: { isTyping: boolean, lastUpdate: Date }, librarian: { isTyping: boolean, lastUpdate: Date } }
+
+// Auto-clear typing status after 5 seconds of inactivity
+setInterval(() => {
+  const now = Date.now();
+  const TYPING_TIMEOUT = 5000; // 5 seconds
+  
+  for (const [sessionId, status] of typingStatus.entries()) {
+    if (status.user.isTyping && (now - status.user.lastUpdate.getTime()) > TYPING_TIMEOUT) {
+      status.user.isTyping = false;
+    }
+    if (status.librarian.isTyping && (now - status.librarian.lastUpdate.getTime()) > TYPING_TIMEOUT) {
+      status.librarian.isTyping = false;
+    }
+    
+    // Remove entry if both are not typing
+    if (!status.user.isTyping && !status.librarian.isTyping) {
+      typingStatus.delete(sessionId);
+    }
+  }
+}, 2000); // Check every 2 seconds
+
 // Store pending librarian requests
 const pendingLibrarianRequests = new Map();
 // psid -> { psid, lastMessage: Date, messageCount: number, name: string }
@@ -958,14 +982,70 @@ app.get('/api/conversation-status/:sessionId', (req, res) => {
   const conversation = conversations.get(sessionId);
   
   if (conversation) {
+    // Include typing status in response
+    const typing = typingStatus.get(sessionId) || {
+      user: { isTyping: false, lastUpdate: new Date() },
+      librarian: { isTyping: false, lastUpdate: new Date() }
+    };
+    
     res.json({
       status: conversation.status,
-      messageCount: conversation.messages.length
+      messageCount: conversation.messages.length,
+      typing: {
+        user: typing.user.isTyping,
+        librarian: typing.librarian.isTyping
+      }
     });
   } else {
-    res.json({ status: 'bot', messageCount: 0 });
+    res.json({ 
+      status: 'bot', 
+      messageCount: 0,
+      typing: { user: false, librarian: false }
+    });
   }
 });
+
+// Set typing status (user or librarian)
+app.post('/api/typing/:sessionId', (req, res) => {
+  const { sessionId } = req.params;
+  const { isTyping, role } = req.body; // role: 'user' or 'librarian'
+  
+  if (!role || (role !== 'user' && role !== 'librarian')) {
+    return res.status(400).json({ success: false, error: 'Invalid role' });
+  }
+  
+  if (!typingStatus.has(sessionId)) {
+    typingStatus.set(sessionId, {
+      user: { isTyping: false, lastUpdate: new Date() },
+      librarian: { isTyping: false, lastUpdate: new Date() }
+    });
+  }
+  
+  const status = typingStatus.get(sessionId);
+  status[role].isTyping = !!isTyping;
+  status[role].lastUpdate = new Date();
+  
+  res.json({ success: true });
+});
+
+// Get typing status for a conversation
+app.get('/api/typing/:sessionId', (req, res) => {
+  const { sessionId } = req.params;
+  const status = typingStatus.get(sessionId);
+  
+  if (status) {
+    res.json({
+      user: status.user.isTyping,
+      librarian: status.librarian.isTyping
+    });
+  } else {
+    res.json({
+      user: false,
+      librarian: false
+    });
+  }
+});
+
 
 // Librarian Dashboard - View all active conversations
 app.get('/librarian', (req, res) => {
