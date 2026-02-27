@@ -15,81 +15,150 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #0f172a;
       min-height: 100vh;
-      padding: 32px;
       color: #e2e8f0;
+      overflow-x: hidden;
+    }
+
+    /* Sidebar Layout */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 280px;
+      background: #1e293b;
+      border-right: 1px solid #334155;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #334155;
+    }
+
+    .logo-icon {
+      font-size: 32px;
+    }
+
+    .logo-text h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #f1f5f9;
+      margin-bottom: 2px;
+    }
+
+    .logo-text p {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .stats-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-item {
+      background: #0f172a;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      transition: all 0.2s;
+    }
+
+    .stat-item:hover {
+      border-color: #3b82f6;
+      transform: translateX(4px);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #f1f5f9;
+    }
+
+    .refresh-section {
+      margin-top: auto;
+      padding-top: 24px;
+      border-top: 1px solid #334155;
+    }
+
+    .refresh-btn-sidebar {
+      width: 100%;
+      padding: 14px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn-sidebar:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .auto-refresh-info {
+      text-align: center;
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 12px;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      margin-left: 280px;
+      padding: 32px;
+      min-height: 100vh;
     }
 
     .header {
-      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-      color: white;
-      padding: 40px;
-      border-radius: 16px;
       margin-bottom: 32px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-      border: 1px solid #334155;
     }
 
     .header h1 {
-      font-size: 36px;
-      margin-bottom: 8px;
+      font-size: 32px;
       font-weight: 800;
       color: #f1f5f9;
-      letter-spacing: -0.5px;
+      margin-bottom: 8px;
     }
 
     .header p {
       color: #94a3b8;
-      font-size: 16px;
+      font-size: 15px;
     }
 
     .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 24px;
-      margin-bottom: 32px;
+      display: none; /* Hide original stats, using sidebar instead */
     }
 
     .stat-card {
-      background: #1e293b;
-      padding: 32px;
-      border-radius: 16px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-      border: 1px solid #334155;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .stat-card::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
-    }
-
-    .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-      border-color: #475569;
-    }
-
-    .stat-card h3 {
-      font-size: 12px;
-      color: #94a3b8;
-      margin-bottom: 16px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 700;
-    }
-
-    .stat-card .number {
-      font-size: 48px;
-      font-weight: 800;
-      color: #f1f5f9;
-      line-height: 1;
+      display: none;
     }
 
     .conversations {
@@ -221,21 +290,7 @@
     }
 
     .refresh-btn {
-      padding: 12px 24px;
-      background: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
-
-    .refresh-btn:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+      display: none; /* Using sidebar refresh button instead */
     }
 
     .conversation-list {
@@ -878,15 +933,72 @@
       .clear-filters-btn {
         width: 100%;
       }
+
+      /* Mobile sidebar */
+      .sidebar {
+        width: 100%;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid #334155;
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 16px;
+      }
+
+      .stats-sidebar {
+        flex-direction: row;
+        overflow-x: auto;
+      }
+
+      .stat-item {
+        min-width: 140px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>📚 Librarian Dashboard</h1>
-    <p>Monitor and respond to chat conversations</p>
-    <p style="font-size: 12px; opacity: 0.8; margin-top: 8px;">🔄 Auto-refreshes every 2 seconds</p>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">📚</div>
+      <div class="logo-text">
+        <h1>Librarian</h1>
+        <p>Dashboard</p>
+      </div>
+    </div>
+
+    <div class="stats-sidebar">
+      <div class="stat-item">
+        <div class="stat-label">Active</div>
+        <div class="stat-value" id="active-count-sidebar">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value" id="pending-count-sidebar">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Messages</div>
+        <div class="stat-value" id="message-count-sidebar">0</div>
+      </div>
+    </div>
+
+    <div class="refresh-section">
+      <button class="refresh-btn-sidebar" onclick="loadNotifications()">
+        <span>🔄</span>
+        <span>Refresh Now</span>
+      </button>
+      <div class="auto-refresh-info">Auto-refreshes every 2s</div>
+    </div>
   </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="header">
+      <h1>Conversations</h1>
+      <p>Monitor and respond to chat conversations</p>
+    </div>
 
   <!-- Notification Alerts -->
   <div id="notification-librarian" class="notification-alert" style="display: none; top: 20px;">
@@ -911,25 +1023,9 @@
     </div>
   </div>
 
-  <div class="stats">
-    <div class="stat-card">
-      <h3>Active Conversations</h3>
-      <div class="number" id="active-count">0</div>
-    </div>
-    <div class="stat-card">
-      <h3>Pending Requests</h3>
-      <div class="number" id="pending-count">0</div>
-    </div>
-    <div class="stat-card">
-      <h3>Total Messages</h3>
-      <div class="number" id="message-count">0</div>
-    </div>
-  </div>
-
   <div class="conversations">
     <div class="conversations-header">
-      <h2>Conversations</h2>
-      <button class="refresh-btn" onclick="loadNotifications()">🔄 Refresh</button>
+      <h2>All Conversations</h2>
     </div>
     
     <!-- Search and Filter Controls -->
@@ -965,6 +1061,7 @@
       </div>
     </div>
   </div>
+  </div> <!-- End main-content -->
 
   <!-- Conversation Detail Modal -->
   <div class="modal" id="conversation-modal">
@@ -1192,9 +1289,18 @@
       const totalPending = data.activeConversations.filter(c => c.status === 'human').length;
       const totalMessages = data.activeConversations.reduce((sum, c) => sum + c.messageCount, 0);
       
-      document.getElementById('active-count').textContent = totalActive;
-      document.getElementById('pending-count').textContent = totalPending;
-      document.getElementById('message-count').textContent = totalMessages;
+      // Update sidebar stats
+      document.getElementById('active-count-sidebar').textContent = totalActive;
+      document.getElementById('pending-count-sidebar').textContent = totalPending;
+      document.getElementById('message-count-sidebar').textContent = totalMessages;
+      
+      // Update old stats (hidden but keep for compatibility)
+      const activeCountEl = document.getElementById('active-count');
+      const pendingCountEl = document.getElementById('pending-count');
+      const messageCountEl = document.getElementById('message-count');
+      if (activeCountEl) activeCountEl.textContent = totalActive;
+      if (pendingCountEl) pendingCountEl.textContent = totalPending;
+      if (messageCountEl) messageCountEl.textContent = totalMessages;
       
       // Remove 'human' status conversations from viewedConversations (they need attention again)
       data.activeConversations.forEach(c => {
