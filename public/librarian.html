@@ -924,16 +924,29 @@
       // Generate consistent color based on session ID
       const colors = [
         '#667eea', '#764ba2', '#f093fb', '#4facfe',
-        '#43e97b', '#fa709a', '#fee140', '#30cfd0'
+        '#43e97b', '#fa709a', '#fee140', '#30cfd0',
+        '#a8edea', '#fed6e3', '#fbc2eb', '#a6c1ee'
       ];
-      const hash = sessionId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      return colors[hash % colors.length];
+      let hash = 0;
+      for (let i = 0; i < sessionId.length; i++) {
+        hash = sessionId.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return colors[Math.abs(hash) % colors.length];
     }
 
     function getInitials(sessionId) {
       // Generate initials from session ID
-      const parts = sessionId.split('_');
-      return parts[parts.length - 1].substring(0, 2).toUpperCase();
+      const parts = sessionId.split('-');
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+      return sessionId.substring(0, 2).toUpperCase();
+    }
+    
+    function generateAvatar(sessionId) {
+      // Use DiceBear API for consistent avatars
+      const style = 'avataaars';
+      return `https://api.dicebear.com/7.x/${style}/svg?seed=${sessionId}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
     }
 
     function showNotification(count, type = 'librarian', playSound = true) {
@@ -1215,6 +1228,7 @@
       listEl.innerHTML = conversations.map(conv => {
         const color = getColorForSession(conv.sessionId);
         const initials = getInitials(conv.sessionId);
+        const avatarUrl = generateAvatar(conv.sessionId);
         const isWaiting = conv.status === 'human';
         const isUnread = !viewedConversations.has(conv.sessionId) && conv.status === 'bot';
         
@@ -1236,7 +1250,11 @@
           <div class="conversation-header">
             <div style="display: flex; align-items: center; gap: 12px;">
               ${isUnread ? '<div class="unread-indicator"></div>' : ''}
-              <div class="user-avatar" style="background: ${color};">${initials}</div>
+              <div class="user-avatar" style="background: ${color}; position: relative; overflow: hidden;">
+                <img src="${avatarUrl}" alt="User" style="width: 100%; height: 100%; object-fit: cover;" 
+                     onerror="this.style.display='none';">
+                <span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 16px;">${initials}</span>
+              </div>
               <span class="session-id">${sessionIdDisplay}...</span>
             </div>
             <span class="status-badge ${conv.status}">
