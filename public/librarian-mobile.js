@@ -4,6 +4,31 @@ let filteredConversations = [];
 let lastNotificationCount = 0;
 let cannedResponses = { categories: [] };
 let quickRepliesCollapsed = true;
+let viewedConversations = new Set();
+
+// Load viewed conversations from localStorage
+function loadViewedConversations() {
+  try {
+    const stored = localStorage.getItem('viewedConversations');
+    if (stored) {
+      viewedConversations = new Set(JSON.parse(stored));
+    }
+  } catch (error) {
+    console.error('Error loading viewed conversations:', error);
+  }
+}
+
+// Save viewed conversations to localStorage
+function saveViewedConversations() {
+  try {
+    localStorage.setItem('viewedConversations', JSON.stringify([...viewedConversations]));
+  } catch (error) {
+    console.error('Error saving viewed conversations:', error);
+  }
+}
+
+// Initialize viewed conversations
+loadViewedConversations();
 
 // Load canned responses
 async function loadCannedResponses() {
@@ -128,7 +153,9 @@ function renderConversations() {
   container.innerHTML = filteredConversations.map(conv => {
     const lastMsg = conv.lastMessage?.content || 'No messages yet';
     const timeAgo = getTimeAgo(new Date(conv.startTime));
-    const statusClass = conv.status === 'human' ? 'waiting' : conv.status === 'responded' ? 'responded' : '';
+    const isWaiting = conv.status === 'human';
+    const isUnread = conv.status === 'bot' && !viewedConversations.has(conv.sessionId);
+    const statusClass = isWaiting ? 'waiting' : isUnread ? 'unread' : conv.status === 'responded' ? 'responded' : '';
     const avatarUrl = generateAvatar(conv.sessionId);
     const initials = getInitials(conv.sessionId);
     const bgColor = getColorFromSession(conv.sessionId);
@@ -182,6 +209,13 @@ function getTimeAgo(date) {
 // Open conversation
 async function openConversation(sessionId) {
   currentSessionId = sessionId;
+  
+  // Mark as viewed
+  viewedConversations.add(sessionId);
+  saveViewedConversations();
+  
+  // Re-render to remove highlighting immediately
+  renderConversations();
   
   try {
     const response = await fetch(`/api/conversation/${sessionId}`);

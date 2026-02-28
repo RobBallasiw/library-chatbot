@@ -59,6 +59,19 @@
       }
     }
 
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+      }
+      50% {
+        box-shadow: 0 0 0 10px rgba(251, 191, 36, 0);
+      }
+    }
+
+    .stat-item.has-pending {
+      animation: pulse 2s infinite;
+    }
+
     .logo-text h1 {
       font-size: 20px;
       font-weight: 800;
@@ -98,10 +111,29 @@
 
     .stat-item {
       background: #0f172a;
-      padding: 16px;
+      padding: 18px;
       border-radius: 12px;
       border: 1px solid #334155;
-      transition: all 0.2s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .stat-item:hover::before {
+      transform: scaleX(1);
     }
 
     .stat-item:hover {
@@ -110,19 +142,90 @@
       box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
     }
 
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
     .stat-label {
       font-size: 11px;
       color: #64748b;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 8px;
       font-weight: 600;
     }
 
+    .stat-icon {
+      font-size: 20px;
+      opacity: 0.6;
+    }
+
     .stat-value {
-      font-size: 28px;
+      font-size: 32px;
       font-weight: 800;
       color: #f1f5f9;
+      margin-bottom: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .stat-item:hover .stat-value {
+      color: #3b82f6;
+      transform: scale(1.05);
+    }
+
+    .stat-progress {
+      width: 100%;
+      height: 4px;
+      background: #1e293b;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .stat-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+      border-radius: 2px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .stat-progress-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .stat-change {
+      font-size: 11px;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stat-change.positive {
+      color: #10b981;
+    }
+
+    .stat-change.negative {
+      color: #ef4444;
+    }
+
+    .stat-change.neutral {
+      color: #64748b;
     }
 
     .refresh-section {
@@ -134,7 +237,7 @@
     .refresh-btn-sidebar {
       width: 100%;
       padding: 14px;
-      background: #3b82f6;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
       color: white;
       border: none;
       border-radius: 10px;
@@ -145,13 +248,44 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: all 0.2s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .refresh-btn-sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .refresh-btn-sidebar:hover::before {
+      left: 100%;
     }
 
     .refresh-btn-sidebar:hover {
-      background: #2563eb;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+    }
+
+    .refresh-btn-sidebar:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+
+    .refresh-btn-sidebar span:first-child {
+      display: inline-block;
+      transition: transform 0.3s ease;
+    }
+
+    .refresh-btn-sidebar:hover span:first-child {
+      transform: rotate(180deg);
     }
 
     .auto-refresh-info {
@@ -352,9 +486,21 @@
       padding: 24px 32px;
       border-bottom: 1px solid #334155;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       background: #1e293b;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
     }
 
     .conversation-item::before {
@@ -365,15 +511,17 @@
       bottom: 0;
       width: 3px;
       background: transparent;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
     }
 
     .conversation-item:hover {
       background: #334155;
+      transform: translateX(4px);
     }
 
     .conversation-item:hover::before {
       background: #3b82f6;
+      width: 4px;
     }
 
     .conversation-item.active {
@@ -641,10 +789,22 @@
       z-index: 1000;
       align-items: center;
       justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
     .modal.active {
       display: flex;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
 
     .modal-content {
@@ -657,6 +817,18 @@
       flex-direction: column;
       box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
       border: 1px solid #334155;
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     .modal-header {
@@ -1148,16 +1320,34 @@
 
     <div class="stats-sidebar">
       <div class="stat-item">
-        <div class="stat-label">Active</div>
+        <div class="stat-header">
+          <div class="stat-label">Active</div>
+          <div class="stat-icon">💬</div>
+        </div>
         <div class="stat-value" id="active-count-sidebar">0</div>
+        <div class="stat-progress">
+          <div class="stat-progress-bar" id="active-progress" style="width: 0%"></div>
+        </div>
       </div>
       <div class="stat-item">
-        <div class="stat-label">Pending</div>
+        <div class="stat-header">
+          <div class="stat-label">Pending</div>
+          <div class="stat-icon">⏳</div>
+        </div>
         <div class="stat-value" id="pending-count-sidebar">0</div>
+        <div class="stat-progress">
+          <div class="stat-progress-bar" id="pending-progress" style="width: 0%"></div>
+        </div>
       </div>
       <div class="stat-item">
-        <div class="stat-label">Messages</div>
+        <div class="stat-header">
+          <div class="stat-label">Messages</div>
+          <div class="stat-icon">📨</div>
+        </div>
         <div class="stat-value" id="message-count-sidebar">0</div>
+        <div class="stat-progress">
+          <div class="stat-progress-bar" id="message-progress" style="width: 0%"></div>
+        </div>
       </div>
     </div>
 
@@ -1407,6 +1597,47 @@
       }
     }
 
+    // Animation helper functions
+    function animateStatValue(elementId, targetValue) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+      
+      const currentValue = parseInt(element.textContent) || 0;
+      if (currentValue === targetValue) return;
+      
+      const duration = 600;
+      const steps = 30;
+      const stepValue = (targetValue - currentValue) / steps;
+      const stepDuration = duration / steps;
+      
+      let currentStep = 0;
+      const interval = setInterval(() => {
+        currentStep++;
+        const newValue = Math.round(currentValue + (stepValue * currentStep));
+        element.textContent = newValue;
+        
+        if (currentStep >= steps) {
+          element.textContent = targetValue;
+          clearInterval(interval);
+          
+          // Add pulse effect on change
+          element.style.transform = 'scale(1.1)';
+          setTimeout(() => {
+            element.style.transform = 'scale(1)';
+          }, 200);
+        }
+      }, stepDuration);
+    }
+
+    function updateProgressBar(elementId, percentage) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+      
+      // Cap at 100%
+      const cappedPercentage = Math.min(percentage, 100);
+      element.style.width = cappedPercentage + '%';
+    }
+
     async function loadNotifications() {
       try {
         const response = await fetch('/api/librarian/notifications');
@@ -1466,10 +1697,27 @@
       const totalPending = data.activeConversations.filter(c => c.status === 'human').length;
       const totalMessages = data.activeConversations.reduce((sum, c) => sum + c.messageCount, 0);
       
-      // Update sidebar stats
-      document.getElementById('active-count-sidebar').textContent = totalActive;
-      document.getElementById('pending-count-sidebar').textContent = totalPending;
-      document.getElementById('message-count-sidebar').textContent = totalMessages;
+      // Animate stat changes
+      animateStatValue('active-count-sidebar', totalActive);
+      animateStatValue('pending-count-sidebar', totalPending);
+      animateStatValue('message-count-sidebar', totalMessages);
+      
+      // Update progress bars
+      const maxConversations = 50; // Arbitrary max for visualization
+      const maxMessages = 500;
+      updateProgressBar('active-progress', (totalActive / maxConversations) * 100);
+      updateProgressBar('pending-progress', totalPending > 0 ? (totalPending / totalActive) * 100 : 0);
+      updateProgressBar('message-progress', (totalMessages / maxMessages) * 100);
+      
+      // Add pulse animation to pending stat if there are pending conversations
+      const pendingStatItem = document.getElementById('pending-count-sidebar')?.closest('.stat-item');
+      if (pendingStatItem) {
+        if (totalPending > 0) {
+          pendingStatItem.classList.add('has-pending');
+        } else {
+          pendingStatItem.classList.remove('has-pending');
+        }
+      }
       
       // Update old stats (hidden but keep for compatibility)
       const activeCountEl = document.getElementById('active-count');
@@ -1647,10 +1895,10 @@
           previewText;
         
         return `
-        <div class="conversation-item ${isWaiting ? 'waiting' : ''}" 
+        <div class="conversation-item ${isWaiting ? 'waiting' : ''} ${isUnread ? 'unread' : ''}" 
              data-session="${conv.sessionId}" 
              onclick="viewConversation('${conv.sessionId}')"
-             style="${isWaiting ? 'background: #fef3c7 !important; border-left: 4px solid #f59e0b !important;' : ''}">
+             style="${isWaiting ? 'background: #fef3c7 !important; border-left: 4px solid #f59e0b !important;' : isUnread ? 'background: #dbeafe !important; border-left: 4px solid #3b82f6 !important;' : ''}">
           <div class="conversation-header">
             <div style="display: flex; align-items: center; gap: 12px;">
               ${isUnread ? '<div class="unread-indicator"></div>' : ''}
@@ -1659,13 +1907,13 @@
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <span style="position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 16px; z-index: 0;">${initials}</span>
               </div>
-              <span class="session-id">${sessionIdDisplay}...</span>
+              <span class="session-id" style="${isUnread ? 'color: #1e40af !important;' : ''}">${sessionIdDisplay}...</span>
             </div>
             <span class="status-badge ${conv.status}">
               ${conv.status === 'human' ? '🟡 Waiting' : conv.status === 'responded' ? '✅ Responded' : conv.status === 'viewed' ? '👁️ Viewed' : conv.status === 'closed' ? '🔒 Closed' : '🤖 Bot'}
             </span>
           </div>
-          <div class="conversation-preview">
+          <div class="conversation-preview" style="${isUnread ? 'color: #1e40af !important;' : ''}">
             ${previewDisplay}${previewText.length > 80 ? '...' : ''}
           </div>
           <div class="conversation-time">

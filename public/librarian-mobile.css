@@ -191,6 +191,20 @@ body {
   background: #fffbeb;
 }
 
+.conversation-card.unread {
+  border-left: 4px solid #3b82f6;
+  background: #dbeafe;
+}
+
+.conversation-card.unread .session-id {
+  color: #1e40af;
+  font-weight: 700;
+}
+
+.conversation-card.unread .conversation-preview {
+  color: #1e40af;
+}
+
 .conversation-card.responded {
   border-left: 4px solid var(--success);
 }
