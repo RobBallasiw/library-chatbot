@@ -496,7 +496,22 @@ async function checkForLibrarianIntervention() {
         // Show librarian messages after a brief delay (1.5 seconds)
         setTimeout(() => {
           librarianMessages.forEach(msg => {
-            addMessage(msg.content, false, 'librarian');
+            // Debug log
+            console.log('📨 Loading librarian message from history:', {
+              content: msg.content,
+              hasAttachment: !!msg.attachment,
+              attachment: msg.attachment
+            });
+            
+            // Pass attachment if present
+            const attachmentData = msg.attachment ? {
+              name: msg.attachment.name,
+              type: msg.attachment.type,
+              size: msg.attachment.size,
+              data: msg.attachment.data
+            } : null;
+            
+            addMessage(msg.content, false, 'librarian', attachmentData);
             conversationHistory.push({ role: 'assistant', content: msg.content });
           });
           chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -598,7 +613,22 @@ async function checkForNewMessages() {
       
       newMessages.forEach(msg => {
         if (msg.role === 'librarian') {
-          addMessage(msg.content, false, 'librarian');
+          // Debug log
+          console.log('📨 Received librarian message:', {
+            content: msg.content,
+            hasAttachment: !!msg.attachment,
+            attachment: msg.attachment
+          });
+          
+          // Pass attachment if present
+          const attachmentData = msg.attachment ? {
+            name: msg.attachment.name,
+            type: msg.attachment.type,
+            size: msg.attachment.size,
+            data: msg.attachment.data
+          } : null;
+          
+          addMessage(msg.content, false, 'librarian', attachmentData);
           conversationHistory.push({ role: 'assistant', content: msg.content });
           
           // Update status to show connected to librarian
@@ -844,6 +874,15 @@ let messageFeedback = {}; // Store feedback for individual messages
 
 // Add feedback buttons to bot messages
 function addMessageWithFeedback(content, isUser, sender = null, messageId = null, attachment = null) {
+  // Debug log
+  console.log('💬 addMessageWithFeedback called:', {
+    content,
+    isUser,
+    sender,
+    hasAttachment: !!attachment,
+    attachment
+  });
+  
   const messageDiv = document.createElement('div');
   messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
   
@@ -865,15 +904,18 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
   
   // Add attachment if present
   if (attachment) {
+    console.log('📎 Adding attachment to message:', attachment);
     const attachmentDiv = document.createElement('div');
     attachmentDiv.className = 'message-attachment';
     
     if (attachment.type.startsWith('image/')) {
+      console.log('🖼️ Creating image element for attachment');
       const img = document.createElement('img');
       img.src = attachment.data;
       img.alt = attachment.name;
       attachmentDiv.appendChild(img);
     } else {
+      console.log('📄 Creating file element for attachment');
       attachmentDiv.innerHTML = `
         <span class="attachment-icon">📄</span>
         <div class="attachment-info">
