@@ -19,6 +19,15 @@ const filePreviewInfo = document.getElementById('file-preview-info');
 const removeFileBtn = document.getElementById('remove-file-btn');
 const typingPreview = document.getElementById('typing-preview');
 
+// Debug: Log element status
+console.log('=== FILE UPLOAD DEBUG ===');
+console.log('attachBtn:', attachBtn);
+console.log('fileInput:', fileInput);
+console.log('filePreview:', filePreview);
+console.log('filePreviewInfo:', filePreviewInfo);
+console.log('removeFileBtn:', removeFileBtn);
+console.log('========================');
+
 let conversationHistory = [];
 let isFirstOpen = true;
 let sessionId = generateSessionId();
@@ -58,33 +67,54 @@ closeChat.addEventListener('click', () => {
 });
 
 // File upload functionality
+console.log('Setting up file upload...');
+
 if (attachBtn && fileInput) {
-  console.log('Attach button found, adding event listener');
-  attachBtn.addEventListener('click', (e) => {
-    console.log('Attach button clicked');
+  console.log('✓ Attach button and file input found');
+  
+  // Method 1: Direct click handler
+  attachBtn.onclick = function(e) {
+    console.log('>>> Attach button clicked (onclick)');
     e.preventDefault();
     e.stopPropagation();
     fileInput.click();
-  });
+    return false;
+  };
+  
+  // Method 2: Event listener (backup)
+  attachBtn.addEventListener('click', function(e) {
+    console.log('>>> Attach button clicked (addEventListener)');
+    e.preventDefault();
+    e.stopPropagation();
+    fileInput.click();
+  }, true); // Use capture phase
 
   fileInput.addEventListener('change', (e) => {
-    console.log('File input changed');
+    console.log('>>> File input changed');
     const file = e.target.files[0];
     if (file) {
-      console.log('File selected:', file.name);
+      console.log('>>> File selected:', file.name, file.size, file.type);
       handleFileSelection(file);
+    } else {
+      console.log('>>> No file selected');
     }
   });
+  
+  console.log('✓ Event listeners attached');
 } else {
-  console.error('Attach button or file input not found', { attachBtn, fileInput });
+  console.error('✗ Missing elements:', { 
+    attachBtn: !!attachBtn, 
+    fileInput: !!fileInput 
+  });
 }
 
 if (removeFileBtn) {
   removeFileBtn.addEventListener('click', () => {
+    console.log('>>> Remove file clicked');
     clearFileSelection();
   });
 } else {
-  console.error('Remove file button not found');
+  console.error('✗ Remove file button not found');
 }
 
 // Drag and Drop functionality
