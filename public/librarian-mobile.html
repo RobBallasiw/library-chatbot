@@ -122,12 +122,31 @@
     </div>
 
     <div class="modal-input">
-      <textarea id="response-input" placeholder="Type your response..." rows="3"></textarea>
-      <button class="send-btn" onclick="sendResponse()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-        </svg>
-      </button>
+      <input type="file" id="mobile-librarian-file-input" accept="image/*,.pdf,.doc,.docx" style="display: none;" aria-label="Upload file">
+      <div id="mobile-librarian-file-preview" class="file-preview-mobile" style="display: none;">
+        <div class="file-preview-content-mobile">
+          <img id="mobile-librarian-file-preview-img" style="display: none; max-width: 100px; max-height: 100px; border-radius: 8px;" alt="File preview">
+          <div id="mobile-librarian-file-preview-info" class="file-info-mobile">
+            <span class="file-icon-mobile">📄</span>
+            <span class="file-name-mobile"></span>
+            <span class="file-size-mobile"></span>
+          </div>
+          <button id="mobile-librarian-remove-file-btn" class="remove-file-btn-mobile" aria-label="Remove file">×</button>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: flex-end; width: 100%;">
+        <button class="attach-btn-mobile" onclick="openMobileLibrarianFileDialog()" title="Attach file">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="pointer-events: none;">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </button>
+        <textarea id="response-input" placeholder="Type your response..." rows="3" style="flex: 1;"></textarea>
+        <button class="send-btn" onclick="sendResponse()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -136,7 +155,7 @@
     <span id="notification-count">0</span>
   </div>
 
-  <script src="librarian-mobile.js"></script>
+  <script src="librarian-mobile.js?v=2"></script>
 
   <!-- Theme Toggle Button -->
   <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">

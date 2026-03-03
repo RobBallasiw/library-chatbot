@@ -343,23 +343,31 @@ async function sendResponse() {
   const input = document.getElementById('response-input');
   const message = input.value.trim();
   
-  if (!message || !currentSessionId) return;
+  if ((!message && !mobileLibrarianSelectedFile) || !currentSessionId) return;
   
   // Stop typing indicator when sending
   stopLibrarianTyping();
   
   try {
+    const requestBody = {
+      sessionId: currentSessionId,
+      message: message || '📎 File attached'
+    };
+    
+    // Add attachment if present
+    if (mobileLibrarianSelectedFile) {
+      requestBody.attachment = mobileLibrarianSelectedFile;
+    }
+    
     const response = await fetch('/api/librarian/respond', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: currentSessionId,
-        message: message
-      })
+      body: JSON.stringify(requestBody)
     });
     
     if (response.ok) {
       input.value = '';
+      clearMobileLibrarianFileSelection();
       // Reload conversation
       await openConversation(currentSessionId);
       // Reload list
@@ -663,3 +671,70 @@ document.addEventListener('click', function(e) {
     menu.classList.remove('active');
   }
 });
+
+
+// File upload for mobile librarian
+let mobileLibrarianSelectedFile = null;
+
+function openMobileLibrarianFileDialog() {
+  document.getElementById('mobile-librarian-file-input').click();
+}
+
+document.getElementById('mobile-librarian-file-input').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    handleMobileLibrarianFileSelection(file);
+  }
+});
+
+document.getElementById('mobile-librarian-remove-file-btn').addEventListener('click', function() {
+  clearMobileLibrarianFileSelection();
+});
+
+function handleMobileLibrarianFileSelection(file) {
+  // Check file size (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    alert('File size must be less than 5MB');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    mobileLibrarianSelectedFile = {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      data: e.target.result
+    };
+    
+    const filePreview = document.getElementById('mobile-librarian-file-preview');
+    const filePreviewImg = document.getElementById('mobile-librarian-file-preview-img');
+    const filePreviewInfo = document.getElementById('mobile-librarian-file-preview-info');
+    
+    filePreview.style.display = 'block';
+
+    // Show file info
+    const fileName = filePreviewInfo.querySelector('.file-name-mobile');
+    const fileSize = filePreviewInfo.querySelector('.file-size-mobile');
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+
+    // Show image preview if it's an image
+    if (file.type.startsWith('image/')) {
+      filePreviewImg.src = e.target.result;
+      filePreviewImg.style.display = 'block';
+      filePreviewInfo.querySelector('.file-icon-mobile').style.display = 'none';
+    } else {
+      filePreviewImg.style.display = 'none';
+      filePreviewInfo.querySelector('.file-icon-mobile').style.display = 'block';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearMobileLibrarianFileSelection() {
+  mobileLibrarianSelectedFile = null;
+  document.getElementById('mobile-librarian-file-input').value = '';
+  document.getElementById('mobile-librarian-file-preview').style.display = 'none';
+  document.getElementById('mobile-librarian-file-preview-img').src = '';
+}

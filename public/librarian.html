@@ -1203,6 +1203,7 @@
       padding: 20px 32px;
       border-top: 1px solid #334155;
       display: flex;
+      flex-direction: column;
       gap: 14px;
       background: #1e293b;
     }
@@ -1229,6 +1230,86 @@
       outline: none;
       border-color: #3b82f6;
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .modal-input .attach-btn {
+      width: 44px;
+      height: 44px;
+      background: #334155;
+      color: #94a3b8;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    
+    .modal-input .attach-btn:hover {
+      background: #3b82f6;
+      color: white;
+      transform: translateY(-2px);
+    }
+    
+    .modal-input .file-preview {
+      padding: 12px;
+      background: rgba(59, 130, 246, 0.1);
+      border-radius: 12px;
+      border: 2px solid #3b82f6;
+    }
+    
+    .modal-input .file-preview-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+    
+    .modal-input .file-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .modal-input .file-icon {
+      font-size: 32px;
+    }
+    
+    .modal-input .file-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+    
+    .modal-input .file-size {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    
+    .modal-input .remove-file-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 24px;
+      height: 24px;
+      background: #ef4444;
+      color: white;
+      border: 2px solid #1e293b;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+      transition: transform 0.2s;
+    }
+    
+    .modal-input .remove-file-btn:hover {
+      transform: scale(1.1);
     }
 
     .send-btn {
@@ -1666,8 +1747,27 @@
         </div>
       </div>
       <div class="modal-input">
-        <textarea id="response-input" placeholder="Type your response..."></textarea>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
+        <input type="file" id="librarian-file-input" accept="image/*,.pdf,.doc,.docx" style="display: none;" aria-label="Upload file">
+        <div id="librarian-file-preview" class="file-preview" style="display: none;">
+          <div class="file-preview-content">
+            <img id="librarian-file-preview-img" style="display: none; max-width: 200px; max-height: 200px; border-radius: 8px;" alt="File preview">
+            <div id="librarian-file-preview-info" class="file-info">
+              <span class="file-icon">📄</span>
+              <span class="file-name"></span>
+              <span class="file-size"></span>
+            </div>
+            <button id="librarian-remove-file-btn" class="remove-file-btn" aria-label="Remove file">×</button>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: flex-start;">
+          <button class="attach-btn" onclick="openLibrarianFileDialog()" title="Attach file">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="pointer-events: none;">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+          </button>
+          <textarea id="response-input" placeholder="Type your response..." style="flex: 1;"></textarea>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
           <button class="send-btn" onclick="sendResponse()">Send</button>
           <button class="warn-btn" onclick="sendWarning()">Warn Before Ending</button>
           <button class="end-session-btn" onclick="endSession()">End Session</button>
@@ -1686,6 +1786,7 @@
     let botNotificationTimeout = null;
     let viewedConversations = new Set(JSON.parse(localStorage.getItem('viewedConversations') || '[]')); // Track which conversations have been viewed
     let lastConversationsHash = ''; // Track if conversations changed
+    let librarianSelectedFile = null; // For file uploads
 
     // Save viewed conversations to localStorage whenever it changes
     function saveViewedConversations() {
@@ -2713,7 +2814,7 @@
       const input = document.getElementById('response-input');
       const message = input.value.trim();
       
-      if (!message || !currentSessionId) {
+      if ((!message && !librarianSelectedFile) || !currentSessionId) {
         return;
       }
 
@@ -2721,13 +2822,20 @@
       stopLibrarianTyping();
 
       try {
+        const requestBody = {
+          sessionId: currentSessionId,
+          message: message || '📎 File attached'
+        };
+        
+        // Add attachment if present
+        if (librarianSelectedFile) {
+          requestBody.attachment = librarianSelectedFile;
+        }
+
         const response = await fetch('/api/librarian/respond', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId: currentSessionId,
-            message: message
-          })
+          body: JSON.stringify(requestBody)
         });
 
         // Handle rate limiting
@@ -2746,6 +2854,7 @@
         
         if (data.success) {
           input.value = '';
+          clearLibrarianFileSelection();
           // Immediately refresh to show the sent message
           refreshConversation();
         } else {
@@ -2754,6 +2863,70 @@
       } catch (error) {
         alert('Error sending message: ' + error.message);
       }
+    }
+    
+    // File upload functions for librarian
+    function openLibrarianFileDialog() {
+      document.getElementById('librarian-file-input').click();
+    }
+    
+    document.getElementById('librarian-file-input').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        handleLibrarianFileSelection(file);
+      }
+    });
+    
+    document.getElementById('librarian-remove-file-btn').addEventListener('click', function() {
+      clearLibrarianFileSelection();
+    });
+    
+    function handleLibrarianFileSelection(file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        librarianSelectedFile = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: e.target.result
+        };
+        
+        const filePreview = document.getElementById('librarian-file-preview');
+        const filePreviewImg = document.getElementById('librarian-file-preview-img');
+        const filePreviewInfo = document.getElementById('librarian-file-preview-info');
+        
+        filePreview.style.display = 'block';
+
+        // Show file info
+        const fileName = filePreviewInfo.querySelector('.file-name');
+        const fileSize = filePreviewInfo.querySelector('.file-size');
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+
+        // Show image preview if it's an image
+        if (file.type.startsWith('image/')) {
+          filePreviewImg.src = e.target.result;
+          filePreviewImg.style.display = 'block';
+          filePreviewInfo.querySelector('.file-icon').style.display = 'none';
+        } else {
+          filePreviewImg.style.display = 'none';
+          filePreviewInfo.querySelector('.file-icon').style.display = 'block';
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    function clearLibrarianFileSelection() {
+      librarianSelectedFile = null;
+      document.getElementById('librarian-file-input').value = '';
+      document.getElementById('librarian-file-preview').style.display = 'none';
+      document.getElementById('librarian-file-preview-img').src = '';
     }
 
     async function sendWarning() {
