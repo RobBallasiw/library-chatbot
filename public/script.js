@@ -18,6 +18,8 @@ const filePreviewImg = document.getElementById('file-preview-img');
 const filePreviewInfo = document.getElementById('file-preview-info');
 const removeFileBtn = document.getElementById('remove-file-btn');
 const typingPreview = document.getElementById('typing-preview');
+const themeToggle = document.getElementById('theme-toggle');
+const quickReplies = document.getElementById('quick-replies');
 
 // Debug: Log element status
 console.log('=== FILE UPLOAD DEBUG ===');
@@ -34,6 +36,7 @@ let sessionId = generateSessionId();
 let conversationStatus = 'bot';
 let selectedFile = null;
 let typingPreviewTimeout = null;
+let messageReactions = {}; // Store reactions per message
 
 // Generate human-friendly session ID
 function generateSessionId() {
@@ -952,6 +955,11 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
     messageDiv.appendChild(feedbackDiv);
   }
   
+  // Add reaction support for bot/librarian messages
+  if (!isUser && messageId) {
+    addReactionButtonToMessage(messageDiv, messageId);
+  }
+  
   messagesContainer.appendChild(messageDiv);
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
@@ -1099,3 +1107,157 @@ document.addEventListener('click', (e) => {
     closeFeedbackModal();
   }
 });
+
+
+// ===== DARK/LIGHT MODE TOGGLE =====
+function loadTheme() {
+  const savedTheme = localStorage.getItem('chatTheme') || 'light';
+  if (savedTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+    document.querySelector('.sun-icon').style.display = 'none';
+    document.querySelector('.moon-icon').style.display = 'block';
+  }
+}
+
+if (themeToggle) {
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    
+    // Toggle icons
+    document.querySelector('.sun-icon').style.display = isDark ? 'none' : 'block';
+    document.querySelector('.moon-icon').style.display = isDark ? 'block' : 'none';
+    
+    // Save preference
+    localStorage.setItem('chatTheme', isDark ? 'dark' : 'light');
+  });
+}
+
+// Load theme on page load
+loadTheme();
+
+// ===== QUICK REPLIES =====
+if (quickReplies) {
+  const quickReplyButtons = quickReplies.querySelectorAll('.quick-reply-btn');
+  
+  quickReplyButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const message = btn.getAttribute('data-message');
+      userInput.value = message;
+      sendMessage();
+      
+      // Hide quick replies after first use
+      quickReplies.classList.add('hidden');
+    });
+  });
+  
+  // Hide quick replies when user starts typing
+  userInput.addEventListener('input', () => {
+    if (userInput.value.trim().length > 0) {
+      quickReplies.classList.add('hidden');
+    }
+  });
+  
+  // Show quick replies when input is empty and no messages
+  userInput.addEventListener('focus', () => {
+    if (userInput.value.trim().length === 0 && messagesContainer.children.length === 0) {
+      quickReplies.classList.remove('hidden');
+    }
+  });
+}
+
+// ===== MESSAGE REACTIONS =====
+function addReactionToMessage(messageId, emoji) {
+  if (!messageReactions[messageId]) {
+    messageReactions[messageId] = {};
+  }
+  
+  if (!messageReactions[messageId][emoji]) {
+    messageReactions[messageId][emoji] = 0;
+  }
+  
+  messageReactions[messageId][emoji]++;
+  updateReactionDisplay(messageId);
+  
+  // Send to server
+  fetch('/api/reactions/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId, messageId, emoji })
+  }).catch(err => console.error('Error saving reaction:', err));
+}
+
+function updateReactionDisplay(messageId) {
+  const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!messageEl) return;
+  
+  let reactionsContainer = messageEl.querySelector('.message-reactions');
+  if (!reactionsContainer) {
+    reactionsContainer = document.createElement('div');
+    reactionsContainer.className = 'message-reactions';
+    messageEl.appendChild(reactionsContainer);
+  }
+  
+  reactionsContainer.innerHTML = '';
+  
+  const reactions = messageReactions[messageId] || {};
+  Object.entries(reactions).forEach(([emoji, count]) => {
+    if (count > 0) {
+      const reactionBtn = document.createElement('button');
+      reactionBtn.className = 'reaction-btn';
+      reactionBtn.innerHTML = `${emoji} <span class="reaction-count">${count}</span>`;
+      reactionsContainer.appendChild(reactionBtn);
+    }
+  });
+  
+  // Add "+" button to add more reactions
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-reaction-btn';
+  addBtn.textContent = '+';
+  addBtn.onclick = (e) => {
+    e.stopPropagation();
+    showReactionPicker(messageId, addBtn);
+  };
+  reactionsContainer.appendChild(addBtn);
+}
+
+function showReactionPicker(messageId, buttonEl) {
+  // Remove any existing picker
+  document.querySelectorAll('.reaction-picker').forEach(p => p.remove());
+  
+  const picker = document.createElement('div');
+  picker.className = 'reaction-picker active';
+  
+  const emojis = ['👍', '❤️', '😊', '😂', '🎉', '🔥', '👏', '✨'];
+  emojis.forEach(emoji => {
+    const option = document.createElement('button');
+    option.className = 'reaction-option';
+    option.textContent = emoji;
+    option.onclick = () => {
+      addReactionToMessage(messageId, emoji);
+      picker.remove();
+    };
+    picker.appendChild(option);
+  });
+  
+  buttonEl.parentElement.style.position = 'relative';
+  buttonEl.parentElement.appendChild(picker);
+  
+  // Close picker when clicking outside
+  setTimeout(() => {
+    document.addEventListener('click', function closePicker(e) {
+      if (!picker.contains(e.target)) {
+        picker.remove();
+        document.removeEventListener('click', closePicker);
+      }
+    });
+  }, 100);
+}
+
+// Add reaction button to bot messages
+function addReactionButtonToMessage(messageDiv, messageId) {
+  // Only add to bot/librarian messages
+  if (messageDiv.classList.contains('bot-message')) {
+    updateReactionDisplay(messageId);
+  }
+}
