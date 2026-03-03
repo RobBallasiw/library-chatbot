@@ -275,14 +275,51 @@ function renderMessages(messages) {
     const roleLabel = msg.role === 'user' ? 'User' : msg.role === 'librarian' ? 'You' : 'Bot';
     const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
+    let attachmentHtml = '';
+    
+    // Check if message has attachment
+    if (msg.attachment) {
+      if (msg.attachment.type && msg.attachment.type.startsWith('image/') && msg.attachment.data) {
+        // Display image
+        attachmentHtml = `
+          <div class="message-attachment">
+            <img src="${msg.attachment.data}" alt="${msg.attachment.name || 'Image'}" style="max-width: 100%; max-height: 300px; border-radius: 8px; margin-top: 8px;">
+            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
+              📎 ${msg.attachment.name || 'Image'} (${formatFileSize(msg.attachment.size || 0)})
+            </div>
+          </div>
+        `;
+      } else {
+        // Display file info
+        attachmentHtml = `
+          <div class="message-attachment" style="margin-top: 8px; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; border: 1px solid rgba(102, 126, 234, 0.2);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 28px;">📄</span>
+              <div>
+                <div style="font-weight: 600; font-size: 13px;">${msg.attachment.name || 'File'}</div>
+                <div style="font-size: 11px; color: #64748b;">${formatFileSize(msg.attachment.size || 0)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+    
     return `
       <div class="message ${roleClass}">
         <div class="message-role">${roleLabel}</div>
         <div class="message-content">${msg.content}</div>
+        ${attachmentHtml}
         <div class="message-time">${time}</div>
       </div>
     `;
   }).join('');
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
 // Close modal

@@ -2467,16 +2467,55 @@
         return;
       }
 
-      messagesEl.innerHTML = conversation.messages.map(msg => `
-        <div class="message ${msg.role || 'unknown'}">
-          <div class="message-role">${msg.role || 'unknown'}</div>
-          <div class="message-content">${escapeHtml(msg.content || '')}</div>
-          <div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'Unknown time'}</div>
-        </div>
-      `).join('');
+      messagesEl.innerHTML = conversation.messages.map(msg => {
+        let attachmentHtml = '';
+        
+        // Check if message has attachment
+        if (msg.attachment) {
+          if (msg.attachment.type && msg.attachment.type.startsWith('image/') && msg.attachment.data) {
+            // Display image
+            attachmentHtml = `
+              <div class="message-attachment">
+                <img src="${msg.attachment.data}" alt="${msg.attachment.name || 'Image'}" style="max-width: 300px; max-height: 300px; border-radius: 8px; margin-top: 8px;">
+                <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
+                  📎 ${msg.attachment.name || 'Image'} (${formatFileSize(msg.attachment.size || 0)})
+                </div>
+              </div>
+            `;
+          } else {
+            // Display file info
+            attachmentHtml = `
+              <div class="message-attachment" style="margin-top: 8px; padding: 12px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; border: 1px solid rgba(102, 126, 234, 0.2);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span style="font-size: 32px;">📄</span>
+                  <div>
+                    <div style="font-weight: 600; color: #1e293b;">${msg.attachment.name || 'File'}</div>
+                    <div style="font-size: 12px; color: #64748b;">${formatFileSize(msg.attachment.size || 0)}</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+        }
+        
+        return `
+          <div class="message ${msg.role || 'unknown'}">
+            <div class="message-role">${msg.role || 'unknown'}</div>
+            <div class="message-content">${escapeHtml(msg.content || '')}</div>
+            ${attachmentHtml}
+            <div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'Unknown time'}</div>
+          </div>
+        `;
+      }).join('');
       
       // Force scroll to bottom immediately
       messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+    
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
     
     function updateSentimentIndicator(conversation) {
