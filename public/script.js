@@ -462,6 +462,7 @@ async function checkForLibrarianIntervention() {
   try {
     const response = await fetch(`/api/conversation/${sessionId}?skipView=true`);
     
+    // Silently ignore 404 (conversation not created yet) and other errors
     if (!response.ok) {
       return;
     }
@@ -639,7 +640,7 @@ async function checkForNewMessages() {
             
             // Start polling if not already polling
             if (!pollingInterval) {
-              pollingInterval = setInterval(checkForNewMessages, 3000);
+              pollingInterval = setInterval(checkForNewMessages, 5000); // Changed from 3s to 5s
             }
           }
         } else if (msg.role === 'assistant') {
@@ -827,7 +828,7 @@ setInterval(() => {
   if (conversationStatus === 'human' || conversationStatus === 'responded') {
     checkLibrarianTyping();
   }
-}, 2000);
+}, 4000); // Changed from 2s to 4s to reduce server load
 
 
 // Welcome message (only once on page load)
