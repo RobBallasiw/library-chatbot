@@ -137,5 +137,50 @@
   </div>
 
   <script src="librarian-mobile.js"></script>
+
+  <!-- Theme Toggle Button -->
+  <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    ☀️
+  </button>
+
+  <script>
+    // Theme Toggle Functionality
+    function toggleTheme() {
+      const body = document.body;
+      const currentTheme = body.classList.contains('dark-mode') ? 'dark' : 'light';
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      
+      if (newTheme === 'dark') {
+        body.classList.add('dark-mode');
+      } else {
+        body.classList.remove('dark-mode');
+      }
+      
+      // Save preference
+      localStorage.setItem('mobileTheme', newTheme);
+      
+      // Update toggle icon
+      updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+      const themeToggle = document.getElementById('theme-toggle');
+      const isDark = document.body.classList.contains('dark-mode');
+      themeToggle.textContent = isDark ? '☀️' : '🌙';
+    }
+
+    // Load saved theme on page load
+    function loadTheme() {
+      const savedTheme = localStorage.getItem('mobileTheme') || 'light';
+      if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+      }
+      updateThemeIcon();
+    }
+
+    // Initialize theme
+    loadTheme();
+  </script>
+
 </body>
 </html>
