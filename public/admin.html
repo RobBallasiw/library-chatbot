@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard - Librarian Management</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -836,6 +837,99 @@
       font-size: 18px;
       color: #10b981;
       font-weight: 700;
+    }
+
+    /* Analytics Enhancements */
+    .analytics-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .date-range-picker {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #1e293b;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+    }
+
+    .date-range-picker label {
+      font-size: 14px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .date-range-picker select {
+      background: #0f172a;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .date-range-picker select:hover {
+      border-color: #047857;
+    }
+
+    .date-range-picker select:focus {
+      outline: none;
+      border-color: #047857;
+      box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.1);
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .chart-section {
+      min-height: 350px;
+    }
+
+    .chart-container {
+      padding: 20px;
+      position: relative;
+      height: 280px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 20px;
+      font-size: 13px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    @media (max-width: 1024px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* Hide old header and tabs */
@@ -2250,14 +2344,28 @@
   <!-- Analytics Tab -->
   <div id="analytics-tab" class="tab-content">
     
+    <!-- Date Range Picker -->
+    <div class="analytics-controls">
+      <div class="date-range-picker">
+        <label>📅 Date Range:</label>
+        <select id="date-range-select" onchange="changeDateRange()">
+          <option value="7">Last 7 Days</option>
+          <option value="14">Last 14 Days</option>
+          <option value="30" selected>Last 30 Days</option>
+          <option value="90">Last 90 Days</option>
+        </select>
+      </div>
+      <button class="refresh-btn" onclick="loadAnalytics()">
+        <span>🔄</span>
+        <span>Refresh</span>
+      </button>
+    </div>
+
     <!-- Summary Stats -->
     <div class="section">
       <div class="section-header">
         <h2>📊 Overview</h2>
-        <div style="display: flex; gap: 10px; align-items: center;">
-          <span style="font-size: 12px; color: #666;" id="analytics-last-update">Never updated</span>
-          <button class="refresh-btn" onclick="loadAnalytics()">🔄 Refresh</button>
-        </div>
+        <span style="font-size: 12px; color: #64748b;" id="analytics-last-update">Never updated</span>
       </div>
       <div style="padding: 20px;">
         <div id="analytics-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -2289,6 +2397,33 @@
       </div>
     </div>
 
+    <!-- Charts Grid -->
+    <div class="charts-grid">
+      <!-- Activity Chart -->
+      <div class="section chart-section">
+        <div class="section-header">
+          <h2>📈 Activity Trend</h2>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot" style="background: #3b82f6;"></span> Conversations</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #10b981;"></span> Messages</span>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="activity-chart-canvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Status Breakdown Chart -->
+      <div class="section chart-section">
+        <div class="section-header">
+          <h2>🎯 Status Distribution</h2>
+        </div>
+        <div class="chart-container">
+          <canvas id="status-chart-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+
     <!-- Conversations by Status -->
     <div class="section">
       <div class="section-header">
@@ -2297,18 +2432,6 @@
       <div style="padding: 20px;">
         <div id="status-breakdown" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
           <!-- Populated by JS -->
-        </div>
-      </div>
-    </div>
-
-    <!-- Last 7 Days Activity -->
-    <div class="section">
-      <div class="section-header">
-        <h2>Last 7 Days Activity</h2>
-      </div>
-      <div style="padding: 20px;">
-        <div id="activity-chart" style="min-height: 200px;">
-          <!-- Simple bar chart -->
         </div>
       </div>
     </div>
@@ -3452,11 +3575,213 @@
           `;
         }).join('');
 
-      // Activity chart (simple bar chart)
-      renderActivityChart(analyticsData.last7Days);
+      // Render charts
+      renderActivityChartCanvas(analyticsData.last7Days);
+      renderStatusChartCanvas(analyticsData.conversationsByStatus);
 
       // Active conversations
       renderActiveConversations(analyticsData.activeConversations);
+    }
+
+    // Chart instances
+    let activityChartInstance = null;
+    let statusChartInstance = null;
+
+    // Render activity chart with Chart.js
+    function renderActivityChartCanvas(data) {
+      const canvas = document.getElementById('activity-chart-canvas');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      
+      // Destroy existing chart
+      if (activityChartInstance) {
+        activityChartInstance.destroy();
+      }
+      
+      if (!data || data.length === 0) {
+        return;
+      }
+
+      const labels = data.map(d => {
+        const date = new Date(d.date);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      });
+
+      activityChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Conversations',
+              data: data.map(d => d.conversations),
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              pointBackgroundColor: '#3b82f6',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2
+            },
+            {
+              label: 'Messages',
+              data: data.map(d => d.messages),
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              pointBackgroundColor: '#10b981',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: '#1e293b',
+              titleColor: '#f1f5f9',
+              bodyColor: '#e2e8f0',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 12,
+              displayColors: true,
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.parsed.y;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: '#334155',
+                drawBorder: false
+              },
+              ticks: {
+                color: '#94a3b8',
+                font: {
+                  size: 12
+                }
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                color: '#94a3b8',
+                font: {
+                  size: 12
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Render status chart with Chart.js
+    function renderStatusChartCanvas(statusData) {
+      const canvas = document.getElementById('status-chart-canvas');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      
+      // Destroy existing chart
+      if (statusChartInstance) {
+        statusChartInstance.destroy();
+      }
+
+      const statusLabels = {
+        bot: { label: 'Bot', color: '#3b82f6' },
+        human: { label: 'Waiting', color: '#f59e0b' },
+        responded: { label: 'Responded', color: '#10b981' },
+        viewed: { label: 'Viewed', color: '#8b5cf6' },
+        closed: { label: 'Closed', color: '#6b7280' }
+      };
+
+      const labels = [];
+      const data = [];
+      const colors = [];
+
+      Object.entries(statusData).forEach(([status, count]) => {
+        const info = statusLabels[status] || { label: status, color: '#667eea' };
+        labels.push(info.label);
+        data.push(count);
+        colors.push(info.color);
+      });
+
+      statusChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: colors,
+            borderColor: '#1e293b',
+            borderWidth: 3,
+            hoverOffset: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#94a3b8',
+                padding: 15,
+                font: {
+                  size: 13,
+                  weight: '600'
+                },
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
+            },
+            tooltip: {
+              backgroundColor: '#1e293b',
+              titleColor: '#f1f5f9',
+              bodyColor: '#e2e8f0',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 12,
+              callbacks: {
+                label: function(context) {
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((context.parsed / total) * 100).toFixed(1);
+                  return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Change date range
+    function changeDateRange() {
+      const days = document.getElementById('date-range-select').value;
+      // In a real implementation, this would fetch data for the selected range
+      console.log('Date range changed to:', days, 'days');
+      // For now, just reload analytics
+      loadAnalytics();
     }
 
     // Render simple activity chart
