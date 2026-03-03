@@ -246,7 +246,7 @@
     /* Header */
     .header {
       background: linear-gradient(135deg, #047857 0%, #065f46 100%);
-      padding: 40px;
+      padding: 48px 40px;
       margin-bottom: 0;
       position: relative;
       overflow: hidden;
@@ -264,24 +264,26 @@
       opacity: 0.3;
     }
 
-    .header > * {
+    .header-content {
       position: relative;
       z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
     }
 
     .header h1 {
-      font-size: 36px;
+      font-size: 42px;
       font-weight: 800;
       color: white;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
     }
 
     .header h1::before {
       content: '🔐';
-      font-size: 40px;
+      font-size: 48px;
       animation: float 3s ease-in-out infinite;
     }
 
@@ -292,19 +294,61 @@
 
     .header p {
       color: rgba(255, 255, 255, 0.9);
-      font-size: 16px;
-      margin-bottom: 16px;
+      font-size: 17px;
+      margin-bottom: 24px;
+      max-width: 600px;
     }
 
-    .header p:last-child {
+    .header-stats {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .header-stat-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .header-stat-item:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .header-stat-item .stat-icon {
+      font-size: 24px;
+    }
+
+    .header-stat-item span:nth-child(2) {
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+    }
+
+    .header-stat-item .stat-text {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 600;
+    }
+
+    .status-indicator-wrapper {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 16px;
+      padding: 10px 18px;
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
       border-radius: 20px;
       font-size: 13px;
+      color: white;
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
@@ -1217,12 +1261,32 @@
   </style>
 </head>
 <body>
+  <!-- Header -->
   <div class="header">
-    <h1>🔐 Admin Dashboard</h1>
-    <p>Manage librarian access and permissions</p>
-    <p style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
-      <span id="status-indicator">🔄 Checking for updates...</span>
-    </p>
+    <div class="header-content">
+      <h1>Admin Dashboard</h1>
+      <p>Manage librarian access, responses, and monitor system analytics</p>
+      <div class="header-stats">
+        <div class="header-stat-item">
+          <span class="stat-icon">👥</span>
+          <span id="header-librarian-count">0</span>
+          <span class="stat-text">Librarians</span>
+        </div>
+        <div class="header-stat-item">
+          <span class="stat-icon">💬</span>
+          <span id="header-template-count">0</span>
+          <span class="stat-text">Templates</span>
+        </div>
+        <div class="header-stat-item">
+          <span class="stat-icon">📊</span>
+          <span id="header-conversation-count">0</span>
+          <span class="stat-text">Conversations</span>
+        </div>
+      </div>
+      <div class="status-indicator-wrapper">
+        <span id="status-indicator">🔄 Monitoring for changes...</span>
+      </div>
+    </div>
   </div>
 
   <div id="alert-container"></div>
@@ -1571,9 +1635,36 @@
         renderAuthorized();
         renderPending();
         updateKeywordDisplay();
+        updateHeaderStats();
       } catch (error) {
         console.error('Error loading data:', error);
         // Don't show alert for every polling error, just log it
+      }
+    }
+
+    function updateHeaderStats() {
+      // Update librarian count
+      const librarianCountEl = document.getElementById('header-librarian-count');
+      if (librarianCountEl) {
+        librarianCountEl.textContent = authorizedLibrarians.length;
+      }
+      
+      // Update template count
+      const templateCountEl = document.getElementById('header-template-count');
+      if (templateCountEl && cannedResponsesData) {
+        let totalTemplates = 0;
+        if (cannedResponsesData.categories) {
+          cannedResponsesData.categories.forEach(cat => {
+            totalTemplates += cat.templates ? cat.templates.length : 0;
+          });
+        }
+        templateCountEl.textContent = totalTemplates;
+      }
+      
+      // Update conversation count
+      const conversationCountEl = document.getElementById('header-conversation-count');
+      if (conversationCountEl && analyticsData && analyticsData.summary) {
+        conversationCountEl.textContent = analyticsData.summary.totalConversations || 0;
       }
     }
 
@@ -1860,6 +1951,7 @@
         cannedResponsesData = await response.json();
         renderCategories();
         updateUsageStats();
+        updateHeaderStats();
       } catch (error) {
         showAlert('Error loading canned responses: ' + error.message, 'error');
       }
@@ -2295,6 +2387,9 @@
       document.getElementById('stat-response-time').textContent = analyticsData.summary.averageResponseTime + 'ms';
       document.getElementById('stat-active').textContent = analyticsData.summary.activeConversations;
       document.getElementById('stat-uptime').textContent = analyticsData.summary.uptime;
+
+      // Update header stats
+      updateHeaderStats();
 
       // Status breakdown
       const statusBreakdown = document.getElementById('status-breakdown');
