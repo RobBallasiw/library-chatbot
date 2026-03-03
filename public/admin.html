@@ -107,6 +107,10 @@
       color: white;
     }
 
+    body.light-mode .tab-icon {
+      filter: none;
+    }
+
     body.light-mode .tab-content {
       background: transparent;
     }
@@ -688,7 +692,19 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+    }
+
+    .tab-icon {
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tab-label {
+      display: flex;
+      align-items: center;
     }
 
     .tab-btn:hover {
@@ -703,6 +719,15 @@
       border-color: #047857;
       color: white;
       box-shadow: 0 4px 16px rgba(4, 120, 87, 0.4);
+    }
+
+    .tab-btn.active .tab-icon {
+      animation: bounce 0.5s ease;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
     }
 
     .tab-content {
@@ -1197,10 +1222,22 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('librarians')">👥 Librarians</button>
-    <button class="tab-btn" onclick="switchTab('responses')">💬 Canned Responses</button>
-    <button class="tab-btn" onclick="switchTab('analytics')">📊 Analytics</button>
-    <button class="tab-btn" onclick="switchTab('feedback')">⭐ Feedback</button>
+    <button class="tab-btn active" onclick="switchTab('librarians')">
+      <span class="tab-icon">👥</span>
+      <span class="tab-label">Librarians</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('responses')">
+      <span class="tab-icon">💬</span>
+      <span class="tab-label">Canned Responses</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('analytics')">
+      <span class="tab-icon">📊</span>
+      <span class="tab-label">Analytics</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('feedback')">
+      <span class="tab-icon">⭐</span>
+      <span class="tab-label">Feedback</span>
+    </button>
   </div>
 
   <!-- Librarians Tab -->
