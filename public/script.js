@@ -10,10 +10,21 @@ const requestLibrarianBtn = document.getElementById('request-librarian');
 const newChatBtn = document.getElementById('new-chat-btn');
 const statusIndicator = document.querySelector('.status');
 
+// New elements for features
+const attachBtn = document.getElementById('attach-btn');
+const fileInput = document.getElementById('file-input');
+const filePreview = document.getElementById('file-preview');
+const filePreviewImg = document.getElementById('file-preview-img');
+const filePreviewInfo = document.getElementById('file-preview-info');
+const removeFileBtn = document.getElementById('remove-file-btn');
+const typingPreview = document.getElementById('typing-preview');
+
 let conversationHistory = [];
 let isFirstOpen = true;
 let sessionId = generateSessionId();
 let conversationStatus = 'bot';
+let selectedFile = null;
+let typingPreviewTimeout = null;
 
 // Generate human-friendly session ID
 function generateSessionId() {
@@ -46,9 +57,132 @@ closeChat.addEventListener('click', () => {
   chatToggle.classList.remove('hidden');
 });
 
-function addMessage(content, isUser, sender = null) {
-  const messageId = isUser ? null : `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  addMessageWithFeedback(content, isUser, sender, messageId);
+// File upload functionality
+attachBtn.addEventListener('click', () => {
+  fileInput.click();
+});
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    handleFileSelection(file);
+  }
+});
+
+removeFileBtn.addEventListener('click', () => {
+  clearFileSelection();
+});
+
+function handleFileSelection(file) {
+  // Check file size (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    alert('File size must be less than 5MB');
+    return;
+  }
+
+  selectedFile = file;
+  filePreview.style.display = 'block';
+
+  // Show file info
+  const fileName = filePreviewInfo.querySelector('.file-name');
+  const fileSize = filePreviewInfo.querySelector('.file-size');
+  fileName.textContent = file.name;
+  fileSize.textContent = formatFileSize(file.size);
+
+  // Show image preview if it's an image
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      filePreviewImg.src = e.target.result;
+      filePreviewImg.style.display = 'block';
+      filePreviewInfo.querySelector('.file-icon').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    filePreviewImg.style.display = 'none';
+    filePreviewInfo.querySelector('.file-icon').style.display = 'block';
+  }
+}
+
+function clearFileSelection() {
+  selectedFile = null;
+  fileInput.value = '';
+  filePreview.style.display = 'none';
+  filePreviewImg.src = '';
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// Typing preview functionality
+userInput.addEventListener('input', () => {
+  const text = userInput.value.trim();
+  
+  if (text.length > 0) {
+    // Show typing preview
+    typingPreview.style.display = 'flex';
+    typingPreview.querySelector('.typing-preview-text').textContent = text;
+    
+    // Clear previous timeout
+    if (typingPreviewTimeout) {
+      clearTimeout(typingPreviewTimeout);
+    }
+    
+    // Hide preview after 2 seconds of no typing
+    typingPreviewTimeout = setTimeout(() => {
+      typingPreview.style.display = 'none';
+    }, 2000);
+  } else {
+    typingPreview.style.display = 'none';
+  }
+});
+
+// Hide typing preview on Enter
+userInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    typingPreview.style.display = 'none';
+    if (typingPreviewTimeout) {
+      clearTimeout(typingPreviewTimeout);
+    }
+  }
+});
+
+function addMessage(content, isUser, sender = null, attachment = null) {
+  const messageId = isUser ? `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  addMessageWithFeedback(content, isUser, sender, messageId, attachment);
+  
+  // Update message status for user messages
+  if (isUser) {
+    setTimeout(() => updateMessageStatus(messageId, 'sent'), 500);
+    setTimeout(() => updateMessageStatus(messageId, 'delivered'), 1000);
+  }
+}
+
+function updateMessageStatus(messageId, status) {
+  const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!messageEl) return;
+  
+  const statusEl = messageEl.querySelector('.message-status');
+  if (!statusEl) return;
+  
+  const icons = {
+    sending: '○',
+    sent: '✓',
+    delivered: '✓✓',
+    read: '✓✓'
+  };
+  
+  const classes = {
+    sending: 'status-sending',
+    sent: 'status-sent',
+    delivered: 'status-delivered',
+    read: 'status-read'
+  };
+  
+  statusEl.innerHTML = `<span class="status-icon ${classes[status]}">${icons[status]}</span>`;
 }
 
 function showTypingIndicator() {
@@ -69,7 +203,7 @@ function removeTypingIndicator() {
 
 async function sendMessage() {
   const message = userInput.value.trim();
-  if (!message) return;
+  if (!message && !selectedFile) return;
 
   // Stop typing indicator when sending
   if (isUserTyping) {
@@ -81,8 +215,26 @@ async function sendMessage() {
     typingTimeout = null;
   }
 
-  addMessage(message, true);
+  // Prepare attachment data
+  let attachmentData = null;
+  if (selectedFile) {
+    const reader = new FileReader();
+    const fileData = await new Promise((resolve) => {
+      reader.onload = (e) => resolve(e.target.result);
+      reader.readAsDataURL(selectedFile);
+    });
+    
+    attachmentData = {
+      name: selectedFile.name,
+      type: selectedFile.type,
+      size: selectedFile.size,
+      data: fileData
+    };
+  }
+
+  addMessage(message || '📎 Sent a file', true, null, attachmentData);
   userInput.value = '';
+  clearFileSelection();
   sendBtn.disabled = true;
   showTypingIndicator();
 
@@ -91,14 +243,25 @@ async function sendMessage() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
+    const requestBody = { 
+      message: message || '📎 File attached',
+      history: conversationHistory,
+      sessionId
+    };
+    
+    // Add attachment info (not the full data, just metadata)
+    if (attachmentData) {
+      requestBody.attachment = {
+        name: attachmentData.name,
+        type: attachmentData.type,
+        size: attachmentData.size
+      };
+    }
+
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        message,
-        history: conversationHistory,
-        sessionId
-      }),
+      body: JSON.stringify(requestBody),
       signal: controller.signal
     });
 
@@ -574,7 +737,7 @@ let selectedRating = 0;
 let messageFeedback = {}; // Store feedback for individual messages
 
 // Add feedback buttons to bot messages
-function addMessageWithFeedback(content, isUser, sender = null, messageId = null) {
+function addMessageWithFeedback(content, isUser, sender = null, messageId = null, attachment = null) {
   const messageDiv = document.createElement('div');
   messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
   
@@ -593,6 +756,37 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
   const contentDiv = document.createElement('div');
   contentDiv.textContent = content;
   messageDiv.appendChild(contentDiv);
+  
+  // Add attachment if present
+  if (attachment) {
+    const attachmentDiv = document.createElement('div');
+    attachmentDiv.className = 'message-attachment';
+    
+    if (attachment.type.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = attachment.data;
+      img.alt = attachment.name;
+      attachmentDiv.appendChild(img);
+    } else {
+      attachmentDiv.innerHTML = `
+        <span class="attachment-icon">📄</span>
+        <div class="attachment-info">
+          <div class="attachment-name">${attachment.name}</div>
+          <div class="attachment-size">${formatFileSize(attachment.size)}</div>
+        </div>
+      `;
+    }
+    
+    messageDiv.appendChild(attachmentDiv);
+  }
+  
+  // Add message status for user messages
+  if (isUser) {
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'message-status';
+    statusDiv.innerHTML = '<span class="status-icon status-sending">○</span>';
+    messageDiv.appendChild(statusDiv);
+  }
   
   // Add feedback buttons for bot messages (not librarian)
   if (!isUser && sender === 'bot' && messageId) {
