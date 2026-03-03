@@ -18,6 +18,7 @@
       min-height: 100vh;
       overflow-x: hidden;
       transition: background-color 0.3s ease, color 0.3s ease;
+      display: flex;
     }
 
     /* Light Mode */
@@ -26,8 +27,48 @@
       color: #1e293b;
     }
 
-    body.light-mode .header {
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    body.light-mode .sidebar {
+      background: #ffffff;
+      border-right-color: #e2e8f0;
+    }
+
+    body.light-mode .sidebar-header h1 {
+      color: #1e293b;
+    }
+
+    body.light-mode .sidebar-header p {
+      color: #64748b;
+    }
+
+    body.light-mode .nav-item {
+      color: #64748b;
+    }
+
+    body.light-mode .nav-item:hover {
+      background: #f8fafc;
+      color: #047857;
+    }
+
+    body.light-mode .nav-item.active {
+      background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+      color: white;
+    }
+
+    body.light-mode .main-content {
+      background: #f5f7fa;
+    }
+
+    body.light-mode .top-bar {
+      background: #ffffff;
+      border-bottom-color: #e2e8f0;
+    }
+
+    body.light-mode .page-title {
+      color: #1e293b;
+    }
+
+    body.light-mode .page-subtitle {
+      color: #64748b;
     }
 
     body.light-mode .section {
@@ -243,11 +284,208 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     }
 
-    /* Header */
-    .header {
+    /* Sidebar Layout */
+    .sidebar {
+      width: 280px;
+      background: #1e293b;
+      border-right: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      z-index: 100;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-header {
+      padding: 32px 24px;
+      border-bottom: 1px solid #334155;
       background: linear-gradient(135deg, #047857 0%, #065f46 100%);
-      padding: 48px 40px;
-      margin-bottom: 0;
+    }
+
+    .sidebar-header h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar-header h1::before {
+      content: '🔐';
+      font-size: 28px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .sidebar-header p {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.4;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 24px 16px;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #94a3b8;
+      font-size: 15px;
+      font-weight: 600;
+      border: 2px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: rgba(4, 120, 87, 0.1);
+      color: #10b981;
+      transform: translateX(4px);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(4, 120, 87, 0.3);
+      border-color: #047857;
+    }
+
+    .nav-icon {
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: #ef4444;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      padding: 20px;
+      border-top: 1px solid #334155;
+    }
+
+    .status-indicator-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: rgba(4, 120, 87, 0.1);
+      border-radius: 8px;
+      font-size: 12px;
+      color: #10b981;
+      border: 1px solid rgba(4, 120, 87, 0.2);
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      background: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-bar {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 4px;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .top-bar-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .refresh-btn {
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .refresh-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(4, 120, 87, 0.4);
+    }
+
+    .content-area {
+      flex: 1;
+      padding: 32px 40px;
+      overflow-y: auto;
+    }
+
+    /* Hide old header and tabs */
+    .header {
+      display: none;
+    }
+
+    .tabs {
+      display: none;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
       position: relative;
       overflow: hidden;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -1199,6 +1437,50 @@
     @media (max-width: 768px) {
       body {
         padding: 0;
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid #334155;
+      }
+
+      .sidebar-header {
+        padding: 20px 16px;
+      }
+
+      .sidebar-header h1 {
+        font-size: 20px;
+      }
+
+      .sidebar-nav {
+        padding: 16px;
+        display: flex;
+        overflow-x: auto;
+        flex-direction: row;
+      }
+
+      .nav-item {
+        flex-shrink: 0;
+        min-width: 140px;
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .top-bar {
+        padding: 16px 20px;
+      }
+
+      .page-title {
+        font-size: 22px;
+      }
+
+      .content-area {
+        padding: 20px 16px;
       }
 
       .header {
@@ -1261,8 +1543,60 @@
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <div class="header">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1>Admin Panel</h1>
+      <p>Manage librarians, responses & analytics</p>
+    </div>
+    
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="switchTab('librarians')">
+        <span class="nav-icon">👥</span>
+        <span>Librarians</span>
+        <span class="nav-badge" id="pending-badge" style="display: none;">0</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('responses')">
+        <span class="nav-icon">💬</span>
+        <span>Canned Responses</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('analytics')">
+        <span class="nav-icon">📊</span>
+        <span>Analytics</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('feedback')">
+        <span class="nav-icon">⭐</span>
+        <span>Feedback</span>
+      </div>
+    </div>
+    
+    <div class="sidebar-footer">
+      <div class="status-indicator-wrapper">
+        <span id="status-indicator">🔄 Monitoring...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="top-bar">
+      <div>
+        <div class="page-title" id="page-title">Librarians</div>
+        <div class="page-subtitle" id="page-subtitle">Manage librarian access and permissions</div>
+      </div>
+      <div class="top-bar-actions">
+        <button class="refresh-btn" onclick="refreshCurrentTab()">
+          <span>🔄</span>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div id="alert-container"></div>
+
+  <!-- Header (hidden, kept for compatibility) -->
+  <div class="header" style="display: none;">
     <div class="header-content">
       <h1>Admin Dashboard</h1>
       <p>Manage librarian access, responses, and monitor system analytics</p>
@@ -1283,16 +1617,14 @@
           <span class="stat-text">Conversations</span>
         </div>
       </div>
-      <div class="status-indicator-wrapper">
-        <span id="status-indicator">🔄 Monitoring for changes...</span>
+      <div class="status-indicator-wrapper-old">
+        <span id="status-indicator-old">🔄 Monitoring for changes...</span>
       </div>
     </div>
   </div>
 
-  <div id="alert-container"></div>
-
-  <!-- Tabs -->
-  <div class="tabs">
+  <!-- Tabs (hidden, kept for compatibility) -->
+  <div class="tabs" style="display: none;">
     <button class="tab-btn active" onclick="switchTab('librarians')">
       <span class="tab-icon">👥</span>
       <span class="tab-label">Librarians</span>
@@ -1714,8 +2046,19 @@
     function renderPending() {
       const listEl = document.getElementById('pending-list');
       const countEl = document.getElementById('pending-count');
+      const badgeEl = document.getElementById('pending-badge');
       
       countEl.textContent = pendingRequests.length;
+      
+      // Update sidebar badge
+      if (badgeEl) {
+        if (pendingRequests.length > 0) {
+          badgeEl.textContent = pendingRequests.length;
+          badgeEl.style.display = 'block';
+        } else {
+          badgeEl.style.display = 'none';
+        }
+      }
       
       if (pendingRequests.length === 0) {
         listEl.innerHTML = '<div class="empty-state">No pending requests</div>';
@@ -1910,13 +2253,28 @@
 
     // Tab switching
     function switchTab(tabName) {
-      // Update tab buttons
+      // Update nav items
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      event.target.closest('.nav-item').classList.add('active');
+      
+      // Update tab buttons (for compatibility)
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
 
       // Update tab content
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
       document.getElementById(tabName + '-tab').classList.add('active');
+
+      // Update page title and subtitle
+      const titles = {
+        librarians: { title: 'Librarians', subtitle: 'Manage librarian access and permissions' },
+        responses: { title: 'Canned Responses', subtitle: 'Manage response templates and categories' },
+        analytics: { title: 'Analytics', subtitle: 'Monitor system performance and usage' },
+        feedback: { title: 'Feedback', subtitle: 'View user feedback and ratings' }
+      };
+      
+      const pageInfo = titles[tabName] || { title: 'Dashboard', subtitle: '' };
+      document.getElementById('page-title').textContent = pageInfo.title;
+      document.getElementById('page-subtitle').textContent = pageInfo.subtitle;
 
       // Load canned responses if switching to that tab
       if (tabName === 'responses' && !cannedResponsesData) {
@@ -1940,6 +2298,24 @@
       
       // Load feedback if switching to that tab
       if (tabName === 'feedback') {
+        loadFeedback();
+      }
+    }
+
+    // Refresh current tab
+    function refreshCurrentTab() {
+      const activeTab = document.querySelector('.tab-content.active');
+      if (!activeTab) return;
+      
+      const tabId = activeTab.id.replace('-tab', '');
+      
+      if (tabId === 'librarians') {
+        loadData();
+      } else if (tabId === 'responses') {
+        loadCannedResponses();
+      } else if (tabId === 'analytics') {
+        loadAnalytics();
+      } else if (tabId === 'feedback') {
         loadFeedback();
       }
     }
@@ -2704,6 +3080,9 @@
     // Initialize theme
     loadTheme();
   </script>
+
+    </div><!-- End content-area -->
+  </div><!-- End main-content -->
 
   <!-- Theme Toggle Button -->
   <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
