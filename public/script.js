@@ -63,6 +63,7 @@ if (attachBtn && fileInput) {
   attachBtn.addEventListener('click', (e) => {
     console.log('Attach button clicked');
     e.preventDefault();
+    e.stopPropagation();
     fileInput.click();
   });
 
@@ -84,6 +85,51 @@ if (removeFileBtn) {
   });
 } else {
   console.error('Remove file button not found');
+}
+
+// Drag and Drop functionality
+const dropZone = document.getElementById('chat-container');
+const dropOverlay = document.getElementById('drop-overlay');
+
+if (dropZone) {
+  // Prevent default drag behaviors
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, preventDefaults, false);
+    document.body.addEventListener(eventName, preventDefaults, false);
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  // Highlight drop zone when item is dragged over it
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, () => {
+      dropZone.classList.add('drag-over');
+      if (dropOverlay) dropOverlay.style.display = 'flex';
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, () => {
+      dropZone.classList.remove('drag-over');
+      if (dropOverlay) dropOverlay.style.display = 'none';
+    }, false);
+  });
+
+  // Handle dropped files
+  dropZone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+
+    if (files.length > 0) {
+      console.log('File dropped:', files[0].name);
+      handleFileSelection(files[0]);
+    }
+  }, false);
+} else {
+  console.error('Drop zone not found');
 }
 
 function handleFileSelection(file) {
