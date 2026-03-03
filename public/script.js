@@ -58,22 +58,37 @@ closeChat.addEventListener('click', () => {
 });
 
 // File upload functionality
-attachBtn.addEventListener('click', () => {
-  fileInput.click();
-});
+if (attachBtn && fileInput) {
+  console.log('Attach button found, adding event listener');
+  attachBtn.addEventListener('click', (e) => {
+    console.log('Attach button clicked');
+    e.preventDefault();
+    fileInput.click();
+  });
 
-fileInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    handleFileSelection(file);
-  }
-});
+  fileInput.addEventListener('change', (e) => {
+    console.log('File input changed');
+    const file = e.target.files[0];
+    if (file) {
+      console.log('File selected:', file.name);
+      handleFileSelection(file);
+    }
+  });
+} else {
+  console.error('Attach button or file input not found', { attachBtn, fileInput });
+}
 
-removeFileBtn.addEventListener('click', () => {
-  clearFileSelection();
-});
+if (removeFileBtn) {
+  removeFileBtn.addEventListener('click', () => {
+    clearFileSelection();
+  });
+} else {
+  console.error('Remove file button not found');
+}
 
 function handleFileSelection(file) {
+  console.log('handleFileSelection called with file:', file);
+  
   // Check file size (max 5MB)
   if (file.size > 5 * 1024 * 1024) {
     alert('File size must be less than 5MB');
@@ -81,13 +96,24 @@ function handleFileSelection(file) {
   }
 
   selectedFile = file;
+  
+  if (!filePreview) {
+    console.error('filePreview element not found');
+    return;
+  }
+  
   filePreview.style.display = 'block';
 
   // Show file info
   const fileName = filePreviewInfo.querySelector('.file-name');
   const fileSize = filePreviewInfo.querySelector('.file-size');
-  fileName.textContent = file.name;
-  fileSize.textContent = formatFileSize(file.size);
+  
+  if (fileName && fileSize) {
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+  } else {
+    console.error('fileName or fileSize element not found');
+  }
 
   // Show image preview if it's an image
   if (file.type.startsWith('image/')) {
@@ -95,13 +121,17 @@ function handleFileSelection(file) {
     reader.onload = (e) => {
       filePreviewImg.src = e.target.result;
       filePreviewImg.style.display = 'block';
-      filePreviewInfo.querySelector('.file-icon').style.display = 'none';
+      const fileIcon = filePreviewInfo.querySelector('.file-icon');
+      if (fileIcon) fileIcon.style.display = 'none';
     };
     reader.readAsDataURL(file);
   } else {
     filePreviewImg.style.display = 'none';
-    filePreviewInfo.querySelector('.file-icon').style.display = 'block';
+    const fileIcon = filePreviewInfo.querySelector('.file-icon');
+    if (fileIcon) fileIcon.style.display = 'block';
   }
+  
+  console.log('File preview should now be visible');
 }
 
 function clearFileSelection() {
