@@ -1259,7 +1259,7 @@ app.get('/api/conversation/:sessionId', (req, res) => {
 
 // API endpoint for librarian to respond
 app.post('/api/librarian/respond', (req, res) => {
-  const { sessionId, message } = req.body;
+  const { sessionId, message, attachment } = req.body;
   
   // Input validation
   if (!sessionId || typeof sessionId !== 'string') {
@@ -1292,12 +1292,26 @@ app.post('/api/librarian/respond', (req, res) => {
       console.log('📢 Added librarian takeover notification');
     }
     
-    // Add librarian's message
-    conversation.messages.push({
+    // Create message object
+    const librarianMessage = {
       role: 'librarian',
       content: message,
       timestamp: new Date()
-    });
+    };
+    
+    // Add attachment if present
+    if (attachment) {
+      librarianMessage.attachment = {
+        name: attachment.name,
+        type: attachment.type,
+        size: attachment.size,
+        data: attachment.data
+      };
+      console.log('📎 Librarian attached file:', attachment.name);
+    }
+    
+    // Add librarian's message
+    conversation.messages.push(librarianMessage);
     
     // Change status to 'responded' to indicate librarian has replied
     conversation.status = 'responded';
