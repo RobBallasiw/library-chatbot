@@ -475,6 +475,17 @@
       color: #94a3b8;
     }
 
+    .librarian-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 2px;
+    }
+
+    body.light-mode .librarian-name {
+      color: #1e293b;
+    }
+
     .item-actions {
       display: flex;
       gap: 12px;
@@ -1551,7 +1562,7 @@
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
               ${lib.profilePic ? `<img src="${lib.profilePic}" alt="${lib.name}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #667eea;">` : ''}
               <div>
-                <div style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 2px;">${lib.name}</div>
+                <div class="librarian-name">${lib.name}</div>
                 <div class="psid" style="font-size: 12px; opacity: 0.7;">${lib.psid}</div>
               </div>
             </div>
@@ -1582,7 +1593,7 @@
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
               ${req.profilePic ? `<img src="${req.profilePic}" alt="${req.name}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fbbf24;">` : ''}
               <div>
-                <div style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 2px;">${req.name}</div>
+                <div class="librarian-name">${req.name}</div>
                 <div class="psid" style="font-size: 12px; opacity: 0.7;">${req.psid}</div>
               </div>
             </div>
