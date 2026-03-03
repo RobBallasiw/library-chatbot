@@ -692,19 +692,24 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .tab-icon {
-      font-size: 20px;
-      display: flex;
+      font-size: 22px;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-right: 8px;
     }
 
     .tab-label {
-      display: flex;
+      display: inline-flex;
       align-items: center;
+      white-space: nowrap;
+      line-height: 1;
     }
 
     .tab-btn:hover {
