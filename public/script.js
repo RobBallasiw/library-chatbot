@@ -523,7 +523,7 @@ async function checkForLibrarianIntervention() {
       
       // Start polling for librarian messages
       if (!pollingInterval) {
-        pollingInterval = setInterval(checkForNewMessages, 3000);
+        pollingInterval = setInterval(checkForNewMessages, 5000); // Changed from 3s to 5s
       }
     }
   } catch (error) {
@@ -577,7 +577,7 @@ function updateStatusIndicator() {
     
     // Start polling for librarian responses
     if (!pollingInterval) {
-      pollingInterval = setInterval(checkForNewMessages, 3000);
+      pollingInterval = setInterval(checkForNewMessages, 5000); // Changed from 3s to 5s
     }
   } else {
     statusIndicator.innerHTML = '<span class="status-dot"></span>AI Assistant';
