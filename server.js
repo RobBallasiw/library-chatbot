@@ -77,7 +77,10 @@ const librarianLimiter = rateLimit({
   }
 });
 
-app.use(express.json());
+// Increase body size limit to handle file uploads (10MB)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
 app.use(express.static('public', {
   maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
   etag: true
