@@ -71,6 +71,55 @@
       color: #64748b;
     }
 
+    body.light-mode .dashboard-stat-card {
+      background: #ffffff;
+      border-color: #e2e8f0;
+    }
+
+    body.light-mode .dashboard-stat-card:hover {
+      border-color: #047857;
+    }
+
+    body.light-mode .stat-number {
+      color: #1e293b;
+    }
+
+    body.light-mode .quick-action-btn {
+      background: #f8fafc;
+      border-color: #e2e8f0;
+    }
+
+    body.light-mode .quick-action-btn:hover {
+      background: rgba(4, 120, 87, 0.05);
+    }
+
+    body.light-mode .action-title {
+      color: #1e293b;
+    }
+
+    body.light-mode .activity-item {
+      border-bottom-color: #e2e8f0;
+    }
+
+    body.light-mode .activity-title {
+      color: #1e293b;
+    }
+
+    body.light-mode .health-item {
+      background: rgba(4, 120, 87, 0.05);
+      border-color: rgba(4, 120, 87, 0.2);
+    }
+
+    body.light-mode .sidebar-stat-item .stat-label {
+      color: #64748b;
+    }
+
+    body.light-mode .nav-counter {
+      background: rgba(4, 120, 87, 0.1);
+      color: #047857;
+      border-color: rgba(4, 120, 87, 0.2);
+    }
+
     body.light-mode .section {
       background: #ffffff;
       border-color: #e2e8f0;
@@ -299,6 +348,63 @@
       transition: all 0.3s ease;
     }
 
+    .sidebar.collapsed {
+      width: 80px;
+    }
+
+    .sidebar.collapsed .sidebar-header h1,
+    .sidebar.collapsed .sidebar-header p,
+    .sidebar.collapsed .nav-label,
+    .sidebar.collapsed .nav-counter,
+    .sidebar.collapsed .nav-badge,
+    .sidebar.collapsed .sidebar-stats,
+    .sidebar.collapsed .status-indicator-wrapper {
+      display: none;
+    }
+
+    .sidebar.collapsed .nav-item {
+      justify-content: center;
+      padding: 14px 8px;
+    }
+
+    .sidebar.collapsed .sidebar-toggle {
+      margin: 0 auto;
+    }
+
+    .sidebar-toggle {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-toggle:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
+    }
+
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      background: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: margin-left 0.3s ease;
+    }
+
+    .main-content.expanded {
+      margin-left: 80px;
+    }
+
     .sidebar-header {
       padding: 32px 24px;
       border-bottom: 1px solid #334155;
@@ -386,6 +492,51 @@
       text-align: center;
     }
 
+    .nav-counter {
+      margin-left: auto;
+      background: rgba(4, 120, 87, 0.2);
+      color: #10b981;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 20px;
+      text-align: center;
+      border: 1px solid rgba(4, 120, 87, 0.3);
+    }
+
+    .nav-label {
+      flex: 1;
+    }
+
+    .sidebar-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid #334155;
+    }
+
+    .sidebar-stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sidebar-stat-item .stat-label {
+      font-size: 11px;
+      color: #64748b;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .sidebar-stat-item .stat-value {
+      font-size: 16px;
+      color: #10b981;
+      font-weight: 700;
+    }
+
     .sidebar-footer {
       padding: 20px;
       border-top: 1px solid #334155;
@@ -468,6 +619,223 @@
       flex: 1;
       padding: 32px 40px;
       overflow-y: auto;
+    }
+
+    /* Dashboard Styles */
+    .dashboard-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .dashboard-stat-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dashboard-stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #047857 0%, #10b981 100%);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .dashboard-stat-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .dashboard-stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(4, 120, 87, 0.2);
+      border-color: #047857;
+    }
+
+    .stat-icon-large {
+      font-size: 48px;
+      line-height: 1;
+    }
+
+    .stat-info {
+      flex: 1;
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: 800;
+      color: #f1f5f9;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #94a3b8;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .stat-change {
+      font-size: 12px;
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .stat-change.negative {
+      color: #ef4444;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .activity-feed {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .activity-item {
+      padding: 16px;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transition: background 0.2s ease;
+    }
+
+    .activity-item:hover {
+      background: rgba(4, 120, 87, 0.05);
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .activity-content {
+      flex: 1;
+    }
+
+    .activity-title {
+      font-size: 14px;
+      color: #f1f5f9;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .activity-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 4px;
+    }
+
+    .activity-time {
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .quick-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .quick-action-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: left;
+    }
+
+    .quick-action-btn:hover {
+      background: rgba(4, 120, 87, 0.1);
+      border-color: #047857;
+      transform: translateX(4px);
+    }
+
+    .action-icon {
+      font-size: 32px;
+      flex-shrink: 0;
+    }
+
+    .action-info {
+      flex: 1;
+    }
+
+    .action-title {
+      font-size: 15px;
+      color: #f1f5f9;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .action-desc {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .health-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      background: rgba(4, 120, 87, 0.05);
+      border-radius: 12px;
+      border: 1px solid rgba(4, 120, 87, 0.2);
+    }
+
+    .health-icon {
+      font-size: 32px;
+      flex-shrink: 0;
+    }
+
+    .health-info {
+      flex: 1;
+    }
+
+    .health-label {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .health-value {
+      font-size: 18px;
+      color: #10b981;
+      font-weight: 700;
     }
 
     /* Hide old header and tabs */
@@ -1544,33 +1912,58 @@
 </head>
 <body>
   <!-- Sidebar -->
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h1>Admin Panel</h1>
-      <p>Manage librarians, responses & analytics</p>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h1>Admin Panel</h1>
+          <p>Manage librarians, responses & analytics</p>
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span id="sidebar-toggle-icon">◀</span>
+        </button>
+      </div>
     </div>
     
     <div class="sidebar-nav">
-      <div class="nav-item active" onclick="switchTab('librarians')">
+      <div class="nav-item active" onclick="switchTab('dashboard')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Dashboard</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('librarians')">
         <span class="nav-icon">👥</span>
-        <span>Librarians</span>
+        <span class="nav-label">Librarians</span>
+        <span class="nav-counter" id="nav-librarian-count">0</span>
         <span class="nav-badge" id="pending-badge" style="display: none;">0</span>
       </div>
       <div class="nav-item" onclick="switchTab('responses')">
         <span class="nav-icon">💬</span>
-        <span>Canned Responses</span>
+        <span class="nav-label">Templates</span>
+        <span class="nav-counter" id="nav-template-count">0</span>
       </div>
       <div class="nav-item" onclick="switchTab('analytics')">
         <span class="nav-icon">📊</span>
-        <span>Analytics</span>
+        <span class="nav-label">Analytics</span>
+        <span class="nav-counter" id="nav-conversation-count">0</span>
       </div>
       <div class="nav-item" onclick="switchTab('feedback')">
         <span class="nav-icon">⭐</span>
-        <span>Feedback</span>
+        <span class="nav-label">Feedback</span>
+        <span class="nav-counter" id="nav-feedback-count">0</span>
       </div>
     </div>
     
     <div class="sidebar-footer">
+      <div class="sidebar-stats">
+        <div class="sidebar-stat-item">
+          <span class="stat-label">Uptime</span>
+          <span class="stat-value" id="sidebar-uptime">--</span>
+        </div>
+        <div class="sidebar-stat-item">
+          <span class="stat-label">Active</span>
+          <span class="stat-value" id="sidebar-active">0</span>
+        </div>
+      </div>
       <div class="status-indicator-wrapper">
         <span id="status-indicator">🔄 Monitoring...</span>
       </div>
@@ -1578,11 +1971,11 @@
   </div>
 
   <!-- Main Content -->
-  <div class="main-content">
+  <div class="main-content" id="main-content">
     <div class="top-bar">
       <div>
-        <div class="page-title" id="page-title">Librarians</div>
-        <div class="page-subtitle" id="page-subtitle">Manage librarian access and permissions</div>
+        <div class="page-title" id="page-title">Dashboard</div>
+        <div class="page-subtitle" id="page-subtitle">Overview of your library chatbot system</div>
       </div>
       <div class="top-bar-actions">
         <button class="refresh-btn" onclick="refreshCurrentTab()">
@@ -1643,8 +2036,132 @@
     </button>
   </div>
 
+  <!-- Dashboard Tab -->
+  <div id="dashboard-tab" class="tab-content active">
+    <!-- Quick Stats Grid -->
+    <div class="dashboard-stats-grid">
+      <div class="dashboard-stat-card">
+        <div class="stat-icon-large">👥</div>
+        <div class="stat-info">
+          <div class="stat-number" id="dash-librarian-count">0</div>
+          <div class="stat-label">Librarians</div>
+          <div class="stat-change" id="dash-librarian-change">--</div>
+        </div>
+      </div>
+      <div class="dashboard-stat-card">
+        <div class="stat-icon-large">💬</div>
+        <div class="stat-info">
+          <div class="stat-number" id="dash-template-count">0</div>
+          <div class="stat-label">Templates</div>
+          <div class="stat-change" id="dash-template-change">--</div>
+        </div>
+      </div>
+      <div class="dashboard-stat-card">
+        <div class="stat-icon-large">📊</div>
+        <div class="stat-info">
+          <div class="stat-number" id="dash-conversation-count">0</div>
+          <div class="stat-label">Conversations</div>
+          <div class="stat-change" id="dash-conversation-change">--</div>
+        </div>
+      </div>
+      <div class="dashboard-stat-card">
+        <div class="stat-icon-large">⭐</div>
+        <div class="stat-info">
+          <div class="stat-number" id="dash-feedback-count">0</div>
+          <div class="stat-label">Avg Rating</div>
+          <div class="stat-change" id="dash-feedback-change">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity & Quick Actions -->
+    <div class="dashboard-grid">
+      <div class="section">
+        <div class="section-header">
+          <h2>📋 Recent Activity</h2>
+        </div>
+        <div class="activity-feed" id="activity-feed">
+          <div class="empty-state">Loading activity...</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <h2>⚡ Quick Actions</h2>
+        </div>
+        <div class="quick-actions">
+          <button class="quick-action-btn" onclick="switchTab('librarians')">
+            <span class="action-icon">👥</span>
+            <div class="action-info">
+              <div class="action-title">Manage Librarians</div>
+              <div class="action-desc">Approve or remove access</div>
+            </div>
+          </button>
+          <button class="quick-action-btn" onclick="switchTab('responses')">
+            <span class="action-icon">💬</span>
+            <div class="action-info">
+              <div class="action-title">Edit Templates</div>
+              <div class="action-desc">Manage canned responses</div>
+            </div>
+          </button>
+          <button class="quick-action-btn" onclick="switchTab('analytics')">
+            <span class="action-icon">📊</span>
+            <div class="action-info">
+              <div class="action-title">View Analytics</div>
+              <div class="action-desc">Check system performance</div>
+            </div>
+          </button>
+          <button class="quick-action-btn" onclick="switchTab('feedback')">
+            <span class="action-icon">⭐</span>
+            <div class="action-info">
+              <div class="action-title">Review Feedback</div>
+              <div class="action-desc">See user ratings</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Health -->
+    <div class="section">
+      <div class="section-header">
+        <h2>💚 System Health</h2>
+      </div>
+      <div class="health-grid">
+        <div class="health-item">
+          <div class="health-icon">🟢</div>
+          <div class="health-info">
+            <div class="health-label">Server Status</div>
+            <div class="health-value">Online</div>
+          </div>
+        </div>
+        <div class="health-item">
+          <div class="health-icon">⏱️</div>
+          <div class="health-info">
+            <div class="health-label">Uptime</div>
+            <div class="health-value" id="dash-uptime">--</div>
+          </div>
+        </div>
+        <div class="health-item">
+          <div class="health-icon">⚡</div>
+          <div class="health-info">
+            <div class="health-label">Avg Response Time</div>
+            <div class="health-value" id="dash-response-time">--</div>
+          </div>
+        </div>
+        <div class="health-item">
+          <div class="health-icon">👁️</div>
+          <div class="health-info">
+            <div class="health-label">Active Conversations</div>
+            <div class="health-value" id="dash-active-conv">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Librarians Tab -->
-  <div id="librarians-tab" class="tab-content active">
+  <div id="librarians-tab" class="tab-content">
 
   <div class="section">
     <div class="section-header">
@@ -1981,23 +2498,145 @@
         librarianCountEl.textContent = authorizedLibrarians.length;
       }
       
+      // Update nav counters
+      const navLibrarianCount = document.getElementById('nav-librarian-count');
+      if (navLibrarianCount) {
+        navLibrarianCount.textContent = authorizedLibrarians.length;
+      }
+      
       // Update template count
       const templateCountEl = document.getElementById('header-template-count');
-      if (templateCountEl && cannedResponsesData) {
+      const navTemplateCount = document.getElementById('nav-template-count');
+      if (cannedResponsesData) {
         let totalTemplates = 0;
         if (cannedResponsesData.categories) {
           cannedResponsesData.categories.forEach(cat => {
             totalTemplates += cat.templates ? cat.templates.length : 0;
           });
         }
-        templateCountEl.textContent = totalTemplates;
+        if (templateCountEl) templateCountEl.textContent = totalTemplates;
+        if (navTemplateCount) navTemplateCount.textContent = totalTemplates;
       }
       
       // Update conversation count
       const conversationCountEl = document.getElementById('header-conversation-count');
-      if (conversationCountEl && analyticsData && analyticsData.summary) {
-        conversationCountEl.textContent = analyticsData.summary.totalConversations || 0;
+      const navConversationCount = document.getElementById('nav-conversation-count');
+      if (analyticsData && analyticsData.summary) {
+        const count = analyticsData.summary.totalConversations || 0;
+        if (conversationCountEl) conversationCountEl.textContent = count;
+        if (navConversationCount) navConversationCount.textContent = count;
+        
+        // Update sidebar stats
+        const sidebarUptime = document.getElementById('sidebar-uptime');
+        const sidebarActive = document.getElementById('sidebar-active');
+        if (sidebarUptime) sidebarUptime.textContent = analyticsData.summary.uptime || '--';
+        if (sidebarActive) sidebarActive.textContent = analyticsData.summary.activeConversations || 0;
       }
+    }
+
+    // Load dashboard data
+    async function loadDashboard() {
+      try {
+        // Load all data if not already loaded
+        if (!authorizedLibrarians.length && !pendingRequests.length) {
+          await loadData();
+        }
+        if (!cannedResponsesData) {
+          await loadCannedResponses();
+        }
+        if (!analyticsData) {
+          await loadAnalytics();
+        }
+        if (!feedbackData) {
+          await loadFeedback();
+        }
+        
+        // Update dashboard stats
+        document.getElementById('dash-librarian-count').textContent = authorizedLibrarians.length;
+        
+        let totalTemplates = 0;
+        if (cannedResponsesData && cannedResponsesData.categories) {
+          cannedResponsesData.categories.forEach(cat => {
+            totalTemplates += cat.templates ? cat.templates.length : 0;
+          });
+        }
+        document.getElementById('dash-template-count').textContent = totalTemplates;
+        
+        if (analyticsData && analyticsData.summary) {
+          document.getElementById('dash-conversation-count').textContent = analyticsData.summary.totalConversations || 0;
+          document.getElementById('dash-uptime').textContent = analyticsData.summary.uptime || '--';
+          document.getElementById('dash-response-time').textContent = (analyticsData.summary.averageResponseTime || 0) + 'ms';
+          document.getElementById('dash-active-conv').textContent = analyticsData.summary.activeConversations || 0;
+        }
+        
+        if (feedbackData && feedbackData.summary) {
+          const avgRating = feedbackData.summary.averageRating || 0;
+          document.getElementById('dash-feedback-count').textContent = avgRating.toFixed(1);
+          document.getElementById('nav-feedback-count').textContent = feedbackData.summary.totalFeedback || 0;
+        }
+        
+        // Render activity feed
+        renderActivityFeed();
+        
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+      }
+    }
+
+    // Render activity feed
+    function renderActivityFeed() {
+      const feed = document.getElementById('activity-feed');
+      const activities = [];
+      
+      // Add recent librarian approvals
+      if (authorizedLibrarians.length > 0) {
+        authorizedLibrarians.slice(0, 3).forEach(lib => {
+          activities.push({
+            icon: '✅',
+            title: 'Librarian Approved',
+            desc: `${lib.name} was granted access`,
+            time: 'Recently'
+          });
+        });
+      }
+      
+      // Add pending requests
+      if (pendingRequests.length > 0) {
+        pendingRequests.slice(0, 2).forEach(req => {
+          activities.push({
+            icon: '⏳',
+            title: 'Pending Request',
+            desc: `${req.name} is waiting for approval`,
+            time: new Date(req.lastMessage).toLocaleString()
+          });
+        });
+      }
+      
+      // Add analytics activity
+      if (analyticsData && analyticsData.summary) {
+        activities.push({
+          icon: '📊',
+          title: 'System Active',
+          desc: `${analyticsData.summary.activeConversations} active conversations`,
+          time: 'Now'
+        });
+      }
+      
+      if (activities.length === 0) {
+        feed.innerHTML = '<div class="empty-state">No recent activity</div>';
+        return;
+      }
+      
+      feed.innerHTML = activities.map(activity => `
+        <div class="activity-item">
+          <div class="activity-icon">${activity.icon}</div>
+          <div class="activity-content">
+            <div class="activity-title">${activity.title}</div>
+            <div class="activity-desc">${activity.desc}</div>
+            <div class="activity-time">${activity.time}</div>
+          </div>
+        </div>
+      `).join('');
     }
 
     function updateKeywordDisplay() {
@@ -2217,6 +2856,7 @@
     }, 5000); // 5 seconds - same as analytics
     
     // Initial load
+    loadDashboard();
     loadData().then(() => {
       updateStatusIndicator(false);
     });
@@ -2266,6 +2906,7 @@
 
       // Update page title and subtitle
       const titles = {
+        dashboard: { title: 'Dashboard', subtitle: 'Overview of your library chatbot system' },
         librarians: { title: 'Librarians', subtitle: 'Manage librarian access and permissions' },
         responses: { title: 'Canned Responses', subtitle: 'Manage response templates and categories' },
         analytics: { title: 'Analytics', subtitle: 'Monitor system performance and usage' },
@@ -2275,6 +2916,11 @@
       const pageInfo = titles[tabName] || { title: 'Dashboard', subtitle: '' };
       document.getElementById('page-title').textContent = pageInfo.title;
       document.getElementById('page-subtitle').textContent = pageInfo.subtitle;
+
+      // Load dashboard data
+      if (tabName === 'dashboard') {
+        loadDashboard();
+      }
 
       // Load canned responses if switching to that tab
       if (tabName === 'responses' && !cannedResponsesData) {
@@ -2309,7 +2955,9 @@
       
       const tabId = activeTab.id.replace('-tab', '');
       
-      if (tabId === 'librarians') {
+      if (tabId === 'dashboard') {
+        loadDashboard();
+      } else if (tabId === 'librarians') {
         loadData();
       } else if (tabId === 'responses') {
         loadCannedResponses();
@@ -2317,6 +2965,22 @@
         loadAnalytics();
       } else if (tabId === 'feedback') {
         loadFeedback();
+      }
+    }
+
+    // Toggle sidebar
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('main-content');
+      const toggleIcon = document.getElementById('sidebar-toggle-icon');
+      
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+      
+      if (sidebar.classList.contains('collapsed')) {
+        toggleIcon.textContent = '▶';
+      } else {
+        toggleIcon.textContent = '◀';
       }
     }
 
