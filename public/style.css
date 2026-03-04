@@ -70,8 +70,8 @@ body {
   position: fixed;
   bottom: 100px;
   right: 20px;
-  width: 380px;
-  height: 550px;
+  width: 400px;
+  height: 650px;
   background: var(--bg-primary);
   border-radius: 16px;
   box-shadow: 0 8px 32px var(--shadow);
@@ -1072,15 +1072,17 @@ body.loading::after {
 
 /* Quick Replies */
 .quick-replies {
-  padding: 16px;
+  padding: 10px 12px;
   background: linear-gradient(to bottom, var(--bg-chat), transparent);
   border-top: 1px solid var(--border-color);
   display: flex;
-  gap: 10px;
+  gap: 6px;
   flex-wrap: wrap;
   overflow-x: auto;
   transition: all 0.3s ease;
   animation: slideDown 0.3s ease-out;
+  max-height: 80px;
+  overflow-y: auto;
 }
 
 @keyframes slideDown {
@@ -1102,19 +1104,20 @@ body.loading::after {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   color: white;
-  padding: 10px 16px;
-  border-radius: 24px;
-  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 18px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
-  gap: 8px;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .quick-reply-btn::before {
@@ -1133,12 +1136,12 @@ body.loading::after {
 }
 
 .quick-reply-btn:hover {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
 }
 
 .quick-reply-btn:active {
-  transform: translateY(-1px) scale(1.02);
+  transform: translateY(0) scale(1);
 }
 
 body.dark-mode .quick-reply-btn {
