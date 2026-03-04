@@ -2006,8 +2006,12 @@
 
     async function loadNotifications() {
       try {
+        console.log('Loading notifications...');
         const response = await fetch('/api/librarian/notifications');
         const data = await response.json();
+        
+        console.log('Notifications data:', data);
+        console.log('Active conversations count:', data.activeConversations?.length || 0);
         
         // Create hash of conversations to detect changes
         const conversationsHash = JSON.stringify(data.activeConversations.map(c => ({
@@ -2243,62 +2247,74 @@
         return;
       }
 
-      listEl.innerHTML = conversations.map(conv => {
-        const color = getColorForSession(conv.sessionId);
-        const initials = getInitials(conv.sessionId);
-        const avatarUrl = generateAvatar(conv.sessionId);
-        const isWaiting = conv.status === 'human';
-        const isUnread = !viewedConversations.has(conv.sessionId) && conv.status === 'bot';
-        
-        // Highlight search terms
-        const sessionIdDisplay = searchQuery ? 
-          highlightText(conv.sessionId.substring(0, 20), searchQuery) : 
-          conv.sessionId.substring(0, 20);
-        
-        const previewText = conv.lastMessage ? conv.lastMessage.content.substring(0, 80) : 'No messages yet';
-        const previewDisplay = searchQuery ? 
-          highlightText(previewText, searchQuery) : 
-          previewText;
-        
-        // Check assignment status
-        const isAssignedToMe = librarianName && conv.assignedTo === librarianName;
-        const isAssignedToOther = librarianName && conv.assignedTo && conv.assignedTo !== librarianName;
-        const assignmentBadge = conv.assignedTo ? 
-          `<span class="assignment-badge" style="background: ${isAssignedToMe ? '#10b981' : '#ef4444'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
-            ${isAssignedToMe ? '👤 You' : '🔒 ' + conv.assignedTo}
-          </span>` : '';
-        
-        return `
-        <div class="conversation-item ${isWaiting ? 'waiting' : ''} ${isUnread ? 'unread' : ''} ${isAssignedToOther ? 'locked' : ''}" 
-             data-session="${conv.sessionId}" 
-             onclick="viewConversation('${conv.sessionId}')"
-             style="${isAssignedToOther ? 'opacity: 0.6; cursor: not-allowed;' : isWaiting ? 'background: #fef3c7 !important; border-left: 4px solid #f59e0b !important;' : isUnread ? 'background: #dbeafe !important; border-left: 4px solid #3b82f6 !important;' : ''}">
-          <div class="conversation-header">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              ${isUnread ? '<div class="unread-indicator"></div>' : ''}
-              <div class="user-avatar" style="background: ${color}; position: relative; overflow: hidden;">
-                <img src="${avatarUrl}" alt="User" style="width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1;" 
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <span style="position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 16px; z-index: 0;">${initials}</span>
+      console.log('Rendering conversations:', conversations.length);
+      
+      try {
+        listEl.innerHTML = conversations.map(conv => {
+          const color = getColorForSession(conv.sessionId);
+          const initials = getInitials(conv.sessionId);
+          const avatarUrl = generateAvatar(conv.sessionId);
+          const isWaiting = conv.status === 'human';
+          const isUnread = !viewedConversations.has(conv.sessionId) && conv.status === 'bot';
+          
+          // Highlight search terms
+          const sessionIdDisplay = searchQuery ? 
+            highlightText(conv.sessionId.substring(0, 20), searchQuery) : 
+            conv.sessionId.substring(0, 20);
+          
+          const previewText = conv.lastMessage ? conv.lastMessage.content.substring(0, 80) : 'No messages yet';
+          const previewDisplay = searchQuery ? 
+            highlightText(previewText, searchQuery) : 
+            previewText;
+          
+          // Check assignment status
+          const isAssignedToMe = librarianName && conv.assignedTo === librarianName;
+          const isAssignedToOther = librarianName && conv.assignedTo && conv.assignedTo !== librarianName;
+          const assignmentBadge = conv.assignedTo ? 
+            `<span class="assignment-badge" style="background: ${isAssignedToMe ? '#10b981' : '#ef4444'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+              ${isAssignedToMe ? '👤 You' : '🔒 ' + conv.assignedTo}
+            </span>` : '';
+          
+          return `
+          <div class="conversation-item ${isWaiting ? 'waiting' : ''} ${isUnread ? 'unread' : ''} ${isAssignedToOther ? 'locked' : ''}" 
+               data-session="${conv.sessionId}" 
+               onclick="viewConversation('${conv.sessionId}')"
+               style="${isAssignedToOther ? 'opacity: 0.6; cursor: not-allowed;' : isWaiting ? 'background: #fef3c7 !important; border-left: 4px solid #f59e0b !important;' : isUnread ? 'background: #dbeafe !important; border-left: 4px solid #3b82f6 !important;' : ''}">
+            <div class="conversation-header">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                ${isUnread ? '<div class="unread-indicator"></div>' : ''}
+                <div class="user-avatar" style="background: ${color}; position: relative; overflow: hidden;">
+                  <img src="${avatarUrl}" alt="User" style="width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1;" 
+                       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                  <span style="position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 16px; z-index: 0;">${initials}</span>
+                </div>
+                <span class="session-id" style="${isUnread ? 'color: #1e40af !important;' : ''}">${sessionIdDisplay}...</span>
               </div>
-              <span class="session-id" style="${isUnread ? 'color: #1e40af !important;' : ''}">${sessionIdDisplay}...</span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                ${assignmentBadge}
+                <span class="status-badge ${conv.status}">
+                  ${conv.status === 'human' ? '🟡 Waiting' : conv.status === 'responded' ? '✅ Responded' : conv.status === 'viewed' ? '👁️ Viewed' : conv.status === 'closed' ? '🔒 Closed' : '🤖 Bot'}
+                </span>
+              </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              ${assignmentBadge}
-              <span class="status-badge ${conv.status}">
-                ${conv.status === 'human' ? '🟡 Waiting' : conv.status === 'responded' ? '✅ Responded' : conv.status === 'viewed' ? '👁️ Viewed' : conv.status === 'closed' ? '🔒 Closed' : '🤖 Bot'}
-              </span>
+            <div class="conversation-preview" style="${isUnread ? 'color: #1e40af !important;' : ''}">
+              ${previewDisplay}${previewText.length > 80 ? '...' : ''}
+            </div>
+            <div class="conversation-time">
+              ${new Date(conv.startTime).toLocaleString()} • ${conv.messageCount} messages
             </div>
           </div>
-          <div class="conversation-preview" style="${isUnread ? 'color: #1e40af !important;' : ''}">
-            ${previewDisplay}${previewText.length > 80 ? '...' : ''}
+        `;
+        }).join('');
+      } catch (error) {
+        console.error('Error rendering conversations:', error);
+        listEl.innerHTML = `
+          <div class="empty-state">
+            <p style="color: #ef4444;">Error rendering conversations: ${error.message}</p>
+            <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Reload Page</button>
           </div>
-          <div class="conversation-time">
-            ${new Date(conv.startTime).toLocaleString()} • ${conv.messageCount} messages
-          </div>
-        </div>
-      `;
-      }).join('');
+        `;
+      }
     }
 
     function viewConversation(sessionId) {
