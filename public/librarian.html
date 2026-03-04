@@ -1661,6 +1661,21 @@
       <h1>Conversations</h1>
       <p>Monitor and respond to chat conversations</p>
     </div>
+    
+    <!-- Librarian Name Input -->
+    <div class="librarian-name-section" style="background: #1e293b; padding: 16px 24px; margin: 0 24px 16px; border-radius: 12px; border: 2px solid #3b82f6;">
+      <label for="librarian-name-input" style="display: block; color: #94a3b8; font-size: 13px; margin-bottom: 8px; font-weight: 500;">Your Name (for tracking)</label>
+      <input 
+        type="text" 
+        id="librarian-name-input" 
+        placeholder="Enter your name..." 
+        style="width: 100%; padding: 10px 14px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px;"
+        onchange="saveLibrarianName()"
+      >
+      <div id="librarian-name-status" style="margin-top: 8px; font-size: 12px; color: #10b981; display: none;">
+        ✓ Logged in as <strong id="librarian-name-display"></strong>
+      </div>
+    </div>
 
   <!-- Notification Alerts -->
   <div id="notification-librarian" class="notification-alert" style="display: none; top: 20px;">
@@ -1787,6 +1802,42 @@
     let viewedConversations = new Set(JSON.parse(localStorage.getItem('viewedConversations') || '[]')); // Track which conversations have been viewed
     let lastConversationsHash = ''; // Track if conversations changed
     let librarianSelectedFile = null; // For file uploads
+    let librarianName = localStorage.getItem('librarianName') || ''; // Store librarian name
+
+    // Load and display librarian name on page load
+    function loadLibrarianName() {
+      const nameInput = document.getElementById('librarian-name-input');
+      const nameStatus = document.getElementById('librarian-name-status');
+      const nameDisplay = document.getElementById('librarian-name-display');
+      
+      if (librarianName) {
+        nameInput.value = librarianName;
+        nameDisplay.textContent = librarianName;
+        nameStatus.style.display = 'block';
+      }
+    }
+
+    // Save librarian name
+    function saveLibrarianName() {
+      const nameInput = document.getElementById('librarian-name-input');
+      const nameStatus = document.getElementById('librarian-name-status');
+      const nameDisplay = document.getElementById('librarian-name-display');
+      
+      librarianName = nameInput.value.trim();
+      
+      if (librarianName) {
+        localStorage.setItem('librarianName', librarianName);
+        nameDisplay.textContent = librarianName;
+        nameStatus.style.display = 'block';
+        console.log('✓ Librarian name saved:', librarianName);
+      } else {
+        localStorage.removeItem('librarianName');
+        nameStatus.style.display = 'none';
+      }
+    }
+
+    // Load librarian name on page load
+    window.addEventListener('DOMContentLoaded', loadLibrarianName);
 
     // Save viewed conversations to localStorage whenever it changes
     function saveViewedConversations() {
@@ -2209,11 +2260,19 @@
           highlightText(previewText, searchQuery) : 
           previewText;
         
+        // Check assignment status
+        const isAssignedToMe = conv.assignedTo === librarianName;
+        const isAssignedToOther = conv.assignedTo && conv.assignedTo !== librarianName;
+        const assignmentBadge = conv.assignedTo ? 
+          `<span class="assignment-badge" style="background: ${isAssignedToMe ? '#10b981' : '#ef4444'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+            ${isAssignedToMe ? '👤 You' : '🔒 ' + conv.assignedTo}
+          </span>` : '';
+        
         return `
-        <div class="conversation-item ${isWaiting ? 'waiting' : ''} ${isUnread ? 'unread' : ''}" 
+        <div class="conversation-item ${isWaiting ? 'waiting' : ''} ${isUnread ? 'unread' : ''} ${isAssignedToOther ? 'locked' : ''}" 
              data-session="${conv.sessionId}" 
              onclick="viewConversation('${conv.sessionId}')"
-             style="${isWaiting ? 'background: #fef3c7 !important; border-left: 4px solid #f59e0b !important;' : isUnread ? 'background: #dbeafe !important; border-left: 4px solid #3b82f6 !important;' : ''}">
+             style="${isAssignedToOther ? 'opacity: 0.6; cursor: not-allowed;' : isWaiting ? 'background: #fef3c7 !important; border-left: 4px solid #f59e0b !important;' : isUnread ? 'background: #dbeafe !important; border-left: 4px solid #3b82f6 !important;' : ''}">
           <div class="conversation-header">
             <div style="display: flex; align-items: center; gap: 12px;">
               ${isUnread ? '<div class="unread-indicator"></div>' : ''}
@@ -2224,9 +2283,12 @@
               </div>
               <span class="session-id" style="${isUnread ? 'color: #1e40af !important;' : ''}">${sessionIdDisplay}...</span>
             </div>
-            <span class="status-badge ${conv.status}">
-              ${conv.status === 'human' ? '🟡 Waiting' : conv.status === 'responded' ? '✅ Responded' : conv.status === 'viewed' ? '👁️ Viewed' : conv.status === 'closed' ? '🔒 Closed' : '🤖 Bot'}
-            </span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              ${assignmentBadge}
+              <span class="status-badge ${conv.status}">
+                ${conv.status === 'human' ? '🟡 Waiting' : conv.status === 'responded' ? '✅ Responded' : conv.status === 'viewed' ? '👁️ Viewed' : conv.status === 'closed' ? '🔒 Closed' : '🤖 Bot'}
+              </span>
+            </div>
           </div>
           <div class="conversation-preview" style="${isUnread ? 'color: #1e40af !important;' : ''}">
             ${previewDisplay}${previewText.length > 80 ? '...' : ''}
@@ -2817,6 +2879,13 @@
       if ((!message && !librarianSelectedFile) || !currentSessionId) {
         return;
       }
+      
+      // Check if librarian name is set
+      if (!librarianName) {
+        alert('Please enter your name at the top of the page first!');
+        document.getElementById('librarian-name-input').focus();
+        return;
+      }
 
       // Stop typing indicator when sending
       stopLibrarianTyping();
@@ -2824,7 +2893,8 @@
       try {
         const requestBody = {
           sessionId: currentSessionId,
-          message: message || '📎 File attached'
+          message: message || '📎 File attached',
+          librarianName: librarianName
         };
         
         // Add attachment if present
@@ -2843,6 +2913,14 @@
           alert('Too many requests. Please wait a moment and try again.');
           return;
         }
+        
+        // Handle conflict (assigned to another librarian)
+        if (response.status === 409) {
+          const data = await response.json();
+          alert(`This conversation is being handled by ${data.assignedTo}. Please choose another conversation.`);
+          loadNotifications(); // Refresh to show updated status
+          return;
+        }
 
         // Check if response is JSON
         const contentType = response.headers.get('content-type');
@@ -2857,6 +2935,7 @@
           clearLibrarianFileSelection();
           // Immediately refresh to show the sent message
           refreshConversation();
+          loadNotifications(); // Refresh conversation list to show assignment
         } else {
           alert('Error sending message: ' + data.error);
         }

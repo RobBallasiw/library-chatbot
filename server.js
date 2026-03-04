@@ -282,7 +282,7 @@ setInterval(cleanupOldConversations, CLEANUP_INTERVALS.OLD_CONVERSATIONS);
 
 // Store active conversations and their status
 const conversations = new Map();
-// sessionId -> { status: 'bot'|'human', messages: [], userId: null, startTime: Date }
+// sessionId -> { status: 'bot'|'human'|'responded', messages: [], userId: null, startTime: Date, assignedTo: null, assignedAt: null }
 
 // Store typing status for real-time indicators
 const typingStatus = new Map();
@@ -1260,9 +1260,78 @@ app.get('/api/conversation/:sessionId', (req, res) => {
   }
 });
 
+// API endpoint for librarian to claim/assign a conversation
+app.post('/api/librarian/claim', (req, res) => {
+  const { sessionId, librarianName } = req.body;
+  
+  if (!sessionId || !librarianName) {
+    return res.status(400).json({ success: false, error: 'Missing sessionId or librarianName' });
+  }
+  
+  const conversation = conversations.get(sessionId);
+  
+  if (!conversation) {
+    return res.status(404).json({ success: false, error: 'Conversation not found' });
+  }
+  
+  // Check if already assigned to another librarian
+  if (conversation.assignedTo && conversation.assignedTo !== librarianName) {
+    return res.status(409).json({ 
+      success: false, 
+      error: 'Already assigned',
+      assignedTo: conversation.assignedTo,
+      assignedAt: conversation.assignedAt
+    });
+  }
+  
+  // Assign conversation
+  conversation.assignedTo = librarianName;
+  conversation.assignedAt = new Date();
+  
+  console.log(`📌 Conversation ${sessionId} claimed by ${librarianName}`);
+  
+  res.json({ 
+    success: true, 
+    assignedTo: librarianName,
+    assignedAt: conversation.assignedAt
+  });
+});
+
+// API endpoint for librarian to release a conversation
+app.post('/api/librarian/release', (req, res) => {
+  const { sessionId, librarianName } = req.body;
+  
+  if (!sessionId || !librarianName) {
+    return res.status(400).json({ success: false, error: 'Missing sessionId or librarianName' });
+  }
+  
+  const conversation = conversations.get(sessionId);
+  
+  if (!conversation) {
+    return res.status(404).json({ success: false, error: 'Conversation not found' });
+  }
+  
+  // Only the assigned librarian can release
+  if (conversation.assignedTo !== librarianName) {
+    return res.status(403).json({ 
+      success: false, 
+      error: 'Not assigned to you',
+      assignedTo: conversation.assignedTo
+    });
+  }
+  
+  // Release conversation
+  conversation.assignedTo = null;
+  conversation.assignedAt = null;
+  
+  console.log(`🔓 Conversation ${sessionId} released by ${librarianName}`);
+  
+  res.json({ success: true });
+});
+
 // API endpoint for librarian to respond
 app.post('/api/librarian/respond', (req, res) => {
-  const { sessionId, message, attachment } = req.body;
+  const { sessionId, message, attachment, librarianName } = req.body;
   
   // Input validation
   if (!sessionId || typeof sessionId !== 'string') {
@@ -1282,6 +1351,22 @@ app.post('/api/librarian/respond', (req, res) => {
   logger.log('Librarian responding to session:', sessionId);
   
   if (conversation) {
+    // Auto-claim conversation if not already assigned
+    if (!conversation.assignedTo && librarianName) {
+      conversation.assignedTo = librarianName;
+      conversation.assignedAt = new Date();
+      console.log(`📌 Auto-claimed by ${librarianName}`);
+    }
+    
+    // Check if assigned to another librarian
+    if (conversation.assignedTo && librarianName && conversation.assignedTo !== librarianName) {
+      return res.status(409).json({ 
+        success: false, 
+        error: 'Conversation is being handled by another librarian',
+        assignedTo: conversation.assignedTo
+      });
+    }
+    
     // If this is the first librarian response to a bot/viewed conversation, add takeover notification
     const wasBot = conversation.status === 'bot' || conversation.status === 'viewed';
     
@@ -1292,14 +1377,15 @@ app.post('/api/librarian/respond', (req, res) => {
         content: '👤 A librarian is now assisting you. You can ask any questions and they will respond personally.',
         timestamp: new Date()
       });
-      console.log('📢 Added librarian takeover notification');
+      console.log('� Added librarian takeover notification');
     }
     
     // Create message object
     const librarianMessage = {
       role: 'librarian',
       content: message,
-      timestamp: new Date()
+      timestamp: new Date(),
+      librarianName: librarianName || 'Librarian'
     };
     
     // Add attachment if present
