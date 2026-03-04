@@ -4255,6 +4255,7 @@
 
     function updateThemeIcon() {
       const themeToggle = document.getElementById('theme-toggle');
+      if (!themeToggle) return; // Button not loaded yet
       const isLight = document.body.classList.contains('light-mode');
       themeToggle.textContent = isLight ? '🌙' : '☀️';
     }
