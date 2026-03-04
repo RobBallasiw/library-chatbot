@@ -1083,6 +1083,7 @@ app.post('/api/admin/login', (req, res) => {
   
   console.log('Login attempt - Password provided:', password ? 'Yes' : 'No');
   console.log('Expected password:', adminPassword);
+  console.log('Password match:', password === adminPassword);
   
   if (password === adminPassword) {
     console.log('Login successful');
@@ -1091,6 +1092,17 @@ app.post('/api/admin/login', (req, res) => {
     console.log('Login failed - Invalid password');
     res.status(401).json({ success: false, message: 'Invalid password' });
   }
+});
+
+// Test endpoint to check admin password (REMOVE IN PRODUCTION)
+app.get('/api/admin/test-password', (req, res) => {
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  res.json({ 
+    passwordSet: !!process.env.ADMIN_PASSWORD,
+    passwordLength: adminPassword.length,
+    firstChar: adminPassword.charAt(0),
+    lastChar: adminPassword.charAt(adminPassword.length - 1)
+  });
 });
 
 // Admin Dashboard - Manage librarian access

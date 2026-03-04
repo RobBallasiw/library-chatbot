@@ -4272,11 +4272,25 @@
     loadTheme();
 
     // Login functionality
+    console.log('Initializing login functionality...');
     const loginScreen = document.getElementById('login-screen');
     const dashboardContent = document.getElementById('dashboard-content');
     const loginForm = document.getElementById('login-form');
     const loginError = document.getElementById('login-error');
     const adminPasswordInput = document.getElementById('admin-password');
+
+    console.log('Login elements:', {
+      loginScreen: !!loginScreen,
+      dashboardContent: !!dashboardContent,
+      loginForm: !!loginForm,
+      loginError: !!loginError,
+      adminPasswordInput: !!adminPasswordInput
+    });
+
+    if (!loginForm) {
+      console.error('Login form not found!');
+      return;
+    }
 
     // Check if already logged in
     if (sessionStorage.getItem('adminLoggedIn') === 'true') {
@@ -4285,6 +4299,7 @@
 
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      console.log('Form submitted!');
       const password = adminPasswordInput.value;
 
       console.log('Attempting login with password:', password);
