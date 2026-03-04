@@ -1771,6 +1771,9 @@
       </div>
       <form id="librarian-login-form" class="login-form">
         <div class="input-group">
+          <input type="text" id="librarian-username" placeholder="Enter your name" required>
+        </div>
+        <div class="input-group">
           <input type="password" id="librarian-password" placeholder="Enter librarian password" required>
         </div>
         <button type="submit" class="login-btn">Login</button>
@@ -3504,6 +3507,7 @@
       const dashboardContent = document.getElementById('librarian-dashboard-content');
       const loginForm = document.getElementById('librarian-login-form');
       const loginError = document.getElementById('librarian-login-error');
+      const usernameInput = document.getElementById('librarian-username');
       const passwordInput = document.getElementById('librarian-password');
 
       if (!loginForm) return;
@@ -3511,11 +3515,18 @@
       // Check if already logged in
       if (sessionStorage.getItem('librarianLoggedIn') === 'true') {
         showDashboard();
+        populateUsername();
       }
 
       loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const username = usernameInput.value.trim();
         const password = passwordInput.value;
+
+        if (!username) {
+          showError('Please enter your name');
+          return;
+        }
 
         try {
           const response = await fetch('/api/librarian/login', {
@@ -3528,7 +3539,9 @@
 
           if (data.success) {
             sessionStorage.setItem('librarianLoggedIn', 'true');
+            sessionStorage.setItem('librarianUsername', username);
             showDashboard();
+            populateUsername();
           } else {
             showError('Invalid password');
           }
@@ -3540,6 +3553,18 @@
       function showDashboard() {
         loginScreen.style.display = 'none';
         dashboardContent.style.display = 'block';
+      }
+
+      function populateUsername() {
+        const savedUsername = sessionStorage.getItem('librarianUsername');
+        if (savedUsername) {
+          const nameInput = document.getElementById('librarian-name');
+          if (nameInput) {
+            nameInput.value = savedUsername;
+            // Trigger the input event to save it to localStorage
+            nameInput.dispatchEvent(new Event('input'));
+          }
+        }
       }
 
       function showError(message) {
@@ -3554,7 +3579,9 @@
     // Logout function
     window.librarianLogout = function() {
       sessionStorage.removeItem('librarianLoggedIn');
+      sessionStorage.removeItem('librarianUsername');
       location.reload();
+    };
     };
   </script>
 
