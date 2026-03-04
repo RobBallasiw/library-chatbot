@@ -4272,73 +4272,75 @@
     loadTheme();
 
     // Login functionality
-    console.log('Initializing login functionality...');
-    const loginScreen = document.getElementById('login-screen');
-    const dashboardContent = document.getElementById('dashboard-content');
-    const loginForm = document.getElementById('login-form');
-    const loginError = document.getElementById('login-error');
-    const adminPasswordInput = document.getElementById('admin-password');
+    (function initLogin() {
+      console.log('Initializing login functionality...');
+      const loginScreen = document.getElementById('login-screen');
+      const dashboardContent = document.getElementById('dashboard-content');
+      const loginForm = document.getElementById('login-form');
+      const loginError = document.getElementById('login-error');
+      const adminPasswordInput = document.getElementById('admin-password');
 
-    console.log('Login elements:', {
-      loginScreen: !!loginScreen,
-      dashboardContent: !!dashboardContent,
-      loginForm: !!loginForm,
-      loginError: !!loginError,
-      adminPasswordInput: !!adminPasswordInput
-    });
+      console.log('Login elements:', {
+        loginScreen: !!loginScreen,
+        dashboardContent: !!dashboardContent,
+        loginForm: !!loginForm,
+        loginError: !!loginError,
+        adminPasswordInput: !!adminPasswordInput
+      });
 
-    if (!loginForm) {
-      console.error('Login form not found!');
-      return;
-    }
-
-    // Check if already logged in
-    if (sessionStorage.getItem('adminLoggedIn') === 'true') {
-      showDashboard();
-    }
-
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      console.log('Form submitted!');
-      const password = adminPasswordInput.value;
-
-      console.log('Attempting login with password:', password);
-
-      try {
-        const response = await fetch('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password })
-        });
-
-        console.log('Response status:', response.status);
-        const data = await response.json();
-        console.log('Response data:', data);
-
-        if (data.success) {
-          sessionStorage.setItem('adminLoggedIn', 'true');
-          showDashboard();
-        } else {
-          showError('Invalid password');
-        }
-      } catch (error) {
-        console.error('Login error:', error);
-        showError('Login failed. Please try again.');
+      if (!loginForm) {
+        console.error('Login form not found!');
+        return;
       }
-    });
 
-    function showDashboard() {
-      loginScreen.style.display = 'none';
-      dashboardContent.style.display = 'flex';
-    }
+      // Check if already logged in
+      if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+        showDashboard();
+      }
 
-    function showError(message) {
-      loginError.textContent = message;
-      loginError.style.display = 'block';
-      setTimeout(() => {
-        loginError.style.display = 'none';
-      }, 3000);
-    }
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log('Form submitted!');
+        const password = adminPasswordInput.value;
+
+        console.log('Attempting login with password:', password);
+
+        try {
+          const response = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+          });
+
+          console.log('Response status:', response.status);
+          const data = await response.json();
+          console.log('Response data:', data);
+
+          if (data.success) {
+            sessionStorage.setItem('adminLoggedIn', 'true');
+            showDashboard();
+          } else {
+            showError('Invalid password');
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          showError('Login failed. Please try again.');
+        }
+      });
+
+      function showDashboard() {
+        loginScreen.style.display = 'none';
+        dashboardContent.style.display = 'flex';
+      }
+
+      function showError(message) {
+        loginError.textContent = message;
+        loginError.style.display = 'block';
+        setTimeout(() => {
+          loginError.style.display = 'none';
+        }, 3000);
+      }
+    })();
 
     // Logout function
     window.logout = function() {
