@@ -2261,8 +2261,8 @@
           previewText;
         
         // Check assignment status
-        const isAssignedToMe = conv.assignedTo === librarianName;
-        const isAssignedToOther = conv.assignedTo && conv.assignedTo !== librarianName;
+        const isAssignedToMe = librarianName && conv.assignedTo === librarianName;
+        const isAssignedToOther = librarianName && conv.assignedTo && conv.assignedTo !== librarianName;
         const assignmentBadge = conv.assignedTo ? 
           `<span class="assignment-badge" style="background: ${isAssignedToMe ? '#10b981' : '#ef4444'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
             ${isAssignedToMe ? '👤 You' : '🔒 ' + conv.assignedTo}
@@ -2591,8 +2591,8 @@
       const avatarUrl = generateAvatar(conversation.sessionId);
       
       // Check assignment status
-      const isAssignedToMe = conversation.assignedTo === librarianName;
-      const isAssignedToOther = conversation.assignedTo && conversation.assignedTo !== librarianName;
+      const isAssignedToMe = librarianName && conversation.assignedTo === librarianName;
+      const isAssignedToOther = librarianName && conversation.assignedTo && conversation.assignedTo !== librarianName;
       
       // Disable inputs if assigned to another librarian
       if (isAssignedToOther) {
