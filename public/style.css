@@ -1389,7 +1389,7 @@ body.dark-mode #send-btn:hover {
 }
 
 body.dark-mode .librarian-btn {
-  background: var(--bg-primary);
+  background: transparent;
   border-color: var(--border-color);
   color: var(--text-primary);
 }
