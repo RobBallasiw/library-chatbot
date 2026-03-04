@@ -2017,9 +2017,173 @@
         max-width: 200px;
       }
     }
+
+    /* Login Screen */
+    .login-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .login-container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .login-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .login-header p {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 15px;
+      transition: all 0.3s ease;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #047857;
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.1);
+    }
+
+    .input-group input::placeholder {
+      color: #64748b;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(4, 120, 87, 0.3);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .login-error {
+      padding: 12px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      color: #fca5a5;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    /* Logout Button */
+    .logout-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.9);
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      z-index: 999;
+    }
+
+    .logout-btn:hover {
+      transform: scale(1.1);
+      background: rgba(220, 38, 38, 1);
+    }
+
+    body.light-mode .logout-btn {
+      background: rgba(239, 68, 68, 0.9);
+    }
+
+    body.light-mode .logout-btn:hover {
+      background: rgba(220, 38, 38, 1);
+    }
   </style>
 </head>
 <body>
+  <!-- Login Screen -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-container">
+      <div class="login-header">
+        <div class="login-icon">🔐</div>
+        <h1>Admin Dashboard</h1>
+        <p>Enter password to continue</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <div class="input-group">
+          <input type="password" id="admin-password" placeholder="Enter admin password" required>
+        </div>
+        <button type="submit" class="login-btn">Login</button>
+        <div id="login-error" class="login-error" style="display: none;"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Dashboard (hidden until login) -->
+  <div id="dashboard-content" style="display: none; width: 100%; display: flex;">
+  
   <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -4100,14 +4264,75 @@
 
     // Initialize theme
     loadTheme();
+
+    // Login functionality
+    const loginScreen = document.getElementById('login-screen');
+    const dashboardContent = document.getElementById('dashboard-content');
+    const loginForm = document.getElementById('login-form');
+    const loginError = document.getElementById('login-error');
+    const adminPasswordInput = document.getElementById('admin-password');
+
+    // Check if already logged in
+    if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+      showDashboard();
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = adminPasswordInput.value;
+
+      try {
+        const response = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          sessionStorage.setItem('adminLoggedIn', 'true');
+          showDashboard();
+        } else {
+          showError('Invalid password');
+        }
+      } catch (error) {
+        showError('Login failed. Please try again.');
+      }
+    });
+
+    function showDashboard() {
+      loginScreen.style.display = 'none';
+      dashboardContent.style.display = 'flex';
+    }
+
+    function showError(message) {
+      loginError.textContent = message;
+      loginError.style.display = 'block';
+      setTimeout(() => {
+        loginError.style.display = 'none';
+      }, 3000);
+    }
+
+    // Logout function
+    window.logout = function() {
+      sessionStorage.removeItem('adminLoggedIn');
+      location.reload();
+    };
   </script>
 
     </div><!-- End content-area -->
   </div><!-- End main-content -->
+  </div><!-- End dashboard-content -->
 
   <!-- Theme Toggle Button -->
   <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
     ☀️
+  </button>
+
+  <!-- Logout Button -->
+  <button id="logout-btn" class="logout-btn" onclick="logout()" aria-label="Logout" title="Logout">
+    🚪
   </button>
 
 </body>
