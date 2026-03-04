@@ -1844,18 +1844,16 @@
       <p>Monitor and respond to chat conversations</p>
     </div>
     
-    <!-- Librarian Name Input -->
+    <!-- Librarian Name Display (hidden input, shown status) -->
     <div class="librarian-name-section" style="background: #1e293b; padding: 16px 24px; margin: 0 24px 16px; border-radius: 12px; border: 2px solid #3b82f6;">
-      <label for="librarian-name-input" style="display: block; color: #94a3b8; font-size: 13px; margin-bottom: 8px; font-weight: 500;">Your Name (for tracking)</label>
       <input 
         type="text" 
         id="librarian-name-input" 
-        placeholder="Enter your name..." 
-        style="width: 100%; padding: 10px 14px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px;"
-        onchange="saveLibrarianName()"
+        style="display: none;"
       >
-      <div id="librarian-name-status" style="margin-top: 8px; font-size: 12px; color: #10b981; display: none;">
-        ✓ Logged in as <strong id="librarian-name-display"></strong>
+      <div id="librarian-name-status" style="font-size: 14px; color: #10b981; display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 18px;">👤</span>
+        <span>Logged in as <strong id="librarian-name-display"></strong></span>
       </div>
     </div>
 
