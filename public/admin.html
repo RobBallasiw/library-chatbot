@@ -3821,6 +3821,9 @@
             const msgHeight = maxValue > 0 ? (day.messages / maxValue * 150) : 0;
             const date = new Date(day.date);
             const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const isLight = document.body.classList.contains('light-mode');
+            const textColor = isLight ? '#64748b' : '#666';
+            const secondaryColor = isLight ? '#94a3b8' : '#999';
             
             return `
               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
@@ -3828,8 +3831,8 @@
                   <div style="width: 20px; background: #3b82f6; height: ${convHeight}px; border-radius: 4px 4px 0 0;" title="Conversations: ${day.conversations}"></div>
                   <div style="width: 20px; background: #10b981; height: ${msgHeight}px; border-radius: 4px 4px 0 0;" title="Messages: ${day.messages}"></div>
                 </div>
-                <div style="font-size: 11px; color: #666; text-align: center;">${dateLabel}</div>
-                <div style="font-size: 10px; color: #999;">
+                <div style="font-size: 11px; color: ${textColor}; text-align: center;">${dateLabel}</div>
+                <div style="font-size: 10px; color: ${secondaryColor};">
                   <span style="color: #3b82f6;">${day.conversations}</span> / 
                   <span style="color: #10b981;">${day.messages}</span>
                 </div>
@@ -3984,6 +3987,10 @@
         return;
       }
 
+      const isLight = document.body.classList.contains('light-mode');
+      const textColor = isLight ? '#64748b' : '#666';
+      const bgColor = isLight ? '#e2e8f0' : '#f0f0f0';
+      
       container.innerHTML = Object.entries(distribution)
         .reverse() // Show 5 stars first
         .map(([rating, count]) => {
@@ -3992,11 +3999,11 @@
           
           return `
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-              <div style="width: 80px; font-size: 14px; color: #666;">${stars}</div>
-              <div style="flex: 1; background: #f0f0f0; height: 24px; border-radius: 12px; overflow: hidden;">
+              <div style="width: 80px; font-size: 14px; color: ${textColor};">${stars}</div>
+              <div style="flex: 1; background: ${bgColor}; height: 24px; border-radius: 12px; overflow: hidden;">
                 <div style="width: ${percentage}%; height: 100%; background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%); transition: width 0.3s;"></div>
               </div>
-              <div style="width: 60px; text-align: right; font-size: 14px; color: #666;">
+              <div style="width: 60px; text-align: right; font-size: 14px; color: ${textColor};">
                 ${count} (${percentage}%)
               </div>
             </div>
@@ -4016,6 +4023,11 @@
         return;
       }
 
+      const isLight = document.body.classList.contains('light-mode');
+      const commentBg = isLight ? '#f1f5f9' : '#f8f9fa';
+      const commentLabelColor = isLight ? '#64748b' : '#666';
+      const commentTextColor = isLight ? '#1e293b' : '#333';
+
       listEl.innerHTML = feedback.map(item => {
         const stars = '⭐'.repeat(item.rating);
         const date = new Date(item.timestamp).toLocaleString();
@@ -4029,9 +4041,9 @@
                 <div class="psid" style="font-size: 12px;">${item.sessionId.substring(0, 30)}...</div>
               </div>
               ${hasComment ? `
-                <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-top: 8px;">
-                  <div style="font-size: 12px; color: #666; margin-bottom: 4px;">💬 Comment:</div>
-                  <div style="font-size: 14px; color: #333;">${escapeHtml(item.comment)}</div>
+                <div style="background: ${commentBg}; padding: 12px; border-radius: 6px; margin-top: 8px;">
+                  <div style="font-size: 12px; color: ${commentLabelColor}; margin-bottom: 4px;">💬 Comment:</div>
+                  <div style="font-size: 14px; color: ${commentTextColor};">${escapeHtml(item.comment)}</div>
                 </div>
               ` : ''}
               <div class="item-meta" style="margin-top: 8px;">
@@ -4068,6 +4080,11 @@
       
       // Update toggle icon
       updateThemeIcon();
+      
+      // Refresh dynamic content to apply new theme colors
+      if (typeof renderSimpleChart === 'function') renderSimpleChart();
+      if (typeof renderFeedbackDistribution === 'function') renderFeedbackDistribution();
+      if (typeof renderRecentFeedback === 'function') renderRecentFeedback();
     }
 
     function updateThemeIcon() {
