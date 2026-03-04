@@ -4281,6 +4281,8 @@
       e.preventDefault();
       const password = adminPasswordInput.value;
 
+      console.log('Attempting login with password:', password);
+
       try {
         const response = await fetch('/api/admin/login', {
           method: 'POST',
@@ -4288,7 +4290,9 @@
           body: JSON.stringify({ password })
         });
 
+        console.log('Response status:', response.status);
         const data = await response.json();
+        console.log('Response data:', data);
 
         if (data.success) {
           sessionStorage.setItem('adminLoggedIn', 'true');
@@ -4297,6 +4301,7 @@
           showError('Invalid password');
         }
       } catch (error) {
+        console.error('Login error:', error);
         showError('Login failed. Please try again.');
       }
     });

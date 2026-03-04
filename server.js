@@ -1081,9 +1081,14 @@ app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
   
+  console.log('Login attempt - Password provided:', password ? 'Yes' : 'No');
+  console.log('Expected password:', adminPassword);
+  
   if (password === adminPassword) {
+    console.log('Login successful');
     res.json({ success: true, message: 'Login successful' });
   } else {
+    console.log('Login failed - Invalid password');
     res.status(401).json({ success: false, message: 'Invalid password' });
   }
 });
