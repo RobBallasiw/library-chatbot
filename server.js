@@ -616,7 +616,9 @@ app.post('/api/chat', async (req, res) => {
         status: 'bot',
         messages: [],
         userId: null,
-        startTime: new Date()
+        startTime: new Date(),
+        assignedTo: null,
+        assignedAt: null
       });
       trackConversationStart(sessionId);
     }
@@ -773,7 +775,9 @@ app.post('/api/request-librarian', async (req, res) => {
         status: 'human',
         messages: messages,
         userId: null,
-        startTime: new Date()
+        startTime: new Date(),
+        assignedTo: null,
+        assignedAt: null
       });
       
       console.log('📝 Created new conversation:', sessionId, 'with', messages.length, 'messages');
