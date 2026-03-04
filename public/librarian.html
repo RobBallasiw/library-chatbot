@@ -2672,10 +2672,6 @@
       updateSentimentIndicator(conversation);
       
       // Disable input and hide quick replies if conversation is closed
-      const responseInput = document.getElementById('response-input');
-      const sendBtn = document.querySelector('.send-btn');
-      const warnBtn = document.querySelector('.warn-btn');
-      const endBtn = document.querySelector('.end-session-btn');
       const quickReplies = document.querySelector('.quick-replies');
       
       if (conversation.status === 'closed') {
