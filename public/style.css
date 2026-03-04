@@ -1400,13 +1400,17 @@ body.dark-mode .action-bar {
 }
 
 body.dark-mode .typing-preview {
-  background: rgba(255, 255, 255, 0.05);
-  border-top-color: var(--border-color);
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-top-color: var(--border-color) !important;
+}
+
+body.dark-mode .typing-preview-text {
+  color: var(--text-primary) !important;
 }
 
 body.dark-mode .typing-preview-hint {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-secondary) !important;
 }
 
 body.dark-mode .message-sender {
