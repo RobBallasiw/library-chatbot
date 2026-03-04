@@ -1224,7 +1224,9 @@ app.get('/api/librarian/notifications', (req, res) => {
       status: conv.status,
       messageCount: conv.messages.length,
       startTime: conv.startTime,
-      lastMessage: conv.messages[conv.messages.length - 1]
+      lastMessage: conv.messages[conv.messages.length - 1],
+      assignedTo: conv.assignedTo || null,
+      assignedAt: conv.assignedAt || null
     }))
   });
 });

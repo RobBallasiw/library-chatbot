@@ -2574,6 +2574,11 @@
     function renderConversationModal(conversation) {
       const titleEl = document.getElementById('modal-title');
       const messagesEl = document.getElementById('modal-messages');
+      const responseInput = document.getElementById('response-input');
+      const sendBtn = document.querySelector('.send-btn');
+      const warnBtn = document.querySelector('.warn-btn');
+      const endBtn = document.querySelector('.end-session-btn');
+      const attachBtn = document.querySelector('.attach-btn');
       
       const statusText = conversation.status === 'human' ? '🟡 Waiting' : 
                         conversation.status === 'responded' ? '✅ Responded' : 
@@ -2584,6 +2589,50 @@
       const color = getColorForSession(conversation.sessionId);
       const initials = getInitials(conversation.sessionId);
       const avatarUrl = generateAvatar(conversation.sessionId);
+      
+      // Check assignment status
+      const isAssignedToMe = conversation.assignedTo === librarianName;
+      const isAssignedToOther = conversation.assignedTo && conversation.assignedTo !== librarianName;
+      
+      // Disable inputs if assigned to another librarian
+      if (isAssignedToOther) {
+        responseInput.disabled = true;
+        responseInput.placeholder = `This conversation is being handled by ${conversation.assignedTo}`;
+        sendBtn.disabled = true;
+        warnBtn.disabled = true;
+        endBtn.disabled = true;
+        if (attachBtn) attachBtn.disabled = true;
+      } else {
+        responseInput.disabled = false;
+        responseInput.placeholder = 'Type your response...';
+        sendBtn.disabled = false;
+        warnBtn.disabled = false;
+        endBtn.disabled = false;
+        if (attachBtn) attachBtn.disabled = false;
+      }
+      
+      let assignmentBanner = '';
+      if (isAssignedToOther) {
+        assignmentBanner = `
+          <div style="background: #fee2e2; border: 2px solid #ef4444; border-radius: 8px; padding: 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 24px;">🔒</span>
+            <div style="flex: 1;">
+              <div style="color: #991b1b; font-weight: 600; font-size: 14px;">Conversation Locked</div>
+              <div style="color: #dc2626; font-size: 13px;">Being handled by <strong>${conversation.assignedTo}</strong></div>
+            </div>
+          </div>
+        `;
+      } else if (isAssignedToMe) {
+        assignmentBanner = `
+          <div style="background: #d1fae5; border: 2px solid #10b981; border-radius: 8px; padding: 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 24px;">👤</span>
+            <div style="flex: 1;">
+              <div style="color: #065f46; font-weight: 600; font-size: 14px;">You're handling this conversation</div>
+              <div style="color: #059669; font-size: 13px;">Assigned to you since ${new Date(conversation.assignedAt).toLocaleTimeString()}</div>
+            </div>
+          </div>
+        `;
+      }
       
       titleEl.innerHTML = `
         <div style="display: flex; align-items: center; gap: 12px;">
@@ -2597,6 +2646,7 @@
             <div style="font-size: 14px; color: #666; margin-top: 2px;">${statusText}</div>
           </div>
         </div>
+        ${assignmentBanner}
       `;
       
       // Calculate and display sentiment based on feedback
