@@ -336,8 +336,8 @@ body.dark-mode .close-btn:hover {
 
 .action-bar {
   padding: 12px 16px 0;
-  background: white;
-  border-top: 1px solid #f0f0f0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
 }
 
 .librarian-btn {
@@ -1392,6 +1392,11 @@ body.dark-mode .librarian-btn {
   background: transparent;
   border-color: var(--border-color);
   color: var(--text-primary);
+}
+
+body.dark-mode .action-bar {
+  background: transparent;
+  border-top-color: var(--border-color);
 }
 
 body.dark-mode .message-sender {
