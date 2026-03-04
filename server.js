@@ -1094,6 +1094,22 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
+// Librarian login endpoint
+app.post('/api/librarian/login', (req, res) => {
+  const { password } = req.body;
+  const librarianPassword = process.env.LIBRARIAN_PASSWORD || 'librarian123';
+  
+  console.log('Librarian login attempt');
+  
+  if (password === librarianPassword) {
+    console.log('Librarian login successful');
+    res.json({ success: true, message: 'Login successful' });
+  } else {
+    console.log('Librarian login failed');
+    res.status(401).json({ success: false, message: 'Invalid password' });
+  }
+});
+
 // Test endpoint to check admin password (REMOVE IN PRODUCTION)
 app.get('/api/admin/test-password', (req, res) => {
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
