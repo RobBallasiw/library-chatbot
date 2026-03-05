@@ -10,6 +10,30 @@
 </head>
 <body>
   
+  <!-- Login Screen -->
+  <div id="mobile-login-screen" class="mobile-login-screen">
+    <div class="mobile-login-container">
+      <div class="mobile-login-header">
+        <div class="mobile-login-icon">📚</div>
+        <h1>Librarian Dashboard</h1>
+        <p>Mobile Access</p>
+      </div>
+      <form id="mobile-login-form" class="mobile-login-form">
+        <div class="mobile-input-group">
+          <input type="text" id="mobile-username" placeholder="Enter your name" required>
+        </div>
+        <div class="mobile-input-group">
+          <input type="password" id="mobile-password" placeholder="Enter password" required>
+        </div>
+        <button type="submit" class="mobile-login-btn">Login</button>
+        <div id="mobile-login-error" class="mobile-login-error" style="display: none;"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Dashboard (hidden until login) -->
+  <div id="mobile-dashboard-content" style="display: none;">
+  
   <!-- Header -->
   <header class="mobile-header">
     <div class="header-content">
@@ -199,7 +223,70 @@
 
     // Initialize theme
     loadTheme();
+
+    // Mobile Login functionality
+    (function initMobileLogin() {
+      const loginScreen = document.getElementById('mobile-login-screen');
+      const dashboardContent = document.getElementById('mobile-dashboard-content');
+      const loginForm = document.getElementById('mobile-login-form');
+      const loginError = document.getElementById('mobile-login-error');
+      const usernameInput = document.getElementById('mobile-username');
+      const passwordInput = document.getElementById('mobile-password');
+
+      if (!loginForm) return;
+
+      // Check if already logged in
+      if (sessionStorage.getItem('mobileLibrarianLoggedIn') === 'true') {
+        showDashboard();
+      }
+
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!username) {
+          showError('Please enter your name');
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/librarian/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            sessionStorage.setItem('mobileLibrarianLoggedIn', 'true');
+            sessionStorage.setItem('mobileLibrarianUsername', username);
+            showDashboard();
+          } else {
+            showError('Invalid password');
+          }
+        } catch (error) {
+          showError('Login failed. Please try again.');
+        }
+      });
+
+      function showDashboard() {
+        loginScreen.style.display = 'none';
+        dashboardContent.style.display = 'block';
+      }
+
+      function showError(message) {
+        loginError.textContent = message;
+        loginError.style.display = 'block';
+        setTimeout(() => {
+          loginError.style.display = 'none';
+        }, 3000);
+      }
+    })();
   </script>
+
+  </div><!-- End mobile-dashboard-content -->
 
 </body>
 </html>
