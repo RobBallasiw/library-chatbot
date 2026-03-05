@@ -914,10 +914,48 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
     
     if (attachment.type.startsWith('image/')) {
       console.log('🖼️ Creating image element for attachment');
+      const imgWrapper = document.createElement('div');
+      imgWrapper.className = 'attachment-image-wrapper';
+      
       const img = document.createElement('img');
       img.src = attachment.data;
       img.alt = attachment.name;
-      attachmentDiv.appendChild(img);
+      img.className = 'attachment-image';
+      img.onclick = () => openImageModal(attachment.data, attachment.name);
+      
+      imgWrapper.appendChild(img);
+      attachmentDiv.appendChild(imgWrapper);
+      
+      // Add filename below image
+      const filenameDiv = document.createElement('div');
+      filenameDiv.className = 'attachment-filename';
+      filenameDiv.textContent = attachment.name;
+      attachmentDiv.appendChild(filenameDiv);
+    } else if (attachment.type === 'application/pdf') {
+      console.log('📄 Creating PDF preview for attachment');
+      const pdfWrapper = document.createElement('div');
+      pdfWrapper.className = 'attachment-pdf-wrapper';
+      
+      const pdfIcon = document.createElement('div');
+      pdfIcon.className = 'pdf-icon';
+      pdfIcon.textContent = '📄';
+      
+      const pdfInfo = document.createElement('div');
+      pdfInfo.className = 'attachment-info';
+      pdfInfo.innerHTML = `
+        <div class="attachment-name">${attachment.name}</div>
+        <div class="attachment-size">${formatFileSize(attachment.size)}</div>
+      `;
+      
+      const viewBtn = document.createElement('button');
+      viewBtn.className = 'view-pdf-btn';
+      viewBtn.textContent = 'View PDF';
+      viewBtn.onclick = () => openPDFModal(attachment.data, attachment.name);
+      
+      pdfWrapper.appendChild(pdfIcon);
+      pdfWrapper.appendChild(pdfInfo);
+      pdfWrapper.appendChild(viewBtn);
+      attachmentDiv.appendChild(pdfWrapper);
     } else {
       console.log('📄 Creating file element for attachment');
       attachmentDiv.innerHTML = `
@@ -1260,4 +1298,62 @@ function addReactionButtonToMessage(messageDiv, messageId) {
   if (messageDiv.classList.contains('bot-message')) {
     updateReactionDisplay(messageId);
   }
+}
+
+
+// Image and PDF Modal Functions
+function openImageModal(imageSrc, imageName) {
+  const modal = document.createElement('div');
+  modal.className = 'file-modal';
+  modal.innerHTML = `
+    <div class="file-modal-content">
+      <div class="file-modal-header">
+        <span class="file-modal-title">${imageName}</span>
+        <button class="file-modal-close" onclick="this.closest('.file-modal').remove()">✕</button>
+      </div>
+      <div class="file-modal-body">
+        <img src="${imageSrc}" alt="${imageName}" class="modal-image">
+      </div>
+      <div class="file-modal-footer">
+        <a href="${imageSrc}" download="${imageName}" class="download-btn">
+          <span>⬇️</span>
+          <span>Download</span>
+        </a>
+      </div>
+    </div>
+  `;
+  
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.remove();
+  };
+  
+  document.body.appendChild(modal);
+}
+
+function openPDFModal(pdfData, pdfName) {
+  const modal = document.createElement('div');
+  modal.className = 'file-modal';
+  modal.innerHTML = `
+    <div class="file-modal-content">
+      <div class="file-modal-header">
+        <span class="file-modal-title">${pdfName}</span>
+        <button class="file-modal-close" onclick="this.closest('.file-modal').remove()">✕</button>
+      </div>
+      <div class="file-modal-body">
+        <iframe src="${pdfData}" class="modal-pdf" frameborder="0"></iframe>
+      </div>
+      <div class="file-modal-footer">
+        <a href="${pdfData}" download="${pdfName}" class="download-btn">
+          <span>⬇️</span>
+          <span>Download</span>
+        </a>
+      </div>
+    </div>
+  `;
+  
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.remove();
+  };
+  
+  document.body.appendChild(modal);
 }
