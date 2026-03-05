@@ -1982,38 +1982,31 @@
     let viewedConversations = new Set(JSON.parse(localStorage.getItem('viewedConversations') || '[]')); // Track which conversations have been viewed
     let lastConversationsHash = ''; // Track if conversations changed
     let librarianSelectedFile = null; // For file uploads
-    let librarianName = localStorage.getItem('librarianName') || ''; // Store librarian name
+    let librarianName = ''; // Store librarian name from login
 
-    // Load and display librarian name on page load
+    // Load and display librarian name from session (login)
     function loadLibrarianName() {
+      // Clear old localStorage (migration from old system)
+      localStorage.removeItem('librarianName');
+      
+      // Get name from session (set during login)
+      const sessionName = sessionStorage.getItem('librarianUsername');
+      
       const nameInput = document.getElementById('librarian-name-input');
       const nameStatus = document.getElementById('librarian-name-status');
       const nameDisplay = document.getElementById('librarian-name-display');
       
-      if (librarianName) {
+      if (sessionName) {
+        librarianName = sessionName;
         nameInput.value = librarianName;
         nameDisplay.textContent = librarianName;
-        nameStatus.style.display = 'block';
+        nameStatus.style.display = 'flex';
       }
     }
 
-    // Save librarian name
+    // Save librarian name (not needed anymore, but keeping for compatibility)
     function saveLibrarianName() {
-      const nameInput = document.getElementById('librarian-name-input');
-      const nameStatus = document.getElementById('librarian-name-status');
-      const nameDisplay = document.getElementById('librarian-name-display');
-      
-      librarianName = nameInput.value.trim();
-      
-      if (librarianName) {
-        localStorage.setItem('librarianName', librarianName);
-        nameDisplay.textContent = librarianName;
-        nameStatus.style.display = 'block';
-        console.log('✓ Librarian name saved:', librarianName);
-      } else {
-        localStorage.removeItem('librarianName');
-        nameStatus.style.display = 'none';
-      }
+      // Name is now set from login, no manual saving needed
     }
 
     // Load librarian name on page load
@@ -3556,11 +3549,21 @@
       function populateUsername() {
         const savedUsername = sessionStorage.getItem('librarianUsername');
         if (savedUsername) {
-          const nameInput = document.getElementById('librarian-name');
+          // Update the global librarianName variable
+          librarianName = savedUsername;
+          
+          // Update the hidden input
+          const nameInput = document.getElementById('librarian-name-input');
           if (nameInput) {
             nameInput.value = savedUsername;
-            // Trigger the input event to save it to localStorage
-            nameInput.dispatchEvent(new Event('input'));
+          }
+          
+          // Update the display
+          const nameDisplay = document.getElementById('librarian-name-display');
+          const nameStatus = document.getElementById('librarian-name-status');
+          if (nameDisplay && nameStatus) {
+            nameDisplay.textContent = savedUsername;
+            nameStatus.style.display = 'flex';
           }
         }
       }
