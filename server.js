@@ -480,6 +480,9 @@ BE HELPFUL and ASSUME library-related intent when ambiguous. Keep responses SHOR
 // Store librarian notifications in memory (in production, use a database)
 const librarianNotifications = [];
 
+// Track librarian last activity for 24-hour window reminders
+const librarianActivity = new Map(); // psid -> { lastMessageTime: Date, reminderSent: boolean }
+
 // Get list of authorized librarian PSIDs
 function getAuthorizedLibrarians() {
   return librarianData.authorizedPsids || [];
@@ -490,6 +493,56 @@ function isAuthorizedLibrarian(psid) {
   const authorizedPsids = getAuthorizedLibrarians();
   return authorizedPsids.includes(psid);
 }
+
+// Update librarian activity when they message the page
+function updateLibrarianActivity(psid) {
+  librarianActivity.set(psid, {
+    lastMessageTime: new Date(),
+    reminderSent: false
+  });
+  console.log(`📝 Updated activity for librarian ${psid}`);
+}
+
+// Check and send reminders to librarians before 24-hour window expires
+async function checkLibrarianReminders() {
+  const now = new Date();
+  const authorizedLibrarians = getAuthorizedLibrarians();
+  
+  for (const psid of authorizedLibrarians) {
+    const activity = librarianActivity.get(psid);
+    
+    if (!activity) continue; // No activity recorded yet
+    
+    const hoursSinceLastMessage = (now - activity.lastMessageTime) / (1000 * 60 * 60);
+    
+    // Send reminder after 23 hours (1 hour before window closes)
+    if (hoursSinceLastMessage >= 23 && !activity.reminderSent) {
+      try {
+        const url = `https://graph.facebook.com/v18.0/me/messages?access_token=${process.env.FACEBOOK_PAGE_ACCESS_TOKEN}`;
+        
+        await axios.post(url, {
+          recipient: { id: psid },
+          message: {
+            text: `⏰ Reminder: Your 24-hour messaging window will expire in ~1 hour.\n\nTo continue receiving librarian notifications, please send any message to this page.\n\n💡 Tip: Just reply "Hi" to keep notifications active!`
+          }
+        });
+        
+        activity.reminderSent = true;
+        console.log(`✅ Reminder sent to librarian ${psid}`);
+      } catch (error) {
+        console.error(`❌ Error sending reminder to ${psid}:`, error.response?.data || error.message);
+      }
+    }
+    
+    // Reset reminder flag after 24 hours
+    if (hoursSinceLastMessage >= 24) {
+      activity.reminderSent = false;
+    }
+  }
+}
+
+// Check reminders every hour
+setInterval(checkLibrarianReminders, 60 * 60 * 1000); // Every 1 hour
 
 // Facebook Messenger API helper - Send to authorized librarians only
 async function sendToMessenger(message, conversationData) {
@@ -881,6 +934,11 @@ async function handleLibrarianMessage(event) {
   
   // Check if sender is an authorized librarian
   const isAuthorized = isAuthorizedLibrarian(senderPsid);
+  
+  // Update activity tracking for authorized librarians
+  if (isAuthorized) {
+    updateLibrarianActivity(senderPsid);
+  }
   
   // Check if message contains the request keyword
   const requestKeyword = process.env.LIBRARIAN_REQUEST_KEYWORD || 'REQUEST_LIBRARIAN_ACCESS';
