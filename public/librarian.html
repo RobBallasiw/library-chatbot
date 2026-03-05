@@ -532,6 +532,243 @@
       margin-top: 12px;
     }
 
+    /* Settings Button */
+    .settings-btn-sidebar {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #94a3b8;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      margin-top: 12px;
+    }
+
+    .settings-btn-sidebar:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+
+    /* Settings Modal */
+    .settings-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+
+    .settings-modal-content {
+      background: #1e293b;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px;
+      border-bottom: 1px solid #334155;
+    }
+
+    .settings-header h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin: 0;
+    }
+
+    .close-settings {
+      background: rgba(255, 255, 255, 0.05);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .close-settings:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .settings-body {
+      padding: 24px;
+    }
+
+    .settings-section {
+      margin-bottom: 32px;
+    }
+
+    .settings-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .settings-section h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 16px;
+    }
+
+    .settings-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #334155;
+    }
+
+    .settings-item:last-child {
+      border-bottom: none;
+    }
+
+    .settings-label {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .settings-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #3b82f6;
+    }
+
+    .settings-control {
+      display: flex;
+      align-items: center;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #334155;
+      transition: 0.3s;
+      border-radius: 26px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: #3b82f6;
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(22px);
+    }
+
+    /* Theme Switch Button */
+    .theme-switch-btn {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .theme-switch-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+
+    /* Notification Button */
+    .notification-btn {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .notification-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    /* Logout Button in Settings */
+    .logout-settings-btn {
+      width: 100%;
+      padding: 12px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      color: #ef4444;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .logout-settings-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+    }
+
     /* Main Content Area */
     .main-content {
       margin-left: 280px;
@@ -1834,6 +2071,80 @@
         <span>Refresh Now</span>
       </button>
       <div class="auto-refresh-info">Auto-refreshes every 2s</div>
+      
+      <!-- Settings Button -->
+      <button class="settings-btn-sidebar" onclick="openSettings()">
+        <span>⚙️</span>
+        <span>Settings</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="settings-modal" style="display: none;">
+    <div class="settings-modal-content">
+      <div class="settings-header">
+        <h2>⚙️ Settings</h2>
+        <button class="close-settings" onclick="closeSettings()">✕</button>
+      </div>
+      
+      <div class="settings-body">
+        <!-- Account Info -->
+        <div class="settings-section">
+          <h3>👤 Account</h3>
+          <div class="settings-item">
+            <div class="settings-label">Logged in as</div>
+            <div class="settings-value" id="settings-username">-</div>
+          </div>
+        </div>
+
+        <!-- Theme -->
+        <div class="settings-section">
+          <h3>🎨 Appearance</h3>
+          <div class="settings-item">
+            <div class="settings-label">Theme</div>
+            <div class="settings-control">
+              <button class="theme-switch-btn" onclick="toggleTheme()">
+                <span id="theme-icon">☀️</span>
+                <span id="theme-text">Light Mode</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="settings-section">
+          <h3>🔔 Notifications</h3>
+          <div class="settings-item">
+            <div class="settings-label">Sound notifications</div>
+            <div class="settings-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="sound-toggle" onchange="toggleSound()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-label">Desktop notifications</div>
+            <div class="settings-control">
+              <button class="notification-btn" onclick="requestNotificationPermission()">
+                <span id="notification-status">Enable</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logout -->
+        <div class="settings-section">
+          <h3>🚪 Session</h3>
+          <div class="settings-item">
+            <button class="logout-settings-btn" onclick="librarianLogout()">
+              <span>🚪</span>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3583,6 +3894,107 @@
       sessionStorage.removeItem('librarianUsername');
       location.reload();
     };
+
+    // Settings Modal Functions
+    let soundEnabled = localStorage.getItem('soundEnabled') !== 'false'; // Default true
+
+    function openSettings() {
+      const modal = document.getElementById('settings-modal');
+      const username = sessionStorage.getItem('librarianUsername') || 'Unknown';
+      document.getElementById('settings-username').textContent = username;
+      
+      // Update sound toggle
+      document.getElementById('sound-toggle').checked = soundEnabled;
+      
+      // Update notification status
+      updateNotificationStatus();
+      
+      // Update theme display
+      updateThemeDisplay();
+      
+      modal.style.display = 'flex';
+    }
+
+    function closeSettings() {
+      const modal = document.getElementById('settings-modal');
+      modal.style.display = 'none';
+    }
+
+    function updateThemeDisplay() {
+      const isLight = document.body.classList.contains('light-mode');
+      document.getElementById('theme-icon').textContent = isLight ? '🌙' : '☀️';
+      document.getElementById('theme-text').textContent = isLight ? 'Dark Mode' : 'Light Mode';
+    }
+
+    function toggleSound() {
+      soundEnabled = document.getElementById('sound-toggle').checked;
+      localStorage.setItem('soundEnabled', soundEnabled);
+      console.log('Sound notifications:', soundEnabled ? 'Enabled' : 'Disabled');
+    }
+
+    function requestNotificationPermission() {
+      if (!('Notification' in window)) {
+        alert('This browser does not support desktop notifications');
+        return;
+      }
+
+      Notification.requestPermission().then(permission => {
+        updateNotificationStatus();
+        if (permission === 'granted') {
+          new Notification('Librarian Dashboard', {
+            body: 'Desktop notifications enabled!',
+            icon: '📚'
+          });
+        }
+      });
+    }
+
+    function updateNotificationStatus() {
+      const statusEl = document.getElementById('notification-status');
+      if (!('Notification' in window)) {
+        statusEl.textContent = 'Not Supported';
+        return;
+      }
+
+      const permission = Notification.permission;
+      if (permission === 'granted') {
+        statusEl.textContent = '✓ Enabled';
+      } else if (permission === 'denied') {
+        statusEl.textContent = 'Blocked';
+      } else {
+        statusEl.textContent = 'Enable';
+      }
+    }
+
+    // Play notification sound
+    function playNotificationSound() {
+      if (!soundEnabled) return;
+      
+      // Create a simple beep sound using Web Audio API
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', (e) => {
+      const modal = document.getElementById('settings-modal');
+      if (e.target === modal) {
+        closeSettings();
+      }
+    });
   </script>
 
   </div><!-- End librarian-dashboard-content -->
