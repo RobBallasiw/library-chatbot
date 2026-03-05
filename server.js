@@ -535,14 +535,15 @@ async function sendToMessenger(message, conversationData) {
         recipient: { id: librarianPsid },
         message: {
           text: `🔔 New Librarian Request!\n\nSession: ${conversationData.sessionId}\n\n${message}\n\n📱 Mobile: ${baseUrl}/librarian-mobile\n💻 Desktop: ${baseUrl}/librarian`
-        },
-        messaging_type: 'MESSAGE_TAG',
-        tag: 'ACCOUNT_UPDATE'
+        }
       });
 
       console.log(`✅ Messenger notification sent to librarian: ${librarianPsid}`);
     } catch (error) {
       console.error(`❌ Error sending to librarian ${librarianPsid}:`, error.response?.data || error.message);
+      if (error.response?.data) {
+        console.error('Full error details:', JSON.stringify(error.response.data, null, 2));
+      }
     }
   }
 }
