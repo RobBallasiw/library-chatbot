@@ -358,12 +358,13 @@ async function sendMessage() {
       sessionId
     };
     
-    // Add attachment info (not the full data, just metadata)
+    // Add attachment with full data
     if (attachmentData) {
       requestBody.attachment = {
         name: attachmentData.name,
         type: attachmentData.type,
-        size: attachmentData.size
+        size: attachmentData.size,
+        data: attachmentData.data // Include the base64 data
       };
     }
 

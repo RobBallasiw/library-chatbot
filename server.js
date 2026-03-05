@@ -603,7 +603,7 @@ async function sendToMessenger(message, conversationData) {
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, history = [], sessionId } = req.body;
+    const { message, history = [], sessionId, attachment } = req.body;
     
     const startTime = Date.now();
     
@@ -678,7 +678,25 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const conversation = conversations.get(sessionId);
-    conversation.messages.push({ role: 'user', content: message, timestamp: new Date() });
+    
+    // Create message object with attachment if present
+    const userMessage = { 
+      role: 'user', 
+      content: message, 
+      timestamp: new Date() 
+    };
+    
+    if (attachment) {
+      userMessage.attachment = {
+        name: attachment.name,
+        type: attachment.type,
+        size: attachment.size,
+        data: attachment.data
+      };
+      console.log('📎 User attached file:', attachment.name);
+    }
+    
+    conversation.messages.push(userMessage);
     trackMessage();
     
     console.log(`💬 Message saved to conversation ${sessionId}:`, {
