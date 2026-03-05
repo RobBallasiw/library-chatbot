@@ -2220,6 +2220,11 @@
         <span class="nav-label">Templates</span>
         <span class="nav-counter" id="nav-template-count">0</span>
       </div>
+      <div class="nav-item" onclick="switchTab('knowledge')">
+        <span class="nav-icon">📚</span>
+        <span class="nav-label">Knowledge Base</span>
+        <span class="nav-counter" id="nav-knowledge-count">0</span>
+      </div>
       <div class="nav-item" onclick="switchTab('analytics')">
         <span class="nav-icon">📊</span>
         <span class="nav-label">Analytics</span>
@@ -2526,6 +2531,45 @@
 
   </div><!-- End responses-tab -->
 
+  <!-- Knowledge Base Tab -->
+  <div id="knowledge-tab" class="tab-content">
+    
+    <div class="section">
+      <div class="section-header">
+        <div>
+          <h2>📚 Knowledge Base</h2>
+          <p>Upload documents for AI to reference when answering questions</p>
+        </div>
+        <button class="btn btn-primary" onclick="showUploadKnowledgeModal()">
+          <span>➕</span>
+          <span>Upload Document</span>
+        </button>
+      </div>
+
+      <div class="knowledge-stats">
+        <div class="stat-card-small">
+          <div class="stat-icon">📄</div>
+          <div>
+            <div class="stat-value" id="total-documents">0</div>
+            <div class="stat-label">Documents</div>
+          </div>
+        </div>
+        <div class="stat-card-small">
+          <div class="stat-icon">💾</div>
+          <div>
+            <div class="stat-value" id="total-kb-size">0 KB</div>
+            <div class="stat-label">Total Size</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="knowledge-list" id="knowledge-list">
+        <!-- Documents will be loaded here -->
+      </div>
+    </div>
+
+  </div><!-- End knowledge-tab -->
+
   <!-- Analytics Tab -->
   <div id="analytics-tab" class="tab-content">
     
@@ -2743,6 +2787,34 @@
       <div class="modal-footer">
         <button class="btn-cancel" onclick="closeCategoryModal()">Cancel</button>
         <button class="btn-save" onclick="saveCategory()">Add Category</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Knowledge Modal -->
+  <div class="modal" id="knowledge-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Upload Document</h3>
+        <button class="btn-icon" onclick="closeKnowledgeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Document Title</label>
+          <input type="text" id="knowledge-title" placeholder="e.g., Library Hours Policy">
+        </div>
+        <div class="form-group">
+          <label>Document Content</label>
+          <textarea id="knowledge-content" rows="10" placeholder="Paste or type document content here..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Or Upload File (TXT, PDF)</label>
+          <input type="file" id="knowledge-file" accept=".txt,.pdf" onchange="handleKnowledgeFile()">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeKnowledgeModal()">Cancel</button>
+        <button class="btn-save" onclick="saveKnowledge()">Upload</button>
       </div>
     </div>
   </div>
