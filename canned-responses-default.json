@@ -1,0 +1,42 @@
+[
+  {
+    "id": "greeting",
+    "title": "Greeting",
+    "text": "Hello! Thank you for contacting the library. How can I assist you today?"
+  },
+  {
+    "id": "hours",
+    "title": "Library Hours",
+    "text": "Our library hours are:\nMonday-Friday: 9 AM - 8 PM\nSaturday: 10 AM - 6 PM\nSunday: 12 PM - 5 PM"
+  },
+  {
+    "id": "book-request",
+    "title": "Book Request",
+    "text": "I'd be happy to help you find that book. Could you please provide the title and author?"
+  },
+  {
+    "id": "card-info",
+    "title": "Library Card",
+    "text": "To get a library card, please visit us with a valid ID and proof of address. It's free!"
+  },
+  {
+    "id": "renew-books",
+    "title": "Renew Books",
+    "text": "You can renew your books online through our website or by calling us. Most items can be renewed up to 3 times."
+  },
+  {
+    "id": "closing",
+    "title": "Closing",
+    "text": "Is there anything else I can help you with today? Feel free to reach out anytime!"
+  },
+  {
+    "id": "wait",
+    "title": "Please Wait",
+    "text": "Thank you for your patience. Let me look that up for you."
+  },
+  {
+    "id": "transfer",
+    "title": "Transfer to Specialist",
+    "text": "I'm going to transfer you to a specialist who can better assist you with this request."
+  }
+]
