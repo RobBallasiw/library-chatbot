@@ -1122,6 +1122,63 @@ app.get('/api/admin/test-password', (req, res) => {
   });
 });
 
+// Test endpoint to send a test notification
+app.get('/api/test-notification', async (req, res) => {
+  try {
+    const authorizedLibrarians = getAuthorizedLibrarians();
+    
+    if (!process.env.FACEBOOK_PAGE_ACCESS_TOKEN) {
+      return res.json({
+        success: false,
+        error: 'FACEBOOK_PAGE_ACCESS_TOKEN not set'
+      });
+    }
+
+    if (authorizedLibrarians.length === 0) {
+      return res.json({
+        success: false,
+        error: 'No authorized librarians (LIBRARIAN_PSID not set)'
+      });
+    }
+
+    const url = `https://graph.facebook.com/v18.0/me/messages?access_token=${process.env.FACEBOOK_PAGE_ACCESS_TOKEN}`;
+    const results = [];
+
+    for (const librarianPsid of authorizedLibrarians) {
+      try {
+        await axios.post(url, {
+          recipient: { id: librarianPsid },
+          message: {
+            text: `🧪 Test notification from Library Chatbot\n\nThis is a test to verify Messenger notifications are working.\n\nTimestamp: ${new Date().toISOString()}`
+          }
+        });
+
+        results.push({
+          psid: librarianPsid,
+          status: 'success'
+        });
+      } catch (error) {
+        results.push({
+          psid: librarianPsid,
+          status: 'error',
+          error: error.response?.data || error.message
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      authorizedLibrarians: authorizedLibrarians.length,
+      results: results
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Admin Dashboard - Manage librarian access
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
