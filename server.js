@@ -7,13 +7,20 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
 import compression from 'compression';
-import { createRequire } from 'module';
-
-// Import CommonJS modules
-const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
 
 dotenv.config();
+
+// Dynamic import for pdf-parse (CommonJS module)
+let pdfParse;
+(async () => {
+  try {
+    const pdfParseModule = await import('pdf-parse');
+    pdfParse = pdfParseModule.default || pdfParseModule;
+    console.log('✅ pdf-parse loaded successfully, type:', typeof pdfParse);
+  } catch (error) {
+    console.error('❌ Failed to load pdf-parse:', error);
+  }
+})();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1735,6 +1742,15 @@ app.post('/api/knowledge-base', async (req, res) => {
   
   // If PDF file data is provided, extract text from it
   if (fileData && fileType === 'application/pdf') {
+    // Check if pdfParse is loaded
+    if (!pdfParse || typeof pdfParse !== 'function') {
+      console.error('❌ pdfParse not available, type:', typeof pdfParse);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'PDF parsing module not loaded. Please try again in a moment or contact support.' 
+      });
+    }
+    
     try {
       console.log('📄 Extracting text from PDF...');
       console.log('File data length:', fileData.length);
