@@ -10,22 +10,30 @@ import compression from 'compression';
 
 dotenv.config();
 
-// Dynamic import for pdf-parse (CommonJS module)
-let pdfParse;
-(async () => {
-  try {
-    const pdfParseModule = await import('pdf-parse');
-    pdfParse = pdfParseModule.default || pdfParseModule;
-    console.log('✅ pdf-parse loaded successfully, type:', typeof pdfParse);
-  } catch (error) {
-    console.error('❌ Failed to load pdf-parse:', error);
-  }
-})();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+// Dynamic import for pdf-parse (CommonJS module) - must be loaded before server starts
+let pdfParse;
+
+async function loadPdfParse() {
+  try {
+    const pdfParseModule = await import('pdf-parse');
+    pdfParse = pdfParseModule.default || pdfParseModule;
+    console.log('✅ pdf-parse loaded successfully, type:', typeof pdfParse);
+    if (typeof pdfParse !== 'function') {
+      console.error('❌ pdf-parse loaded but is not a function!');
+      console.error('Module structure:', Object.keys(pdfParseModule));
+    }
+  } catch (error) {
+    console.error('❌ Failed to load pdf-parse:', error);
+  }
+}
+
+// Load pdf-parse before starting server
+await loadPdfParse();
 
 // Trust proxy - required for rate limiting behind Render's proxy
 app.set('trust proxy', 1);
