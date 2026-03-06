@@ -7,7 +7,11 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
 import compression from 'compression';
-import pdfParse from 'pdf-parse';
+import { createRequire } from 'module';
+
+// Import CommonJS modules
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
 
 dotenv.config();
 
