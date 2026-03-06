@@ -607,6 +607,22 @@ app.post('/api/chat', async (req, res) => {
     
     const startTime = Date.now();
     
+    // Get or create conversation FIRST (before any validation)
+    if (!conversations.has(sessionId)) {
+      conversations.set(sessionId, {
+        status: 'bot',
+        messages: [],
+        userId: null,
+        startTime: new Date(),
+        assignedTo: null,
+        assignedAt: null
+      });
+      trackConversationStart(sessionId);
+      console.log(`📝 Created new conversation: ${sessionId}`);
+    }
+
+    const conversation = conversations.get(sessionId);
+    
     // Crisis detection - immediate response with resources
     const crisisPatterns = [
       /\b(suicide|kill myself|end my life|want to die|hurt myself|self harm)\b/i,
@@ -663,21 +679,6 @@ app.post('/api/chat', async (req, res) => {
       });
       return;
     }
-    
-    // Get or create conversation
-    if (!conversations.has(sessionId)) {
-      conversations.set(sessionId, {
-        status: 'bot',
-        messages: [],
-        userId: null,
-        startTime: new Date(),
-        assignedTo: null,
-        assignedAt: null
-      });
-      trackConversationStart(sessionId);
-    }
-
-    const conversation = conversations.get(sessionId);
     
     // Create message object with attachment if present
     const userMessage = { 
