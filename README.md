@@ -1,6 +1,6 @@
 # Library Chatbot
 
-A web-based chatbot for library assistance using Ollama.
+A web-based chatbot for library assistance using Ollama for localhost and Groq for live deployment.
 
 ## Prerequisites
 
