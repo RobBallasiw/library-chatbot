@@ -755,6 +755,21 @@ app.post('/api/chat', async (req, res) => {
       { role: 'system', content: LIBRARY_CONTEXT }
     ];
     
+    // RAG: Search knowledge base for relevant information
+    const knowledgeResults = searchKnowledgeBase(message);
+    if (knowledgeResults.length > 0) {
+      const knowledgeContext = knowledgeResults.map(r => 
+        `From "${r.title}":\n${r.excerpt}`
+      ).join('\n\n');
+      
+      messages.push({
+        role: 'system',
+        content: `Here is relevant information from our knowledge base that may help answer the user's question:\n\n${knowledgeContext}\n\nUse this information to provide accurate answers. If the information doesn't fully answer the question, you can supplement with general library knowledge.`
+      });
+      
+      console.log(`📚 RAG: Found ${knowledgeResults.length} relevant documents`);
+    }
+    
     const recentHistory = history.slice(-LIMITS.CONVERSATION_HISTORY);
     messages.push(...recentHistory);
     messages.push({ role: 'user', content: message });
@@ -1670,6 +1685,114 @@ app.post('/api/canned-responses', (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to save' });
   }
 });
+
+// Knowledge Base endpoints
+let knowledgeBase = { documents: [] };
+
+// Load knowledge base from file
+function loadKnowledgeBase() {
+  try {
+    const data = fs.readFileSync('knowledge-base.json', 'utf8');
+    knowledgeBase = JSON.parse(data);
+    console.log(`✓ Loaded ${knowledgeBase.documents.length} knowledge base documents`);
+  } catch (error) {
+    console.log('No existing knowledge base found, starting fresh');
+    knowledgeBase = { documents: [] };
+  }
+}
+
+// Save knowledge base to file
+function saveKnowledgeBase(data) {
+  try {
+    fs.writeFileSync('knowledge-base.json', JSON.stringify(data, null, 2));
+    return true;
+  } catch (error) {
+    console.error('Error saving knowledge base:', error);
+    return false;
+  }
+}
+
+// Get all knowledge base documents
+app.get('/api/knowledge-base', (req, res) => {
+  res.json(knowledgeBase);
+});
+
+// Add new document to knowledge base
+app.post('/api/knowledge-base', (req, res) => {
+  const { title, content } = req.body;
+  
+  if (!title || !content) {
+    return res.status(400).json({ success: false, error: 'Title and content required' });
+  }
+  
+  const document = {
+    id: Date.now().toString(),
+    title,
+    content,
+    createdAt: new Date(),
+    size: content.length
+  };
+  
+  knowledgeBase.documents.push(document);
+  
+  if (saveKnowledgeBase(knowledgeBase)) {
+    res.json({ success: true, document });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to save' });
+  }
+});
+
+// Delete document from knowledge base
+app.delete('/api/knowledge-base/:id', (req, res) => {
+  const { id } = req.params;
+  
+  const index = knowledgeBase.documents.findIndex(doc => doc.id === id);
+  if (index === -1) {
+    return res.status(404).json({ success: false, error: 'Document not found' });
+  }
+  
+  knowledgeBase.documents.splice(index, 1);
+  
+  if (saveKnowledgeBase(knowledgeBase)) {
+    res.json({ success: true });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to save' });
+  }
+});
+
+// Search knowledge base (for RAG)
+function searchKnowledgeBase(query) {
+  if (!query || knowledgeBase.documents.length === 0) {
+    return [];
+  }
+  
+  const queryLower = query.toLowerCase();
+  const results = [];
+  
+  for (const doc of knowledgeBase.documents) {
+    const contentLower = doc.content.toLowerCase();
+    
+    // Simple keyword matching
+    if (contentLower.includes(queryLower)) {
+      // Find relevant excerpt
+      const index = contentLower.indexOf(queryLower);
+      const start = Math.max(0, index - 100);
+      const end = Math.min(doc.content.length, index + 300);
+      const excerpt = doc.content.substring(start, end);
+      
+      results.push({
+        title: doc.title,
+        excerpt: (start > 0 ? '...' : '') + excerpt + (end < doc.content.length ? '...' : ''),
+        relevance: 1
+      });
+    }
+  }
+  
+  return results.slice(0, 3); // Return top 3 results
+}
+
+// Load knowledge base on startup
+loadKnowledgeBase();
 
 // API endpoint to get analytics data
 app.get('/api/analytics', (req, res) => {
