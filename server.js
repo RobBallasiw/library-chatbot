@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
 import compression from 'compression';
+import pdfParse from 'pdf-parse';
 
 dotenv.config();
 
@@ -1719,24 +1720,61 @@ app.get('/api/knowledge-base', (req, res) => {
 });
 
 // Add new document to knowledge base
-app.post('/api/knowledge-base', (req, res) => {
-  const { title, content } = req.body;
+app.post('/api/knowledge-base', async (req, res) => {
+  const { title, content, fileData, fileType } = req.body;
   
-  if (!title || !content) {
-    return res.status(400).json({ success: false, error: 'Title and content required' });
+  if (!title) {
+    return res.status(400).json({ success: false, error: 'Title required' });
+  }
+  
+  let documentContent = content;
+  
+  // If PDF file data is provided, extract text from it
+  if (fileData && fileType === 'application/pdf') {
+    try {
+      console.log('📄 Extracting text from PDF...');
+      
+      // Convert base64 to buffer
+      const base64Data = fileData.split(',')[1] || fileData;
+      const pdfBuffer = Buffer.from(base64Data, 'base64');
+      
+      // Parse PDF
+      const pdfData = await pdfParse(pdfBuffer);
+      documentContent = pdfData.text;
+      
+      console.log(`✅ Extracted ${documentContent.length} characters from PDF`);
+      console.log(`📊 PDF Info: ${pdfData.numpages} pages`);
+      
+      if (!documentContent || documentContent.trim().length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Could not extract text from PDF. The PDF might be image-based or encrypted.' 
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error parsing PDF:', error);
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Failed to parse PDF file. Please ensure it\'s a valid PDF with extractable text.' 
+      });
+    }
+  } else if (!content || content.trim().length === 0) {
+    return res.status(400).json({ success: false, error: 'Content required' });
   }
   
   const document = {
     id: Date.now().toString(),
     title,
-    content,
+    content: documentContent,
     createdAt: new Date(),
-    size: content.length
+    size: documentContent.length,
+    type: fileType || 'text/plain'
   };
   
   knowledgeBase.documents.push(document);
   
   if (saveKnowledgeBase(knowledgeBase)) {
+    console.log(`✅ Saved document: ${title} (${documentContent.length} chars)`);
     res.json({ success: true, document });
   } else {
     res.status(500).json({ success: false, error: 'Failed to save' });

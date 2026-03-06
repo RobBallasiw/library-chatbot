@@ -4539,11 +4539,15 @@
         return;
       }
       
-      list.innerHTML = documents.map(doc => `
+      list.innerHTML = documents.map(doc => {
+        const icon = doc.type === 'application/pdf' ? '📕' : '📄';
+        const typeLabel = doc.type === 'application/pdf' ? 'PDF' : 'Text';
+        
+        return `
         <div class="knowledge-item">
-          <div class="knowledge-icon">📄</div>
+          <div class="knowledge-icon">${icon}</div>
           <div class="knowledge-info">
-            <div class="knowledge-title">${doc.title}</div>
+            <div class="knowledge-title">${doc.title} <span style="font-size: 11px; color: #64748b;">(${typeLabel})</span></div>
             <div class="knowledge-meta">
               ${formatBytes(doc.size)} • ${new Date(doc.createdAt).toLocaleDateString()}
             </div>
@@ -4553,7 +4557,8 @@
             <button class="btn-icon" onclick="deleteKnowledge('${doc.id}')" title="Delete">🗑️</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     function formatBytes(bytes) {
@@ -4574,7 +4579,12 @@
     function closeKnowledgeModal() {
       const modal = document.getElementById('knowledge-modal');
       modal.classList.remove('active');
-      setTimeout(() => modal.style.display = 'none', 300);
+      setTimeout(() => {
+        modal.style.display = 'none';
+        // Reset textarea state
+        document.getElementById('knowledge-content').disabled = false;
+        document.getElementById('knowledge-content').value = '';
+      }, 300);
     }
 
     // Close modal when clicking outside
@@ -4604,38 +4614,79 @@
         const text = await file.text();
         document.getElementById('knowledge-content').value = text;
       } else if (file.type === 'application/pdf') {
-        alert('PDF parsing is not yet implemented. Please copy and paste the text content.');
+        // For PDFs, we'll send the file data to the server for processing
+        // Show a message to the user
+        document.getElementById('knowledge-content').value = '📄 PDF file selected. Text will be extracted automatically when you click Upload.';
+        document.getElementById('knowledge-content').disabled = true;
       }
     }
 
     async function saveKnowledge() {
       const title = document.getElementById('knowledge-title').value.trim();
       const content = document.getElementById('knowledge-content').value.trim();
+      const fileInput = document.getElementById('knowledge-file');
+      const file = fileInput.files[0];
       
-      if (!title || !content) {
-        alert('Please provide both title and content');
+      if (!title) {
+        alert('Please provide a title');
         return;
+      }
+      
+      let requestBody = { title };
+      
+      // If PDF file is selected, send file data
+      if (file && file.type === 'application/pdf') {
+        try {
+          // Show loading message
+          const originalContent = content;
+          document.getElementById('knowledge-content').value = '⏳ Extracting text from PDF...';
+          
+          // Convert file to base64
+          const reader = new FileReader();
+          const fileData = await new Promise((resolve, reject) => {
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          
+          requestBody.fileData = fileData;
+          requestBody.fileType = file.type;
+        } catch (error) {
+          console.error('Error reading PDF file:', error);
+          alert('Error reading PDF file');
+          document.getElementById('knowledge-content').value = originalContent;
+          return;
+        }
+      } else if (!content || content.trim().length === 0) {
+        alert('Please provide content or select a file');
+        return;
+      } else {
+        requestBody.content = content;
       }
       
       try {
         const response = await fetch('/api/knowledge-base', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, content })
+          body: JSON.stringify(requestBody)
         });
         
         const data = await response.json();
         
         if (data.success) {
+          // Re-enable textarea
+          document.getElementById('knowledge-content').disabled = false;
           closeKnowledgeModal();
           loadKnowledgeBase();
-          alert('Document uploaded successfully!');
+          alert(`Document uploaded successfully!\n\nExtracted ${data.document.size} characters from the document.`);
         } else {
-          alert('Failed to upload document');
+          alert('Failed to upload document: ' + (data.error || 'Unknown error'));
+          document.getElementById('knowledge-content').disabled = false;
         }
       } catch (error) {
         console.error('Error saving knowledge:', error);
         alert('Error uploading document');
+        document.getElementById('knowledge-content').disabled = false;
       }
     }
 
