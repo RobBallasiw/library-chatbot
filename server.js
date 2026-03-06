@@ -1737,29 +1737,49 @@ app.post('/api/knowledge-base', async (req, res) => {
   if (fileData && fileType === 'application/pdf') {
     try {
       console.log('📄 Extracting text from PDF...');
+      console.log('File data length:', fileData.length);
       
       // Convert base64 to buffer
-      const base64Data = fileData.split(',')[1] || fileData;
-      const pdfBuffer = Buffer.from(base64Data, 'base64');
+      // Handle both data URL format and plain base64
+      let base64Data = fileData;
+      if (fileData.includes(',')) {
+        base64Data = fileData.split(',')[1];
+      }
       
-      // Parse PDF
-      const pdfData = await pdfParse(pdfBuffer);
+      console.log('Base64 data length:', base64Data.length);
+      
+      const pdfBuffer = Buffer.from(base64Data, 'base64');
+      console.log('PDF buffer size:', pdfBuffer.length, 'bytes');
+      
+      // Parse PDF with options
+      const pdfData = await pdfParse(pdfBuffer, {
+        max: 0, // Parse all pages
+        version: 'default'
+      });
+      
       documentContent = pdfData.text;
       
       console.log(`✅ Extracted ${documentContent.length} characters from PDF`);
       console.log(`📊 PDF Info: ${pdfData.numpages} pages`);
+      console.log('First 200 chars:', documentContent.substring(0, 200));
       
       if (!documentContent || documentContent.trim().length === 0) {
+        console.warn('⚠️ PDF text extraction returned empty content');
         return res.status(400).json({ 
           success: false, 
-          error: 'Could not extract text from PDF. The PDF might be image-based or encrypted.' 
+          error: 'Could not extract text from PDF. The PDF might be image-based (scanned) or encrypted. Try a text-based PDF or use OCR for scanned documents.' 
         });
       }
     } catch (error) {
       console.error('❌ Error parsing PDF:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       return res.status(400).json({ 
         success: false, 
-        error: 'Failed to parse PDF file. Please ensure it\'s a valid PDF with extractable text.' 
+        error: `Failed to parse PDF: ${error.message}. Please ensure it's a valid PDF with extractable text.` 
       });
     }
   } else if (!content || content.trim().length === 0) {

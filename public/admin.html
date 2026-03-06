@@ -4641,19 +4641,29 @@
           const originalContent = content;
           document.getElementById('knowledge-content').value = '⏳ Extracting text from PDF...';
           
+          console.log('📄 Reading PDF file:', file.name, 'Size:', file.size, 'bytes');
+          
           // Convert file to base64
           const reader = new FileReader();
           const fileData = await new Promise((resolve, reject) => {
-            reader.onload = (e) => resolve(e.target.result);
-            reader.onerror = reject;
+            reader.onload = (e) => {
+              console.log('✅ File read successfully, data length:', e.target.result.length);
+              resolve(e.target.result);
+            };
+            reader.onerror = (e) => {
+              console.error('❌ Error reading file:', e);
+              reject(e);
+            };
             reader.readAsDataURL(file);
           });
           
           requestBody.fileData = fileData;
           requestBody.fileType = file.type;
+          
+          console.log('📤 Sending PDF to server for extraction...');
         } catch (error) {
           console.error('Error reading PDF file:', error);
-          alert('Error reading PDF file');
+          alert('Error reading PDF file: ' + error.message);
           document.getElementById('knowledge-content').value = originalContent;
           return;
         }
@@ -4678,14 +4688,20 @@
           document.getElementById('knowledge-content').disabled = false;
           closeKnowledgeModal();
           loadKnowledgeBase();
-          alert(`Document uploaded successfully!\n\nExtracted ${data.document.size} characters from the document.`);
+          
+          const message = file && file.type === 'application/pdf' 
+            ? `PDF uploaded successfully!\n\nExtracted ${data.document.size.toLocaleString()} characters from the document.`
+            : 'Document uploaded successfully!';
+          
+          alert(message);
         } else {
-          alert('Failed to upload document: ' + (data.error || 'Unknown error'));
+          console.error('Server error:', data.error);
+          alert('Failed to upload document:\n\n' + (data.error || 'Unknown error'));
           document.getElementById('knowledge-content').disabled = false;
         }
       } catch (error) {
         console.error('Error saving knowledge:', error);
-        alert('Error uploading document');
+        alert('Error uploading document: ' + error.message);
         document.getElementById('knowledge-content').disabled = false;
       }
     }
