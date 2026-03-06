@@ -1698,9 +1698,15 @@ function loadKnowledgeBase() {
   try {
     const data = fs.readFileSync('knowledge-base.json', 'utf8');
     knowledgeBase = JSON.parse(data);
-    console.log(`✓ Loaded ${knowledgeBase.documents.length} knowledge base documents`);
+    console.log(`✅ Loaded ${knowledgeBase.documents.length} knowledge base documents`);
+    if (knowledgeBase.documents.length > 0) {
+      console.log('📚 Documents in knowledge base:');
+      knowledgeBase.documents.forEach(doc => {
+        console.log(`   - "${doc.title}" (${doc.size} chars, ${doc.type || 'text'})`);
+      });
+    }
   } catch (error) {
-    console.log('No existing knowledge base found, starting fresh');
+    console.log('⚠️  No existing knowledge base found, starting fresh');
     knowledgeBase = { documents: [] };
   }
 }
@@ -1840,28 +1846,75 @@ function searchKnowledgeBase(query) {
   }
   
   const queryLower = query.toLowerCase();
+  
+  // Extract keywords from query (remove common words)
+  const stopWords = ['the', 'a', 'an', 'is', 'are', 'was', 'were', 'do', 'does', 'did', 'have', 'has', 'had', 'can', 'could', 'should', 'would', 'for', 'you', 'your', 'any', 'there'];
+  const keywords = queryLower
+    .split(/\s+/)
+    .filter(word => word.length > 2 && !stopWords.includes(word));
+  
+  console.log('🔍 Searching knowledge base for keywords:', keywords);
+  
   const results = [];
   
   for (const doc of knowledgeBase.documents) {
     const contentLower = doc.content.toLowerCase();
+    const titleLower = doc.title.toLowerCase();
     
-    // Simple keyword matching
-    if (contentLower.includes(queryLower)) {
-      // Find relevant excerpt
-      const index = contentLower.indexOf(queryLower);
-      const start = Math.max(0, index - 100);
-      const end = Math.min(doc.content.length, index + 300);
-      const excerpt = doc.content.substring(start, end);
+    // Calculate relevance score
+    let relevanceScore = 0;
+    let bestExcerptIndex = -1;
+    
+    // Check title matches (higher weight)
+    for (const keyword of keywords) {
+      if (titleLower.includes(keyword)) {
+        relevanceScore += 3;
+      }
+    }
+    
+    // Check content matches
+    for (const keyword of keywords) {
+      const regex = new RegExp(`\\b${keyword}\\w*\\b`, 'gi');
+      const matches = contentLower.match(regex);
+      if (matches) {
+        relevanceScore += matches.length;
+        // Find first occurrence for excerpt
+        if (bestExcerptIndex === -1) {
+          bestExcerptIndex = contentLower.indexOf(keyword);
+        }
+      }
+    }
+    
+    // If we found matches, add to results
+    if (relevanceScore > 0) {
+      // Extract relevant excerpt
+      let excerpt = '';
+      if (bestExcerptIndex !== -1) {
+        const start = Math.max(0, bestExcerptIndex - 150);
+        const end = Math.min(doc.content.length, bestExcerptIndex + 350);
+        excerpt = doc.content.substring(start, end);
+        excerpt = (start > 0 ? '...' : '') + excerpt + (end < doc.content.length ? '...' : '');
+      } else {
+        // No specific match, use beginning
+        excerpt = doc.content.substring(0, 500) + (doc.content.length > 500 ? '...' : '');
+      }
       
       results.push({
         title: doc.title,
-        excerpt: (start > 0 ? '...' : '') + excerpt + (end < doc.content.length ? '...' : ''),
-        relevance: 1
+        excerpt: excerpt,
+        relevance: relevanceScore
       });
+      
+      console.log(`✓ Found match in "${doc.title}" (score: ${relevanceScore})`);
     }
   }
   
-  return results.slice(0, 3); // Return top 3 results
+  // Sort by relevance and return top 3
+  results.sort((a, b) => b.relevance - a.relevance);
+  
+  console.log(`📊 Found ${results.length} relevant documents`);
+  
+  return results.slice(0, 3);
 }
 
 // Load knowledge base on startup
