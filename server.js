@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
 import compression from 'compression';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 dotenv.config();
 
@@ -15,25 +16,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Dynamic import for pdf-parse (CommonJS module) - must be loaded before server starts
-let pdfParse;
-
-async function loadPdfParse() {
-  try {
-    const pdfParseModule = await import('pdf-parse');
-    pdfParse = pdfParseModule.default || pdfParseModule;
-    console.log('✅ pdf-parse loaded successfully, type:', typeof pdfParse);
-    if (typeof pdfParse !== 'function') {
-      console.error('❌ pdf-parse loaded but is not a function!');
-      console.error('Module structure:', Object.keys(pdfParseModule));
-    }
-  } catch (error) {
-    console.error('❌ Failed to load pdf-parse:', error);
-  }
-}
-
-// Load pdf-parse before starting server
-await loadPdfParse();
+console.log('✅ pdfjs-dist loaded successfully');
 
 // Trust proxy - required for rate limiting behind Render's proxy
 app.set('trust proxy', 1);
@@ -1750,21 +1733,11 @@ app.post('/api/knowledge-base', async (req, res) => {
   
   // If PDF file data is provided, extract text from it
   if (fileData && fileType === 'application/pdf') {
-    // Check if pdfParse is loaded
-    if (!pdfParse || typeof pdfParse !== 'function') {
-      console.error('❌ pdfParse not available, type:', typeof pdfParse);
-      return res.status(500).json({ 
-        success: false, 
-        error: 'PDF parsing module not loaded. Please try again in a moment or contact support.' 
-      });
-    }
-    
     try {
-      console.log('📄 Extracting text from PDF...');
+      console.log('📄 Extracting text from PDF using pdfjs-dist...');
       console.log('File data length:', fileData.length);
       
       // Convert base64 to buffer
-      // Handle both data URL format and plain base64
       let base64Data = fileData;
       if (fileData.includes(',')) {
         base64Data = fileData.split(',')[1];
@@ -1775,16 +1748,29 @@ app.post('/api/knowledge-base', async (req, res) => {
       const pdfBuffer = Buffer.from(base64Data, 'base64');
       console.log('PDF buffer size:', pdfBuffer.length, 'bytes');
       
-      // Parse PDF with options
-      const pdfData = await pdfParse(pdfBuffer, {
-        max: 0, // Parse all pages
-        version: 'default'
+      // Load PDF document
+      const loadingTask = pdfjsLib.getDocument({
+        data: new Uint8Array(pdfBuffer),
+        useSystemFonts: true,
+        standardFontDataUrl: null
       });
       
-      documentContent = pdfData.text;
+      const pdfDocument = await loadingTask.promise;
+      const numPages = pdfDocument.numPages;
+      console.log(`📊 PDF has ${numPages} pages`);
+      
+      // Extract text from all pages
+      let fullText = '';
+      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+        const page = await pdfDocument.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n\n';
+      }
+      
+      documentContent = fullText.trim();
       
       console.log(`✅ Extracted ${documentContent.length} characters from PDF`);
-      console.log(`📊 PDF Info: ${pdfData.numpages} pages`);
       console.log('First 200 chars:', documentContent.substring(0, 200));
       
       if (!documentContent || documentContent.trim().length === 0) {
