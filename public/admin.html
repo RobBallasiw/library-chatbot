@@ -2882,10 +2882,16 @@
         <div class="form-group">
           <label>Document Content</label>
           <textarea id="knowledge-content" rows="10" placeholder="Paste or type document content here..."></textarea>
+          <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">
+            💡 Tip: You can paste text here OR upload a file below. PDF text will be extracted automatically.
+          </small>
         </div>
         <div class="form-group">
           <label>Or Upload File (TXT, PDF)</label>
           <input type="file" id="knowledge-file" accept=".txt,.pdf" onchange="handleKnowledgeFile()">
+          <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">
+            ⚠️ Note: If PDF upload fails, please copy and paste the text manually above.
+          </small>
         </div>
       </div>
       <div class="modal-footer">
@@ -4639,7 +4645,9 @@
         try {
           // Show loading message
           const originalContent = content;
-          document.getElementById('knowledge-content').value = '⏳ Extracting text from PDF...';
+          const textarea = document.getElementById('knowledge-content');
+          textarea.value = '⏳ Extracting text from PDF...';
+          textarea.disabled = true;
           
           console.log('📄 Reading PDF file:', file.name, 'Size:', file.size, 'bytes');
           
@@ -4663,8 +4671,9 @@
           console.log('📤 Sending PDF to server for extraction...');
         } catch (error) {
           console.error('Error reading PDF file:', error);
-          alert('Error reading PDF file: ' + error.message);
+          alert('Error reading PDF file: ' + error.message + '\n\nPlease try copying and pasting the text manually instead.');
           document.getElementById('knowledge-content').value = originalContent;
+          document.getElementById('knowledge-content').disabled = false;
           return;
         }
       } else if (!content || content.trim().length === 0) {
@@ -4675,13 +4684,16 @@
       }
       
       try {
+        console.log('📤 Sending request to server...');
         const response = await fetch('/api/knowledge-base', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody)
         });
         
+        console.log('📥 Server response status:', response.status);
         const data = await response.json();
+        console.log('📥 Server response data:', data);
         
         if (data.success) {
           // Re-enable textarea
@@ -4690,18 +4702,36 @@
           loadKnowledgeBase();
           
           const message = file && file.type === 'application/pdf' 
-            ? `PDF uploaded successfully!\n\nExtracted ${data.document.size.toLocaleString()} characters from the document.`
-            : 'Document uploaded successfully!';
+            ? `✅ PDF uploaded successfully!\n\nExtracted ${data.document.size.toLocaleString()} characters from the document.\n\nThe AI can now answer questions about this document!`
+            : '✅ Document uploaded successfully!\n\nThe AI can now answer questions about this document!';
           
           alert(message);
         } else {
-          console.error('Server error:', data.error);
-          alert('Failed to upload document:\n\n' + (data.error || 'Unknown error'));
+          console.error('❌ Server error:', data.error);
+          
+          // If PDF parsing failed, suggest manual input
+          if (file && file.type === 'application/pdf') {
+            const retry = confirm(
+              '❌ PDF text extraction failed:\n\n' + data.error + 
+              '\n\nWould you like to try copying and pasting the text manually instead?\n\n' +
+              'Click OK to clear the file selection and paste text manually, or Cancel to try again.'
+            );
+            
+            if (retry) {
+              document.getElementById('knowledge-file').value = '';
+              document.getElementById('knowledge-content').value = '';
+              document.getElementById('knowledge-content').disabled = false;
+              document.getElementById('knowledge-content').focus();
+              return;
+            }
+          }
+          
+          alert('❌ Failed to upload document:\n\n' + (data.error || 'Unknown error'));
           document.getElementById('knowledge-content').disabled = false;
         }
       } catch (error) {
-        console.error('Error saving knowledge:', error);
-        alert('Error uploading document: ' + error.message);
+        console.error('❌ Network error:', error);
+        alert('❌ Error uploading document:\n\n' + error.message + '\n\nPlease check your internet connection and try again.');
         document.getElementById('knowledge-content').disabled = false;
       }
     }
