@@ -2154,6 +2154,25 @@
       border-top-color: #047857;
     }
 
+    /* Extraction Loading Overlay Light Mode */
+    body.light-mode #extraction-loading-overlay {
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    body.light-mode #extraction-loading-overlay > div {
+      background: #ffffff;
+      border-color: #e2e8f0;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    body.light-mode #extraction-loading-overlay h3 {
+      color: #1e293b;
+    }
+
+    body.light-mode #extraction-loading-overlay p {
+      color: #64748b;
+    }
+
     .login-header h1 {
       font-size: 28px;
       font-weight: 700;
@@ -2967,6 +2986,23 @@
       <div class="modal-footer">
         <button class="btn-cancel" onclick="closeKnowledgeModal()">Cancel</button>
         <button class="btn-save" onclick="saveKnowledge()">Upload</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Extraction Loading Overlay -->
+  <div id="extraction-loading-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 10001; align-items: center; justify-content: center;">
+    <div style="background: #1e293b; padding: 40px; border-radius: 16px; text-align: center; max-width: 400px; border: 1px solid #334155;">
+      <div class="loading-spinner" style="margin: 0 auto 24px;"></div>
+      <h3 style="font-size: 20px; color: #f1f5f9; margin-bottom: 12px;">Extracting PDF Text</h3>
+      <p id="extraction-status" style="font-size: 14px; color: #94a3b8; line-height: 1.6;">
+        Reading PDF file and extracting text...<br>
+        This may take a moment for large files.
+      </p>
+      <div style="margin-top: 20px; padding: 12px; background: rgba(4, 120, 87, 0.1); border-radius: 8px; border: 1px solid rgba(4, 120, 87, 0.2);">
+        <p style="font-size: 12px; color: #10b981; margin: 0;">
+          💡 The AI will be able to answer questions about this document once extraction is complete.
+        </p>
       </div>
     </div>
   </div>
@@ -4837,12 +4873,12 @@
       // If PDF file is selected, send file data
       if (file && file.type === 'application/pdf') {
         try {
-          // Show loading message
-          const originalContent = content;
-          const textarea = document.getElementById('knowledge-content');
-          textarea.value = '⏳ Extracting text from PDF...';
-          textarea.disabled = true;
+          // Show loading overlay
+          const loadingOverlay = document.getElementById('extraction-loading-overlay');
+          const statusText = document.getElementById('extraction-status');
+          loadingOverlay.style.display = 'flex';
           
+          statusText.textContent = 'Reading PDF file...';
           console.log('📄 Reading PDF file:', file.name, 'Size:', file.size, 'bytes');
           
           // Convert file to base64
@@ -4862,12 +4898,12 @@
           requestBody.fileData = fileData;
           requestBody.fileType = file.type;
           
+          statusText.textContent = 'Sending to server for text extraction...\nThis may take a moment for large files.';
           console.log('📤 Sending PDF to server for extraction...');
         } catch (error) {
           console.error('Error reading PDF file:', error);
+          document.getElementById('extraction-loading-overlay').style.display = 'none';
           alert('Error reading PDF file: ' + error.message + '\n\nPlease try copying and pasting the text manually instead.');
-          document.getElementById('knowledge-content').value = originalContent;
-          document.getElementById('knowledge-content').disabled = false;
           return;
         }
       } else if (!content || content.trim().length === 0) {
@@ -4889,9 +4925,10 @@
         const data = await response.json();
         console.log('📥 Server response data:', data);
         
+        // Hide loading overlay
+        document.getElementById('extraction-loading-overlay').style.display = 'none';
+        
         if (data.success) {
-          // Re-enable textarea
-          document.getElementById('knowledge-content').disabled = false;
           closeKnowledgeModal();
           loadKnowledgeBase();
           
@@ -4914,19 +4951,17 @@
             if (retry) {
               document.getElementById('knowledge-file').value = '';
               document.getElementById('knowledge-content').value = '';
-              document.getElementById('knowledge-content').disabled = false;
               document.getElementById('knowledge-content').focus();
               return;
             }
           }
           
           alert('❌ Failed to upload document:\n\n' + (data.error || 'Unknown error'));
-          document.getElementById('knowledge-content').disabled = false;
         }
       } catch (error) {
         console.error('❌ Network error:', error);
+        document.getElementById('extraction-loading-overlay').style.display = 'none';
         alert('❌ Error uploading document:\n\n' + error.message + '\n\nPlease check your internet connection and try again.');
-        document.getElementById('knowledge-content').disabled = false;
       }
     }
 
