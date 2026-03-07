@@ -1870,11 +1870,12 @@ app.post('/api/knowledge-base', async (req, res) => {
   const document = {
     id: Date.now().toString(),
     title,
-    content: documentContent,
+    content: documentContent, // Text for AI to search
     createdAt: new Date(),
     size: documentContent.length,
     type: fileType || 'text/plain',
-    category: category || 'other'
+    category: category || 'other',
+    originalFile: fileData ? fileData : null // Store original PDF for preview
   };
   
   knowledgeBase.documents.push(document);
@@ -1914,7 +1915,7 @@ app.get('/api/knowledge-base/document/:id', (req, res) => {
     return res.status(404).json({ success: false, error: 'Document not found' });
   }
   
-  // Return document with preview (first 2000 characters)
+  // Return document with preview and original file
   res.json({
     success: true,
     document: {
@@ -1922,9 +1923,11 @@ app.get('/api/knowledge-base/document/:id', (req, res) => {
       title: document.title,
       type: document.type,
       size: document.size,
+      category: document.category,
       createdAt: document.createdAt,
       preview: document.content.substring(0, 2000) + (document.content.length > 2000 ? '...' : ''),
-      fullContent: document.content // Include full content for download
+      fullContent: document.content, // Text content for download
+      originalFile: document.originalFile // Original PDF file data
     }
   });
 });
