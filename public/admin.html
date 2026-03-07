@@ -2977,6 +2977,40 @@
     </div>
   </div>
 
+  <!-- Edit Category Modal -->
+  <div class="modal" id="edit-category-modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3>Edit Document Category</h3>
+        <button class="btn-icon" onclick="closeEditCategoryModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Document Title</label>
+          <input type="text" id="edit-doc-title" disabled style="background: #0f172a; opacity: 0.6;">
+        </div>
+        <div class="form-group">
+          <label>Select New Category</label>
+          <select id="edit-doc-category">
+            <option value="ebook">📚 eBook</option>
+            <option value="journal">📓 Journal/Template</option>
+            <option value="manual">📖 Manual/Guide</option>
+            <option value="policy">📋 Policy/Procedure</option>
+            <option value="form">📄 Form/Document</option>
+            <option value="syllabus">📝 Syllabus/Course Material</option>
+            <option value="research">🔬 Research Paper</option>
+            <option value="reference">📚 Reference Material</option>
+            <option value="other">📁 Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeEditCategoryModal()">Cancel</button>
+        <button class="btn-save" onclick="saveDocumentCategory()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let authorizedLibrarians = [];
     let pendingRequests = [];
@@ -4683,7 +4717,7 @@
         const typeLabel = doc.type === 'application/pdf' ? 'PDF' : 'Text';
         
         return `
-        <div class="knowledge-item">
+        <div class="knowledge-item" onclick="previewDocument('${doc.id}')" style="cursor: pointer; transition: all 0.2s ease;">
           <div class="knowledge-icon">${fileIcon}</div>
           <div class="knowledge-info">
             <div class="knowledge-title">
@@ -4698,8 +4732,8 @@
             </div>
             <div class="knowledge-preview">${doc.content.substring(0, 150)}...</div>
           </div>
-          <div class="knowledge-actions">
-            <button class="btn-icon" onclick="previewDocument('${doc.id}')" title="Preview" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">👁️</button>
+          <div class="knowledge-actions" onclick="event.stopPropagation()">
+            <button class="btn-icon" onclick="editDocumentCategory('${doc.id}')" title="Edit Category" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">✏️</button>
             <button class="btn-icon" onclick="deleteKnowledge('${doc.id}')" title="Delete">🗑️</button>
           </div>
         </div>
@@ -5030,7 +5064,66 @@
           }
         });
       }
+      
+      const editCategoryModal = document.getElementById('edit-category-modal');
+      if (editCategoryModal) {
+        editCategoryModal.addEventListener('click', (e) => {
+          if (e.target === editCategoryModal) {
+            closeEditCategoryModal();
+          }
+        });
+      }
     });
+
+    // Edit document category
+    let currentEditDocId = null;
+
+    function editDocumentCategory(id) {
+      const doc = allDocuments.find(d => d.id === id);
+      if (!doc) return;
+      
+      currentEditDocId = id;
+      document.getElementById('edit-doc-title').value = doc.title;
+      document.getElementById('edit-doc-category').value = doc.category || 'other';
+      
+      const modal = document.getElementById('edit-category-modal');
+      modal.style.display = 'flex';
+      setTimeout(() => modal.classList.add('active'), 10);
+    }
+
+    function closeEditCategoryModal() {
+      const modal = document.getElementById('edit-category-modal');
+      modal.classList.remove('active');
+      setTimeout(() => modal.style.display = 'none', 300);
+      currentEditDocId = null;
+    }
+
+    async function saveDocumentCategory() {
+      if (!currentEditDocId) return;
+      
+      const newCategory = document.getElementById('edit-doc-category').value;
+      
+      try {
+        const response = await fetch(`/api/knowledge-base/${currentEditDocId}/category`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category: newCategory })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          closeEditCategoryModal();
+          loadKnowledgeBase();
+          alert('✅ Category updated successfully!');
+        } else {
+          alert('❌ Failed to update category: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error updating category:', error);
+        alert('❌ Error updating category: ' + error.message);
+      }
+    }
 
     // Load knowledge base when switching to knowledge tab
     const originalSwitchTab = switchTab;

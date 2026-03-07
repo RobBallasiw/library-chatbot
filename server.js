@@ -1932,6 +1932,30 @@ app.get('/api/knowledge-base/document/:id', (req, res) => {
   });
 });
 
+// Update document category
+app.patch('/api/knowledge-base/:id/category', (req, res) => {
+  const { id } = req.params;
+  const { category } = req.body;
+  
+  if (!category) {
+    return res.status(400).json({ success: false, error: 'Category required' });
+  }
+  
+  const document = knowledgeBase.documents.find(doc => doc.id === id);
+  if (!document) {
+    return res.status(404).json({ success: false, error: 'Document not found' });
+  }
+  
+  document.category = category;
+  
+  if (saveKnowledgeBase(knowledgeBase)) {
+    console.log(`✅ Updated category for document ${id}: ${category}`);
+    res.json({ success: true, document });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to save' });
+  }
+});
+
 // Search knowledge base (for RAG)
 function searchKnowledgeBase(query) {
   if (!query || knowledgeBase.documents.length === 0) {
