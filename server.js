@@ -1956,6 +1956,36 @@ app.patch('/api/knowledge-base/:id/category', (req, res) => {
   }
 });
 
+// Update document (title and/or category)
+app.patch('/api/knowledge-base/:id', (req, res) => {
+  const { id } = req.params;
+  const { title, category } = req.body;
+  
+  const document = knowledgeBase.documents.find(doc => doc.id === id);
+  if (!document) {
+    return res.status(404).json({ success: false, error: 'Document not found' });
+  }
+  
+  // Update fields if provided
+  if (title !== undefined) {
+    if (!title.trim()) {
+      return res.status(400).json({ success: false, error: 'Title cannot be empty' });
+    }
+    document.title = title.trim();
+  }
+  
+  if (category !== undefined) {
+    document.category = category;
+  }
+  
+  if (saveKnowledgeBase(knowledgeBase)) {
+    console.log(`✅ Updated document ${id}:`, { title: document.title, category: document.category });
+    res.json({ success: true, document });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to save' });
+  }
+});
+
 // Search knowledge base (for RAG)
 function searchKnowledgeBase(query) {
   if (!query || knowledgeBase.documents.length === 0) {

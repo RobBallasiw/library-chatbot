@@ -2977,20 +2977,20 @@
     </div>
   </div>
 
-  <!-- Edit Category Modal -->
+  <!-- Edit Document Modal -->
   <div class="modal" id="edit-category-modal">
     <div class="modal-content" style="max-width: 500px;">
       <div class="modal-header">
-        <h3>Edit Document Category</h3>
+        <h3>Edit Document</h3>
         <button class="btn-icon" onclick="closeEditCategoryModal()">×</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
           <label>Document Title</label>
-          <input type="text" id="edit-doc-title" disabled style="background: #0f172a; opacity: 0.6;">
+          <input type="text" id="edit-doc-title" placeholder="Enter document title">
         </div>
         <div class="form-group">
-          <label>Select New Category</label>
+          <label>Category</label>
           <select id="edit-doc-category">
             <option value="ebook">📚 eBook</option>
             <option value="journal">📓 Journal/Template</option>
@@ -5101,13 +5101,22 @@
     async function saveDocumentCategory() {
       if (!currentEditDocId) return;
       
+      const newTitle = document.getElementById('edit-doc-title').value.trim();
       const newCategory = document.getElementById('edit-doc-category').value;
       
+      if (!newTitle) {
+        alert('❌ Title cannot be empty');
+        return;
+      }
+      
       try {
-        const response = await fetch(`/api/knowledge-base/${currentEditDocId}/category`, {
+        const response = await fetch(`/api/knowledge-base/${currentEditDocId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ category: newCategory })
+          body: JSON.stringify({ 
+            title: newTitle,
+            category: newCategory 
+          })
         });
         
         const data = await response.json();
@@ -5115,13 +5124,13 @@
         if (data.success) {
           closeEditCategoryModal();
           loadKnowledgeBase();
-          alert('✅ Category updated successfully!');
+          alert('✅ Document updated successfully!');
         } else {
-          alert('❌ Failed to update category: ' + (data.error || 'Unknown error'));
+          alert('❌ Failed to update document: ' + (data.error || 'Unknown error'));
         }
       } catch (error) {
-        console.error('Error updating category:', error);
-        alert('❌ Error updating category: ' + error.message);
+        console.error('Error updating document:', error);
+        alert('❌ Error updating document: ' + error.message);
       }
     }
 
