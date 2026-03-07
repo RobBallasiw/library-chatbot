@@ -424,6 +424,9 @@ CRITICAL RULES:
 - NEVER provide counseling, emotional support, or personal advice
 - NEVER engage with off-topic conversations about non-library topics
 - IMMEDIATELY redirect to library services ONLY
+- BE DIRECT: Don't ask unnecessary clarifying questions if the user's intent is clear
+- PROVIDE INFORMATION: If you have relevant information, share it immediately
+- KEEP IT SHORT: Give concise, helpful answers
 
 LANGUAGE RULE:
 - You MUST respond ONLY in ENGLISH
@@ -442,22 +445,32 @@ YOU CAN HELP WITH:
 - Library events, programs, and workshops
 - Membership and library card information
 
-IMPORTANT: When users ask about materials, documents, or solutions:
-- ASSUME they're asking about library resources (books, manuals, guides)
-- "Alternative Solutions" = likely a book title or solutions manual
-- "Previous students' work" = likely past exam papers or study materials in library
-- "Documents" = likely academic papers, journals, or library materials
-- ALWAYS try to help them find these resources in the library first
-- Ask clarifying questions: "Is 'Alternative Solutions' a book title? What course is it for?"
-- Offer to search the library catalog
-- Suggest similar resources if exact match isn't available
+RESPONSE STYLE:
+- BE DIRECT: If you have the information, provide it immediately
+- DON'T ASK: Avoid asking clarifying questions unless absolutely necessary
+- BE HELPFUL: Assume the user wants the most relevant information
+- BE BRIEF: Keep responses concise and to the point
 
 EXAMPLES OF GOOD RESPONSES:
-User: "alternative solutions of previous students"
-Bot: "Are you looking for a book or solutions manual called 'Alternative Solutions'? Or are you looking for past exam papers or study materials from previous students? I can help you search our library catalog. What course or subject is this for?"
+User: "ojt journal format for ccse"
+Bot: "Yes! We have an OJT journal format for CCSE students. It includes daily log templates with fields for date, activities, hours worked, and supervisor's signature. The format follows the standard OJT documentation requirements. Would you like me to provide more details about the format?"
 
-User: "documents"
-Bot: "What type of documents are you looking for? Academic papers, course materials, journals, or something else? I can help you search our library resources."
+User: "library hours"
+Bot: "Our library is open Monday-Friday 8am-10pm, Saturday 9am-6pm, and Sunday 10am-5pm. We're closed on public holidays."
+
+User: "do you have books about python programming"
+Bot: "Yes! We have several Python programming books in our collection, including beginner guides, advanced topics, and project-based learning books. I can help you search our catalog for specific titles. What level are you looking for - beginner, intermediate, or advanced?"
+
+EXAMPLES OF BAD RESPONSES (TOO MANY QUESTIONS):
+❌ "Can you please provide more information about what you're looking for?"
+❌ "Is this a specific format or template required by your school?"
+❌ "What specific information are you looking for?"
+❌ "Are you looking for a physical copy or online version?"
+
+INSTEAD, BE DIRECT:
+✅ "Yes, we have that! Here's what I found..."
+✅ "We have several options available..."
+✅ "Based on your question, here's the most relevant information..."
 
 YOU MUST NEVER HELP WITH:
 - Personal problems, emotional issues, mental health, relationships
@@ -477,7 +490,7 @@ If user writes in a non-English language, respond:
 
 If you cannot fully help with a LIBRARY question, suggest: "Would you like to speak with a librarian? They can provide more personalized assistance."
 
-BE HELPFUL and ASSUME library-related intent when ambiguous. Keep responses SHORT and professional. Focus on helping users find library resources.`;
+BE HELPFUL, DIRECT, and BRIEF. Focus on providing information, not asking questions.`;
 
 
 // Store librarian notifications in memory (in production, use a database)
@@ -766,9 +779,12 @@ app.post('/api/chat', async (req, res) => {
         `From "${r.title}":\n${r.excerpt}`
       ).join('\n\n');
       
+      // Get document IDs for download links
+      const documentIds = knowledgeResults.map(r => r.id).filter(id => id);
+      
       messages.push({
         role: 'system',
-        content: `Here is relevant information from our knowledge base that may help answer the user's question:\n\n${knowledgeContext}\n\nUse this information to provide accurate answers. If the information doesn't fully answer the question, you can supplement with general library knowledge.`
+        content: `Here is relevant information from our knowledge base that may help answer the user's question:\n\n${knowledgeContext}\n\nIMPORTANT: You have access to these documents in our library system. When relevant, you should:\n1. Provide a brief summary or preview of the document content\n2. Mention that the full document is available\n3. Tell the user they can request to view or download the full document\n4. Be specific about what's in the document\n\nExample: "Yes, we have the OJT Journal Format document! It includes daily log templates, weekly reflection sheets, and guidelines for documenting your on-the-job training activities. The document is ${knowledgeResults[0].excerpt.length} characters long and covers [mention key topics]. Would you like me to show you a preview or would you prefer to view the full document?"`
       });
       
       console.log(`📚 RAG: Found ${knowledgeResults.length} relevant documents`);
@@ -1839,6 +1855,30 @@ app.delete('/api/knowledge-base/:id', (req, res) => {
   }
 });
 
+// Get a specific document by ID (for viewing/downloading)
+app.get('/api/knowledge-base/document/:id', (req, res) => {
+  const { id } = req.params;
+  
+  const document = knowledgeBase.documents.find(doc => doc.id === id);
+  if (!document) {
+    return res.status(404).json({ success: false, error: 'Document not found' });
+  }
+  
+  // Return document with preview (first 2000 characters)
+  res.json({
+    success: true,
+    document: {
+      id: document.id,
+      title: document.title,
+      type: document.type,
+      size: document.size,
+      createdAt: document.createdAt,
+      preview: document.content.substring(0, 2000) + (document.content.length > 2000 ? '...' : ''),
+      fullContent: document.content // Include full content for download
+    }
+  });
+});
+
 // Search knowledge base (for RAG)
 function searchKnowledgeBase(query) {
   if (!query || knowledgeBase.documents.length === 0) {
@@ -1902,7 +1942,10 @@ function searchKnowledgeBase(query) {
       results.push({
         title: doc.title,
         excerpt: excerpt,
-        relevance: relevanceScore
+        relevance: relevanceScore,
+        id: doc.id,
+        size: doc.size,
+        type: doc.type
       });
       
       console.log(`✓ Found match in "${doc.title}" (score: ${relevanceScore})`);
