@@ -2877,7 +2877,24 @@
       <div class="modal-body">
         <div class="form-group">
           <label>Document Title</label>
-          <input type="text" id="knowledge-title" placeholder="e.g., Library Hours Policy">
+          <input type="text" id="knowledge-title" placeholder="e.g., OJT Journal Format">
+        </div>
+        <div class="form-group">
+          <label>Document Category</label>
+          <select id="knowledge-category">
+            <option value="ebook">📚 eBook</option>
+            <option value="journal">📓 Journal/Template</option>
+            <option value="manual">📖 Manual/Guide</option>
+            <option value="policy">📋 Policy/Procedure</option>
+            <option value="form">📄 Form/Document</option>
+            <option value="syllabus">📝 Syllabus/Course Material</option>
+            <option value="research">🔬 Research Paper</option>
+            <option value="reference">📚 Reference Material</option>
+            <option value="other">📁 Other</option>
+          </select>
+          <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">
+            💡 This helps organize and categorize your documents
+          </small>
         </div>
         <div class="form-group">
           <label>Document Content</label>
@@ -4545,15 +4562,35 @@
         return;
       }
       
+      // Category icons and labels
+      const categoryInfo = {
+        'ebook': { icon: '📚', label: 'eBook' },
+        'journal': { icon: '📓', label: 'Journal' },
+        'manual': { icon: '📖', label: 'Manual' },
+        'policy': { icon: '📋', label: 'Policy' },
+        'form': { icon: '📄', label: 'Form' },
+        'syllabus': { icon: '📝', label: 'Syllabus' },
+        'research': { icon: '🔬', label: 'Research' },
+        'reference': { icon: '📚', label: 'Reference' },
+        'other': { icon: '📁', label: 'Other' }
+      };
+      
       list.innerHTML = documents.map(doc => {
-        const icon = doc.type === 'application/pdf' ? '📕' : '📄';
+        const cat = categoryInfo[doc.category] || categoryInfo['other'];
+        const fileIcon = doc.type === 'application/pdf' ? '📕' : '📄';
         const typeLabel = doc.type === 'application/pdf' ? 'PDF' : 'Text';
         
         return `
         <div class="knowledge-item">
-          <div class="knowledge-icon">${icon}</div>
+          <div class="knowledge-icon">${fileIcon}</div>
           <div class="knowledge-info">
-            <div class="knowledge-title">${doc.title} <span style="font-size: 11px; color: #64748b;">(${typeLabel})</span></div>
+            <div class="knowledge-title">
+              ${doc.title} 
+              <span style="font-size: 11px; color: #64748b;">(${typeLabel})</span>
+              <span style="font-size: 11px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 2px 8px; border-radius: 4px; margin-left: 8px;">
+                ${cat.icon} ${cat.label}
+              </span>
+            </div>
             <div class="knowledge-meta">
               ${formatBytes(doc.size)} • ${new Date(doc.createdAt).toLocaleDateString()}
             </div>
@@ -4630,6 +4667,7 @@
     async function saveKnowledge() {
       const title = document.getElementById('knowledge-title').value.trim();
       const content = document.getElementById('knowledge-content').value.trim();
+      const category = document.getElementById('knowledge-category').value;
       const fileInput = document.getElementById('knowledge-file');
       const file = fileInput.files[0];
       
@@ -4638,7 +4676,7 @@
         return;
       }
       
-      let requestBody = { title };
+      let requestBody = { title, category };
       
       // If PDF file is selected, send file data
       if (file && file.type === 'application/pdf') {

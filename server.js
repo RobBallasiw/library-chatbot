@@ -793,9 +793,23 @@ app.post('/api/chat', async (req, res) => {
     
     if (isGeneralQuery && knowledgeBase.documents.length > 0) {
       // User wants a list of all available documents
-      const documentList = knowledgeBase.documents.map((doc, index) => 
-        `${index + 1}. ${doc.title} (${doc.type === 'application/pdf' ? 'PDF' : 'Text'}, ${Math.round(doc.size / 1024)}KB)`
-      ).join('\n');
+      const categoryLabels = {
+        'ebook': '📚 eBook',
+        'journal': '📓 Journal',
+        'manual': '📖 Manual',
+        'policy': '📋 Policy',
+        'form': '📄 Form',
+        'syllabus': '📝 Syllabus',
+        'research': '🔬 Research',
+        'reference': '📚 Reference',
+        'other': '📁 Other'
+      };
+      
+      const documentList = knowledgeBase.documents.map((doc, index) => {
+        const category = categoryLabels[doc.category] || categoryLabels['other'];
+        const fileType = doc.type === 'application/pdf' ? 'PDF' : 'Text';
+        return `${index + 1}. ${doc.title} - ${category} (${fileType}, ${Math.round(doc.size / 1024)}KB)`;
+      }).join('\n');
       
       messages.push({
         role: 'system',
@@ -1780,7 +1794,7 @@ app.get('/api/knowledge-base', (req, res) => {
 
 // Add new document to knowledge base
 app.post('/api/knowledge-base', async (req, res) => {
-  const { title, content, fileData, fileType } = req.body;
+  const { title, content, fileData, fileType, category } = req.body;
   
   if (!title) {
     return res.status(400).json({ success: false, error: 'Title required' });
@@ -1859,7 +1873,8 @@ app.post('/api/knowledge-base', async (req, res) => {
     content: documentContent,
     createdAt: new Date(),
     size: documentContent.length,
-    type: fileType || 'text/plain'
+    type: fileType || 'text/plain',
+    category: category || 'other'
   };
   
   knowledgeBase.documents.push(document);
