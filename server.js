@@ -450,16 +450,27 @@ RESPONSE STYLE:
 - DON'T ASK: Avoid asking clarifying questions unless absolutely necessary
 - BE HELPFUL: Assume the user wants the most relevant information
 - BE BRIEF: Keep responses concise and to the point
+- ONLY MENTION UPLOADED DOCUMENTS: Never make up or suggest books that aren't in the system
+- IF NO DOCUMENTS: Be honest that no digital documents are available yet
+
+WHEN LISTING AVAILABLE DOCUMENTS:
+- ONLY list documents that have been uploaded to the knowledge base
+- Format: Simple numbered list with title and type
+- Example: "Here are the documents currently available:\n1. OJT Journal Format (PDF, 45KB)\n2. Library Policy Manual (Text, 12KB)"
+- DON'T mention generic categories or make up titles
+- DON'T say "we have a wide range" if you don't have specific documents
 
 EXAMPLES OF GOOD RESPONSES:
+User: "what books do you have?"
+Bot (if documents uploaded): "Here are the documents currently available in our digital library:\n1. OJT Journal Format (PDF)\n2. CCSE Course Guide (PDF)\n3. Library Hours Policy (Text)\n\nWould you like more information about any of these?"
+
+Bot (if NO documents): "We don't have any digital documents uploaded to the system yet. However, I can help you with information about our physical library collection, hours, services, or you can speak with a librarian for assistance."
+
 User: "ojt journal format for ccse"
 Bot: "Yes! We have an OJT journal format for CCSE students. It includes daily log templates with fields for date, activities, hours worked, and supervisor's signature. The format follows the standard OJT documentation requirements. Would you like me to provide more details about the format?"
 
 User: "library hours"
 Bot: "Our library is open Monday-Friday 8am-10pm, Saturday 9am-6pm, and Sunday 10am-5pm. We're closed on public holidays."
-
-User: "do you have books about python programming"
-Bot: "Yes! We have several Python programming books in our collection, including beginner guides, advanced topics, and project-based learning books. I can help you search our catalog for specific titles. What level are you looking for - beginner, intermediate, or advanced?"
 
 EXAMPLES OF BAD RESPONSES (TOO MANY QUESTIONS):
 ❌ "Can you please provide more information about what you're looking for?"
@@ -774,20 +785,44 @@ app.post('/api/chat', async (req, res) => {
     
     // RAG: Search knowledge base for relevant information
     const knowledgeResults = searchKnowledgeBase(message);
-    if (knowledgeResults.length > 0) {
+    
+    // Check if user is asking for a general list of available documents
+    const isGeneralQuery = /what (books|documents|files|pdfs|materials|resources).*(do you have|available|got)/i.test(message) ||
+                          /list (all|available|your) (books|documents|files|pdfs)/i.test(message) ||
+                          /show me (all|available|your) (books|documents|files|pdfs)/i.test(message);
+    
+    if (isGeneralQuery && knowledgeBase.documents.length > 0) {
+      // User wants a list of all available documents
+      const documentList = knowledgeBase.documents.map((doc, index) => 
+        `${index + 1}. ${doc.title} (${doc.type === 'application/pdf' ? 'PDF' : 'Text'}, ${Math.round(doc.size / 1024)}KB)`
+      ).join('\n');
+      
+      messages.push({
+        role: 'system',
+        content: `The user is asking for a list of available documents. Here are ALL the documents currently in our library system:\n\n${documentList}\n\nProvide this list to the user in a simple, clear format. Don't make up or mention any other books. ONLY list these documents.`
+      });
+      
+      console.log(`📚 Providing full document list (${knowledgeBase.documents.length} documents)`);
+    } else if (knowledgeResults.length > 0) {
+      // User is searching for specific documents
       const knowledgeContext = knowledgeResults.map(r => 
         `From "${r.title}":\n${r.excerpt}`
       ).join('\n\n');
       
-      // Get document IDs for download links
-      const documentIds = knowledgeResults.map(r => r.id).filter(id => id);
-      
       messages.push({
         role: 'system',
-        content: `Here is relevant information from our knowledge base that may help answer the user's question:\n\n${knowledgeContext}\n\nIMPORTANT: You have access to these documents in our library system. When relevant, you should:\n1. Provide a brief summary or preview of the document content\n2. Mention that the full document is available\n3. Tell the user they can request to view or download the full document\n4. Be specific about what's in the document\n\nExample: "Yes, we have the OJT Journal Format document! It includes daily log templates, weekly reflection sheets, and guidelines for documenting your on-the-job training activities. The document is ${knowledgeResults[0].excerpt.length} characters long and covers [mention key topics]. Would you like me to show you a preview or would you prefer to view the full document?"`
+        content: `Here is relevant information from our knowledge base that may help answer the user's question:\n\n${knowledgeContext}\n\nIMPORTANT: You have access to these documents in our library system. When relevant, you should:\n1. Provide a brief summary or preview of the document content\n2. Mention that the full document is available\n3. Tell the user they can request to view or download the full document\n4. Be specific about what's in the document\n\nExample: "Yes, we have the OJT Journal Format document! It includes daily log templates, weekly reflection sheets, and guidelines for documenting your on-the-job training activities. Would you like me to show you a preview or would you prefer to view the full document?"`
       });
       
       console.log(`📚 RAG: Found ${knowledgeResults.length} relevant documents`);
+    } else if (knowledgeBase.documents.length === 0) {
+      // No documents in knowledge base
+      messages.push({
+        role: 'system',
+        content: `IMPORTANT: The library's digital document collection is currently empty. No books, PDFs, or documents have been uploaded yet. If the user asks about available books or documents, tell them honestly that no digital documents are currently available in the system, but they can speak with a librarian for assistance with physical books or other resources.`
+      });
+      
+      console.log(`⚠️ No documents in knowledge base`);
     }
     
     const recentHistory = history.slice(-LIMITS.CONVERSATION_HISTORY);
