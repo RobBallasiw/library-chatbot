@@ -2952,6 +2952,31 @@
     </div>
   </div>
 
+  <!-- Document Preview Modal -->
+  <div class="modal" id="preview-modal">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="modal-header">
+        <h3 id="preview-title">Document Preview</h3>
+        <button class="btn-icon" onclick="closePreviewModal()">×</button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <div id="preview-info" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+          <!-- Document info will be loaded here -->
+        </div>
+        <div id="preview-content" style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 20px; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; color: #e2e8f0;">
+          <!-- Document content will be loaded here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closePreviewModal()">Close</button>
+        <button class="btn-save" onclick="downloadDocument()" id="download-btn">
+          <span>⬇️</span>
+          <span>Download</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let authorizedLibrarians = [];
     let pendingRequests = [];
@@ -4674,6 +4699,7 @@
             <div class="knowledge-preview">${doc.content.substring(0, 150)}...</div>
           </div>
           <div class="knowledge-actions">
+            <button class="btn-icon" onclick="previewDocument('${doc.id}')" title="Preview" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">👁️</button>
             <button class="btn-icon" onclick="deleteKnowledge('${doc.id}')" title="Delete">🗑️</button>
           </div>
         </div>
@@ -4871,6 +4897,109 @@
         alert('Error deleting document');
       }
     }
+
+    // Preview document
+    let currentPreviewDoc = null;
+
+    async function previewDocument(id) {
+      try {
+        const response = await fetch(`/api/knowledge-base/document/${id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          currentPreviewDoc = data.document;
+          
+          // Category info
+          const categoryInfo = {
+            'ebook': { icon: '📚', label: 'eBook' },
+            'journal': { icon: '📓', label: 'Journal' },
+            'manual': { icon: '📖', label: 'Manual' },
+            'policy': { icon: '📋', label: 'Policy' },
+            'form': { icon: '📄', label: 'Form' },
+            'syllabus': { icon: '📝', label: 'Syllabus' },
+            'research': { icon: '🔬', label: 'Research' },
+            'reference': { icon: '📚', label: 'Reference' },
+            'other': { icon: '📁', label: 'Other' }
+          };
+          
+          const cat = categoryInfo[currentPreviewDoc.category] || categoryInfo['other'];
+          const fileType = currentPreviewDoc.type === 'application/pdf' ? 'PDF' : 'Text';
+          
+          // Update modal
+          document.getElementById('preview-title').textContent = currentPreviewDoc.title;
+          
+          document.getElementById('preview-info').innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+              <div>
+                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Category</div>
+                <div style="font-weight: 600;">${cat.icon} ${cat.label}</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Type</div>
+                <div style="font-weight: 600;">${fileType}</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Size</div>
+                <div style="font-weight: 600;">${formatBytes(currentPreviewDoc.size)}</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Created</div>
+                <div style="font-weight: 600;">${new Date(currentPreviewDoc.createdAt).toLocaleDateString()}</div>
+              </div>
+            </div>
+          `;
+          
+          // Show preview (first 5000 characters)
+          const previewText = currentPreviewDoc.preview || currentPreviewDoc.fullContent.substring(0, 5000);
+          const hasMore = currentPreviewDoc.fullContent.length > 5000;
+          
+          document.getElementById('preview-content').textContent = previewText + (hasMore ? '\n\n... (showing first 5000 characters)' : '');
+          
+          // Show modal
+          const modal = document.getElementById('preview-modal');
+          modal.style.display = 'flex';
+          setTimeout(() => modal.classList.add('active'), 10);
+        } else {
+          alert('Failed to load document preview');
+        }
+      } catch (error) {
+        console.error('Error loading preview:', error);
+        alert('Error loading document preview');
+      }
+    }
+
+    function closePreviewModal() {
+      const modal = document.getElementById('preview-modal');
+      modal.classList.remove('active');
+      setTimeout(() => modal.style.display = 'none', 300);
+    }
+
+    function downloadDocument() {
+      if (!currentPreviewDoc) return;
+      
+      // Create a blob and download
+      const blob = new Blob([currentPreviewDoc.fullContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentPreviewDoc.title}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Close preview modal on outside click
+    document.addEventListener('DOMContentLoaded', () => {
+      const previewModal = document.getElementById('preview-modal');
+      if (previewModal) {
+        previewModal.addEventListener('click', (e) => {
+          if (e.target === previewModal) {
+            closePreviewModal();
+          }
+        });
+      }
+    });
 
     // Load knowledge base when switching to knowledge tab
     const originalSwitchTab = switchTab;
