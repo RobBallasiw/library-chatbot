@@ -2639,6 +2639,40 @@
         </div>
       </div>
 
+      <!-- Filter and Sort Controls -->
+      <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 16px; margin: 20px 0;">
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px;">
+            <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 600;">📂 Filter by Category</label>
+            <select id="category-filter" onchange="filterDocuments()" style="width: 100%; padding: 10px; border: 1px solid #334155; border-radius: 8px; background: #1e293b; color: #e2e8f0; font-size: 14px;">
+              <option value="all">All Categories</option>
+              <option value="ebook">📚 eBooks</option>
+              <option value="journal">📓 Journals/Templates</option>
+              <option value="manual">📖 Manuals/Guides</option>
+              <option value="policy">📋 Policies/Procedures</option>
+              <option value="form">📄 Forms/Documents</option>
+              <option value="syllabus">📝 Syllabus/Course Materials</option>
+              <option value="research">🔬 Research Papers</option>
+              <option value="reference">📚 Reference Materials</option>
+              <option value="other">📁 Other</option>
+            </select>
+          </div>
+          <div style="flex: 1; min-width: 200px;">
+            <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 600;">🔤 Sort by</label>
+            <select id="sort-filter" onchange="filterDocuments()" style="width: 100%; padding: 10px; border: 1px solid #334155; border-radius: 8px; background: #1e293b; color: #e2e8f0; font-size: 14px;">
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="title">Title (A-Z)</option>
+              <option value="size-desc">Largest First</option>
+              <option value="size-asc">Smallest First</option>
+            </select>
+          </div>
+          <button onclick="clearFilters()" style="padding: 10px 20px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #ef4444; cursor: pointer; font-size: 14px; font-weight: 600; margin-top: 20px;">
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
       <div class="knowledge-list" id="knowledge-list">
         <!-- Documents will be loaded here -->
       </div>
@@ -4537,10 +4571,14 @@
 
   <script>
     // Knowledge Base Functions
+    let allDocuments = []; // Store all documents for filtering
+    
     async function loadKnowledgeBase() {
       try {
         const response = await fetch('/api/knowledge-base');
         const data = await response.json();
+        
+        allDocuments = data.documents; // Store for filtering
         
         document.getElementById('nav-knowledge-count').textContent = data.documents.length;
         document.getElementById('total-documents').textContent = data.documents.length;
@@ -4548,10 +4586,49 @@
         const totalSize = data.documents.reduce((sum, doc) => sum + doc.size, 0);
         document.getElementById('total-kb-size').textContent = formatBytes(totalSize);
         
-        renderKnowledgeList(data.documents);
+        filterDocuments(); // Apply current filters
       } catch (error) {
         console.error('Error loading knowledge base:', error);
       }
+    }
+
+    function filterDocuments() {
+      const categoryFilter = document.getElementById('category-filter').value;
+      const sortFilter = document.getElementById('sort-filter').value;
+      
+      // Filter by category
+      let filtered = allDocuments;
+      if (categoryFilter !== 'all') {
+        filtered = allDocuments.filter(doc => doc.category === categoryFilter);
+      }
+      
+      // Sort documents
+      filtered = [...filtered]; // Create copy to avoid mutating original
+      switch (sortFilter) {
+        case 'newest':
+          filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          break;
+        case 'oldest':
+          filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+          break;
+        case 'title':
+          filtered.sort((a, b) => a.title.localeCompare(b.title));
+          break;
+        case 'size-desc':
+          filtered.sort((a, b) => b.size - a.size);
+          break;
+        case 'size-asc':
+          filtered.sort((a, b) => a.size - b.size);
+          break;
+      }
+      
+      renderKnowledgeList(filtered);
+    }
+
+    function clearFilters() {
+      document.getElementById('category-filter').value = 'all';
+      document.getElementById('sort-filter').value = 'newest';
+      filterDocuments();
     }
 
     function renderKnowledgeList(documents) {
