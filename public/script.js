@@ -904,7 +904,14 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
   }
   
   const contentDiv = document.createElement('div');
-  contentDiv.textContent = content;
+  contentDiv.className = 'message-content';
+  // Use innerHTML to preserve line breaks and formatting
+  // Convert newlines to <br> tags and preserve formatting
+  const formattedContent = content
+    .replace(/\n/g, '<br>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold: **text**
+    .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italic: *text*
+  contentDiv.innerHTML = formattedContent;
   messageDiv.appendChild(contentDiv);
   
   // Add attachment if present

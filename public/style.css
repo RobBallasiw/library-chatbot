@@ -324,6 +324,32 @@ body.dark-mode .close-btn:hover {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+.message-content {
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.message-content strong {
+  font-weight: 700;
+  color: inherit;
+}
+
+.message-content em {
+  font-style: italic;
+}
+
+/* Better list formatting in messages */
+.bot-message .message-content {
+  font-size: 15px;
+}
+
+.bot-message .message-content br {
+  display: block;
+  content: "";
+  margin: 4px 0;
+}
+
 .message-sender {
   font-size: 11px;
   font-weight: 600;
