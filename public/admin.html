@@ -2741,12 +2741,12 @@
       </div>
     </div>
 
-    <!-- AI Settings Section -->
+    <!-- AI Prompt Settings Section -->
     <div class="section">
       <div class="section-header">
         <div>
-          <h2>🤖 AI Assistant Settings</h2>
-          <p>Customize how the AI responds to users</p>
+          <h2>🤖 AI Personality & Instructions</h2>
+          <p>Customize how the AI behaves and responds to users</p>
         </div>
       </div>
       
@@ -2755,11 +2755,11 @@
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
             <input type="checkbox" id="use-custom-prompt" onchange="toggleCustomPrompt()" style="width: 20px; height: 20px; cursor: pointer;">
             <label for="use-custom-prompt" style="font-size: 16px; font-weight: 600; color: #f1f5f9; cursor: pointer;">
-              Use Custom AI Prompt
+              Use Custom AI Instructions
             </label>
           </div>
           <p style="font-size: 13px; color: #94a3b8; margin-left: 32px;">
-            Enable this to use your own custom instructions for the AI assistant. When disabled, the default library assistant prompt will be used.
+            Enable this to customize the AI's personality, tone, and behavior. When disabled, the default library assistant prompt will be used.
           </p>
         </div>
 
@@ -2771,7 +2771,7 @@
             <textarea 
               id="custom-prompt-text" 
               rows="12" 
-              placeholder="Enter your custom AI instructions here..."
+              placeholder="Enter your custom AI instructions here...&#10;&#10;Example:&#10;You are a friendly library assistant. Be warm and welcoming. Always greet students by saying 'Hello!' Use a casual, conversational tone. Keep responses brief and to the point."
               style="width: 100%; padding: 16px; border: 2px solid #334155; border-radius: 10px; background: #1e293b; color: #e2e8f0; font-size: 14px; font-family: 'Courier New', monospace; line-height: 1.6; resize: vertical;"
             ></textarea>
             <small style="display: block; margin-top: 8px; font-size: 12px; color: #64748b;">
@@ -2779,47 +2779,74 @@
             </small>
           </div>
 
-          <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-              <input type="checkbox" id="use-custom-context" onchange="toggleCustomContext()" style="width: 20px; height: 20px; cursor: pointer;">
-              <label for="use-custom-context" style="font-size: 16px; font-weight: 600; color: #f1f5f9; cursor: pointer;">
-                Use Custom Reference Data
-              </label>
-            </div>
-            <p style="font-size: 13px; color: #94a3b8; margin-left: 32px; margin-bottom: 16px;">
-              Add quick reference information (library hours, policies, FAQs, etc.) that the AI can use without uploading files.
-            </p>
-            
-            <div id="custom-context-editor" style="display: none; margin-left: 32px;">
-              <label style="display: block; font-size: 14px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px;">
-                Custom Reference Data
-              </label>
-              <textarea 
-                id="custom-context-text" 
-                rows="10" 
-                placeholder="Example:&#10;&#10;Library Hours:&#10;Monday-Friday: 8am-10pm&#10;Saturday: 9am-6pm&#10;Sunday: 10am-5pm&#10;&#10;Library Policies:&#10;- Maximum 5 books per student&#10;- 2-week borrowing period&#10;- Late fee: $0.50 per day&#10;&#10;Contact Information:&#10;Email: library@school.edu&#10;Phone: (555) 123-4567"
-                style="width: 100%; padding: 16px; border: 2px solid #334155; border-radius: 10px; background: #1e293b; color: #e2e8f0; font-size: 14px; font-family: 'Courier New', monospace; line-height: 1.6; resize: vertical;"
-              ></textarea>
-              <small style="display: block; margin-top: 8px; font-size: 12px; color: #64748b;">
-                💡 Paste any information you want the AI to reference: hours, policies, contact info, FAQs, procedures, etc.
-              </small>
-            </div>
-          </div>
-
           <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-            <button onclick="saveAISettings()" class="btn" style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
-              💾 Save AI Settings
+            <button onclick="saveAIPrompt()" class="btn" style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+              💾 Save Instructions
             </button>
             <button onclick="viewDefaultPrompt()" class="btn" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 12px 24px; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
               👁️ View Default Prompt
             </button>
-            <button onclick="resetAISettings()" class="btn" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 12px 24px; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+            <button onclick="resetAIPrompt()" class="btn" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 12px 24px; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
               🔄 Reset to Default
             </button>
           </div>
         </div>
 
-        <div id="ai-settings-status" style="margin-top: 16px; padding: 12px; border-radius: 8px; display: none;">
+        <div id="ai-prompt-status" style="margin-top: 16px; padding: 12px; border-radius: 8px; display: none;">
+          <!-- Status messages will appear here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Reference Data Section -->
+    <div class="section">
+      <div class="section-header">
+        <div>
+          <h2>📋 Quick Reference Data</h2>
+          <p>Add library information the AI can reference instantly (no file upload needed)</p>
+        </div>
+      </div>
+      
+      <div style="padding: 32px;">
+        <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <input type="checkbox" id="use-custom-context" onchange="toggleCustomContext()" style="width: 20px; height: 20px; cursor: pointer;">
+            <label for="use-custom-context" style="font-size: 16px; font-weight: 600; color: #f1f5f9; cursor: pointer;">
+              Enable Quick Reference Data
+            </label>
+          </div>
+          <p style="font-size: 13px; color: #94a3b8; margin-left: 32px;">
+            Paste library hours, policies, contact info, FAQs, or any quick facts. The AI will use this information to answer questions without needing to upload files.
+          </p>
+        </div>
+
+        <div id="custom-context-editor" style="display: none;">
+          <div style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 14px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px;">
+              Library Information & Quick Facts
+            </label>
+            <textarea 
+              id="custom-context-text" 
+              rows="15" 
+              placeholder="Paste your library information here...&#10;&#10;Example:&#10;&#10;Library Hours:&#10;Monday-Friday: 8am-10pm&#10;Saturday: 9am-6pm&#10;Sunday: 10am-5pm&#10;Closed on public holidays&#10;&#10;Library Policies:&#10;- Maximum 5 books per student&#10;- 2-week borrowing period&#10;- Late fee: $0.50 per day&#10;- Lost book replacement fee applies&#10;&#10;Contact Information:&#10;Email: library@school.edu&#10;Phone: (555) 123-4567&#10;Location: Building A, 2nd Floor&#10;&#10;Services Available:&#10;- Book borrowing&#10;- Computer access (30 min sessions)&#10;- Printing ($0.10 per page)&#10;- Study rooms (reservation required)"
+              style="width: 100%; padding: 16px; border: 2px solid #334155; border-radius: 10px; background: #1e293b; color: #e2e8f0; font-size: 14px; font-family: 'Courier New', monospace; line-height: 1.6; resize: vertical;"
+            ></textarea>
+            <small style="display: block; margin-top: 8px; font-size: 12px; color: #64748b;">
+              💡 Perfect for: Library hours, policies, contact info, FAQs, procedures, fees, services, locations, etc.
+            </small>
+          </div>
+
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button onclick="saveCustomContext()" class="btn" style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+              💾 Save Reference Data
+            </button>
+            <button onclick="resetCustomContext()" class="btn" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 12px 24px; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+              🗑️ Clear All Data
+            </button>
+          </div>
+        </div>
+
+        <div id="ai-context-status" style="margin-top: 16px; padding: 12px; border-radius: 8px; display: none;">
           <!-- Status messages will appear here -->
         </div>
       </div>
@@ -5517,19 +5544,13 @@
       document.getElementById('custom-context-editor').style.display = useCustom ? 'block' : 'none';
     }
 
-    async function saveAISettings() {
+    // Save AI Prompt (Instructions)
+    async function saveAIPrompt() {
       const useCustomPrompt = document.getElementById('use-custom-prompt').checked;
       const customPrompt = document.getElementById('custom-prompt-text').value.trim();
-      const useCustomContext = document.getElementById('use-custom-context').checked;
-      const customContext = document.getElementById('custom-context-text').value.trim();
       
       if (useCustomPrompt && !customPrompt) {
         alert('❌ Please enter custom AI instructions or disable custom prompt.');
-        return;
-      }
-      
-      if (useCustomContext && !customContext) {
-        alert('❌ Please enter custom reference data or disable custom context.');
         return;
       }
       
@@ -5540,6 +5561,41 @@
           body: JSON.stringify({
             useCustomPrompt: useCustomPrompt,
             customPrompt: customPrompt,
+            useCustomContext: document.getElementById('use-custom-context').checked,
+            customContext: document.getElementById('custom-context-text').value.trim()
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showStatus('ai-prompt-status', '✅ AI instructions saved successfully! Changes will apply to new conversations.', 'success');
+        } else {
+          showStatus('ai-prompt-status', '❌ Failed to save: ' + (data.error || 'Unknown error'), 'error');
+        }
+      } catch (error) {
+        console.error('Error saving AI prompt:', error);
+        showStatus('ai-prompt-status', '❌ Error: ' + error.message, 'error');
+      }
+    }
+
+    // Save Custom Context (Reference Data)
+    async function saveCustomContext() {
+      const useCustomContext = document.getElementById('use-custom-context').checked;
+      const customContext = document.getElementById('custom-context-text').value.trim();
+      
+      if (useCustomContext && !customContext) {
+        alert('❌ Please enter reference data or disable custom context.');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/ai-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            useCustomPrompt: document.getElementById('use-custom-prompt').checked,
+            customPrompt: document.getElementById('custom-prompt-text').value.trim(),
             useCustomContext: useCustomContext,
             customContext: customContext
           })
@@ -5548,24 +5604,32 @@
         const data = await response.json();
         
         if (data.success) {
-          showAIStatus('✅ AI settings saved successfully! Changes will apply to new conversations.', 'success');
+          showStatus('ai-context-status', '✅ Reference data saved successfully! The AI can now use this information.', 'success');
         } else {
-          showAIStatus('❌ Failed to save AI settings: ' + (data.error || 'Unknown error'), 'error');
+          showStatus('ai-context-status', '❌ Failed to save: ' + (data.error || 'Unknown error'), 'error');
         }
       } catch (error) {
-        console.error('Error saving AI settings:', error);
-        showAIStatus('❌ Error saving AI settings: ' + error.message, 'error');
+        console.error('Error saving custom context:', error);
+        showStatus('ai-context-status', '❌ Error: ' + error.message, 'error');
       }
     }
 
-    async function resetAISettings() {
-      if (!confirm('Are you sure you want to reset to the default AI settings? This will discard your custom instructions and reference data.')) {
+    // Reset AI Prompt
+    async function resetAIPrompt() {
+      if (!confirm('Reset AI instructions to default? This will discard your custom instructions.')) {
         return;
       }
       
       try {
-        const response = await fetch('/api/ai-settings/reset', {
-          method: 'POST'
+        const response = await fetch('/api/ai-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            useCustomPrompt: false,
+            customPrompt: null,
+            useCustomContext: document.getElementById('use-custom-context').checked,
+            customContext: document.getElementById('custom-context-text').value.trim()
+          })
         });
         
         const data = await response.json();
@@ -5574,16 +5638,47 @@
           document.getElementById('use-custom-prompt').checked = false;
           document.getElementById('custom-prompt-text').value = '';
           document.getElementById('custom-prompt-editor').style.display = 'none';
+          showStatus('ai-prompt-status', '✅ AI instructions reset to default!', 'success');
+        } else {
+          showStatus('ai-prompt-status', '❌ Failed to reset: ' + (data.error || 'Unknown error'), 'error');
+        }
+      } catch (error) {
+        console.error('Error resetting AI prompt:', error);
+        showStatus('ai-prompt-status', '❌ Error: ' + error.message, 'error');
+      }
+    }
+
+    // Reset Custom Context
+    async function resetCustomContext() {
+      if (!confirm('Clear all reference data? This cannot be undone.')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/ai-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            useCustomPrompt: document.getElementById('use-custom-prompt').checked,
+            customPrompt: document.getElementById('custom-prompt-text').value.trim(),
+            useCustomContext: false,
+            customContext: null
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
           document.getElementById('use-custom-context').checked = false;
           document.getElementById('custom-context-text').value = '';
           document.getElementById('custom-context-editor').style.display = 'none';
-          showAIStatus('✅ AI settings reset to default successfully!', 'success');
+          showStatus('ai-context-status', '✅ Reference data cleared!', 'success');
         } else {
-          showAIStatus('❌ Failed to reset AI settings: ' + (data.error || 'Unknown error'), 'error');
+          showStatus('ai-context-status', '❌ Failed to clear: ' + (data.error || 'Unknown error'), 'error');
         }
       } catch (error) {
-        console.error('Error resetting AI settings:', error);
-        showAIStatus('❌ Error resetting AI settings: ' + error.message, 'error');
+        console.error('Error clearing custom context:', error);
+        showStatus('ai-context-status', '❌ Error: ' + error.message, 'error');
       }
     }
 
@@ -5601,8 +5696,8 @@
       }
     }
 
-    function showAIStatus(message, type) {
-      const statusDiv = document.getElementById('ai-settings-status');
+    function showStatus(elementId, message, type) {
+      const statusDiv = document.getElementById(elementId);
       statusDiv.style.display = 'block';
       statusDiv.style.background = type === 'success' 
         ? 'rgba(16, 185, 129, 0.1)' 
