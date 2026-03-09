@@ -154,6 +154,7 @@ const logger = {
 // Librarian data file
 const LIBRARIAN_DATA_FILE = path.join(__dirname, 'librarian-data.json');
 const CANNED_RESPONSES_FILE = path.join(__dirname, 'canned-responses.json');
+const AI_SETTINGS_FILE = path.join(__dirname, 'ai-settings.json');
 
 // Load canned responses
 function loadCannedResponses() {
@@ -178,6 +179,38 @@ function saveCannedResponses(data) {
     return true;
   } catch (error) {
     logger.error('❌ Error saving canned responses:', error.message);
+    return false;
+  }
+}
+
+// Load AI settings
+function loadAISettings() {
+  try {
+    if (fs.existsSync(AI_SETTINGS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(AI_SETTINGS_FILE, 'utf8'));
+      console.log('✅ Loaded custom AI settings');
+      return data;
+    }
+  } catch (error) {
+    console.error('⚠️  Error loading AI settings:', error.message);
+  }
+  
+  return {
+    customPrompt: null,
+    useCustomPrompt: false,
+    lastUpdated: null
+  };
+}
+
+// Save AI settings
+function saveAISettings(data) {
+  try {
+    data.lastUpdated = new Date().toISOString();
+    fs.writeFileSync(AI_SETTINGS_FILE, JSON.stringify(data, null, 2));
+    console.log('✅ Saved AI settings');
+    return true;
+  } catch (error) {
+    console.error('❌ Error saving AI settings:', error.message);
     return false;
   }
 }
@@ -223,6 +256,7 @@ function saveLibrarianData(data) {
 // Initialize librarian data
 let librarianData = loadLibrarianData();
 let cannedResponses = loadCannedResponses();
+let aiSettings = loadAISettings();
 
 // Cleanup old conversations to prevent memory leaks
 function cleanupOldConversations() {
@@ -779,8 +813,13 @@ app.post('/api/chat', async (req, res) => {
     }
 
     // Bot response using Groq API
+    // Use custom prompt if enabled, otherwise use default
+    const systemPrompt = (aiSettings.useCustomPrompt && aiSettings.customPrompt) 
+      ? aiSettings.customPrompt 
+      : LIBRARY_CONTEXT;
+    
     const messages = [
-      { role: 'system', content: LIBRARY_CONTEXT }
+      { role: 'system', content: systemPrompt }
     ];
     
     // RAG: Search knowledge base for relevant information
@@ -1983,6 +2022,43 @@ app.patch('/api/knowledge-base/:id', (req, res) => {
     res.json({ success: true, document });
   } else {
     res.status(500).json({ success: false, error: 'Failed to save' });
+  }
+});
+
+// Get AI settings
+app.get('/api/ai-settings', (req, res) => {
+  res.json({
+    success: true,
+    settings: aiSettings,
+    defaultPrompt: LIBRARY_CONTEXT
+  });
+});
+
+// Update AI settings
+app.post('/api/ai-settings', (req, res) => {
+  const { customPrompt, useCustomPrompt } = req.body;
+  
+  aiSettings.customPrompt = customPrompt || null;
+  aiSettings.useCustomPrompt = useCustomPrompt === true;
+  
+  if (saveAISettings(aiSettings)) {
+    console.log(`✅ Updated AI settings - Custom prompt ${aiSettings.useCustomPrompt ? 'enabled' : 'disabled'}`);
+    res.json({ success: true, settings: aiSettings });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to save settings' });
+  }
+});
+
+// Reset AI settings to default
+app.post('/api/ai-settings/reset', (req, res) => {
+  aiSettings.customPrompt = null;
+  aiSettings.useCustomPrompt = false;
+  
+  if (saveAISettings(aiSettings)) {
+    console.log(`✅ Reset AI settings to default`);
+    res.json({ success: true, settings: aiSettings });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to save settings' });
   }
 });
 

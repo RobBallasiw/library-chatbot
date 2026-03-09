@@ -2677,6 +2677,31 @@
         </div>
       </div>
 
+      <!-- Search Bar -->
+      <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 20px; margin: 20px 0;">
+        <div style="position: relative;">
+          <input 
+            type="text" 
+            id="knowledge-search" 
+            placeholder="🔍 Search documents by title or content..." 
+            oninput="searchDocuments()"
+            style="width: 100%; padding: 14px 48px 14px 20px; border: 2px solid #334155; border-radius: 10px; background: #1e293b; color: #e2e8f0; font-size: 15px; transition: all 0.3s ease;"
+            onfocus="this.style.borderColor='#047857'; this.style.boxShadow='0 0 0 3px rgba(4, 120, 87, 0.1)'"
+            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+          >
+          <button 
+            onclick="document.getElementById('knowledge-search').value=''; searchDocuments();" 
+            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 20px; padding: 4px 8px; transition: color 0.2s;"
+            onmouseover="this.style.color='#ef4444'"
+            onmouseout="this.style.color='#64748b'"
+            title="Clear search"
+          >×</button>
+        </div>
+        <div id="search-results-count" style="margin-top: 8px; font-size: 13px; color: #64748b; display: none;">
+          <!-- Search results count will appear here -->
+        </div>
+      </div>
+
       <!-- Filter and Sort Controls -->
       <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 16px; margin: 20px 0;">
         <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
@@ -2713,6 +2738,63 @@
 
       <div class="knowledge-list" id="knowledge-list">
         <!-- Documents will be loaded here -->
+      </div>
+    </div>
+
+    <!-- AI Settings Section -->
+    <div class="section">
+      <div class="section-header">
+        <div>
+          <h2>🤖 AI Assistant Settings</h2>
+          <p>Customize how the AI responds to users</p>
+        </div>
+      </div>
+      
+      <div style="padding: 32px;">
+        <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <input type="checkbox" id="use-custom-prompt" onchange="toggleCustomPrompt()" style="width: 20px; height: 20px; cursor: pointer;">
+            <label for="use-custom-prompt" style="font-size: 16px; font-weight: 600; color: #f1f5f9; cursor: pointer;">
+              Use Custom AI Prompt
+            </label>
+          </div>
+          <p style="font-size: 13px; color: #94a3b8; margin-left: 32px;">
+            Enable this to use your own custom instructions for the AI assistant. When disabled, the default library assistant prompt will be used.
+          </p>
+        </div>
+
+        <div id="custom-prompt-editor" style="display: none;">
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 14px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px;">
+              Custom AI Instructions
+            </label>
+            <textarea 
+              id="custom-prompt-text" 
+              rows="15" 
+              placeholder="Enter your custom AI instructions here..."
+              style="width: 100%; padding: 16px; border: 2px solid #334155; border-radius: 10px; background: #1e293b; color: #e2e8f0; font-size: 14px; font-family: 'Courier New', monospace; line-height: 1.6; resize: vertical;"
+            ></textarea>
+            <small style="display: block; margin-top: 8px; font-size: 12px; color: #64748b;">
+              💡 Tip: Be specific about the AI's role, tone, and what it should/shouldn't do. The AI will follow these instructions when responding to users.
+            </small>
+          </div>
+
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button onclick="saveAISettings()" class="btn" style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+              💾 Save AI Settings
+            </button>
+            <button onclick="viewDefaultPrompt()" class="btn" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 12px 24px; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+              👁️ View Default Prompt
+            </button>
+            <button onclick="resetAISettings()" class="btn" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 12px 24px; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+              🔄 Reset to Default
+            </button>
+          </div>
+        </div>
+
+        <div id="ai-settings-status" style="margin-top: 16px; padding: 12px; border-radius: 8px; display: none;">
+          <!-- Status messages will appear here -->
+        </div>
       </div>
     </div>
 
@@ -2977,10 +3059,16 @@
         </div>
         <div class="form-group">
           <label>Or Upload File (TXT, PDF)</label>
-          <input type="file" id="knowledge-file" accept=".txt,.pdf" onchange="handleKnowledgeFile()">
+          <input type="file" id="knowledge-file" accept=".txt,.pdf" multiple onchange="handleKnowledgeFile()">
+          <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">
+            💡 You can select multiple files to upload at once!
+          </small>
           <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">
             ⚠️ Note: If PDF upload fails, please copy and paste the text manually above.
           </small>
+          <div id="file-list" style="margin-top: 12px; display: none;">
+            <!-- Selected files will appear here -->
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -4709,11 +4797,29 @@
     function filterDocuments() {
       const categoryFilter = document.getElementById('category-filter').value;
       const sortFilter = document.getElementById('sort-filter').value;
+      const searchQuery = document.getElementById('knowledge-search').value.toLowerCase().trim();
+      
+      // Filter by search query
+      let filtered = allDocuments;
+      if (searchQuery) {
+        filtered = allDocuments.filter(doc => 
+          doc.title.toLowerCase().includes(searchQuery) || 
+          doc.content.toLowerCase().includes(searchQuery)
+        );
+      }
       
       // Filter by category
-      let filtered = allDocuments;
       if (categoryFilter !== 'all') {
-        filtered = allDocuments.filter(doc => doc.category === categoryFilter);
+        filtered = filtered.filter(doc => doc.category === categoryFilter);
+      }
+      
+      // Update search results count
+      const searchResultsCount = document.getElementById('search-results-count');
+      if (searchQuery) {
+        searchResultsCount.style.display = 'block';
+        searchResultsCount.innerHTML = `Found <strong style="color: #10b981;">${filtered.length}</strong> document${filtered.length !== 1 ? 's' : ''} matching "<strong>${searchQuery}</strong>"`;
+      } else {
+        searchResultsCount.style.display = 'none';
       }
       
       // Sort documents
@@ -4739,9 +4845,14 @@
       renderKnowledgeList(filtered);
     }
 
+    function searchDocuments() {
+      filterDocuments();
+    }
+
     function clearFilters() {
       document.getElementById('category-filter').value = 'all';
       document.getElementById('sort-filter').value = 'newest';
+      document.getElementById('knowledge-search').value = '';
       filterDocuments();
     }
 
@@ -4816,9 +4927,13 @@
       modal.classList.remove('active');
       setTimeout(() => {
         modal.style.display = 'none';
-        // Reset textarea state
-        document.getElementById('knowledge-content').disabled = false;
+        // Reset all fields
+        document.getElementById('knowledge-title').value = '';
+        document.getElementById('knowledge-title').disabled = false;
         document.getElementById('knowledge-content').value = '';
+        document.getElementById('knowledge-content').disabled = false;
+        document.getElementById('knowledge-file').value = '';
+        document.getElementById('file-list').style.display = 'none';
       }, 300);
     }
 
@@ -4836,22 +4951,50 @@
 
     async function handleKnowledgeFile() {
       const fileInput = document.getElementById('knowledge-file');
-      const file = fileInput.files[0];
+      const files = fileInput.files;
       
-      if (!file) return;
-      
-      const titleInput = document.getElementById('knowledge-title');
-      if (!titleInput.value) {
-        titleInput.value = file.name.replace(/\.[^/.]+$/, '');
+      if (!files || files.length === 0) {
+        document.getElementById('file-list').style.display = 'none';
+        return;
       }
       
-      if (file.type === 'text/plain') {
-        const text = await file.text();
-        document.getElementById('knowledge-content').value = text;
-      } else if (file.type === 'application/pdf') {
-        // For PDFs, we'll send the file data to the server for processing
-        // Show a message to the user
-        document.getElementById('knowledge-content').value = '📄 PDF file selected. Text will be extracted automatically when you click Upload.';
+      // Show file list
+      const fileListDiv = document.getElementById('file-list');
+      fileListDiv.style.display = 'block';
+      fileListDiv.innerHTML = `
+        <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 12px;">
+          <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 600;">
+            📎 ${files.length} file${files.length > 1 ? 's' : ''} selected:
+          </div>
+          ${Array.from(files).map((file, index) => `
+            <div style="font-size: 12px; color: #94a3b8; padding: 4px 0; display: flex; align-items: center; gap: 8px;">
+              <span>${file.type === 'application/pdf' ? '📕' : '📄'}</span>
+              <span style="flex: 1;">${file.name}</span>
+              <span style="color: #64748b;">${formatBytes(file.size)}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      
+      // If single file, auto-fill title
+      if (files.length === 1) {
+        const titleInput = document.getElementById('knowledge-title');
+        if (!titleInput.value) {
+          titleInput.value = files[0].name.replace(/\.[^/.]+$/, '');
+        }
+        
+        if (files[0].type === 'text/plain') {
+          const text = await files[0].text();
+          document.getElementById('knowledge-content').value = text;
+        } else if (files[0].type === 'application/pdf') {
+          document.getElementById('knowledge-content').value = '📄 PDF file selected. Text will be extracted automatically when you click Upload.';
+          document.getElementById('knowledge-content').disabled = true;
+        }
+      } else {
+        // Multiple files - disable title and content fields
+        document.getElementById('knowledge-title').value = `${files.length} documents`;
+        document.getElementById('knowledge-title').disabled = true;
+        document.getElementById('knowledge-content').value = `Bulk upload: ${files.length} files will be uploaded with their filenames as titles.`;
         document.getElementById('knowledge-content').disabled = true;
       }
     }
@@ -4861,7 +5004,16 @@
       const content = document.getElementById('knowledge-content').value.trim();
       const category = document.getElementById('knowledge-category').value;
       const fileInput = document.getElementById('knowledge-file');
-      const file = fileInput.files[0];
+      const files = fileInput.files;
+      
+      // Check if bulk upload (multiple files)
+      if (files && files.length > 1) {
+        await bulkUploadDocuments(files, category);
+        return;
+      }
+      
+      // Single file/document upload
+      const file = files && files.length > 0 ? files[0] : null;
       
       if (!title) {
         alert('Please provide a title');
@@ -4963,6 +5115,86 @@
         document.getElementById('extraction-loading-overlay').style.display = 'none';
         alert('❌ Error uploading document:\n\n' + error.message + '\n\nPlease check your internet connection and try again.');
       }
+    }
+
+    // Bulk upload function
+    async function bulkUploadDocuments(files, category) {
+      const loadingOverlay = document.getElementById('extraction-loading-overlay');
+      const statusText = document.getElementById('extraction-status');
+      loadingOverlay.style.display = 'flex';
+      
+      let successCount = 0;
+      let failCount = 0;
+      const errors = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const title = file.name.replace(/\.[^/.]+$/, '');
+        
+        statusText.innerHTML = `
+          Uploading file ${i + 1} of ${files.length}...<br>
+          <strong>${file.name}</strong><br>
+          <div style="margin-top: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; height: 8px; overflow: hidden;">
+            <div style="background: #10b981; height: 100%; width: ${((i + 1) / files.length * 100)}%; transition: width 0.3s;"></div>
+          </div>
+        `;
+        
+        try {
+          let requestBody = { title, category };
+          
+          if (file.type === 'application/pdf') {
+            // Read PDF file
+            const reader = new FileReader();
+            const fileData = await new Promise((resolve, reject) => {
+              reader.onload = (e) => resolve(e.target.result);
+              reader.onerror = (e) => reject(e);
+              reader.readAsDataURL(file);
+            });
+            
+            requestBody.fileData = fileData;
+            requestBody.fileType = file.type;
+          } else if (file.type === 'text/plain') {
+            const text = await file.text();
+            requestBody.content = text;
+          } else {
+            throw new Error('Unsupported file type');
+          }
+          
+          const response = await fetch('/api/knowledge-base', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            successCount++;
+          } else {
+            failCount++;
+            errors.push(`${file.name}: ${data.error}`);
+          }
+        } catch (error) {
+          failCount++;
+          errors.push(`${file.name}: ${error.message}`);
+        }
+      }
+      
+      loadingOverlay.style.display = 'none';
+      closeKnowledgeModal();
+      loadKnowledgeBase();
+      
+      let message = `✅ Bulk upload complete!\n\n`;
+      message += `Successfully uploaded: ${successCount} file${successCount !== 1 ? 's' : ''}\n`;
+      if (failCount > 0) {
+        message += `Failed: ${failCount} file${failCount !== 1 ? 's' : ''}\n\n`;
+        message += `Errors:\n${errors.slice(0, 5).join('\n')}`;
+        if (errors.length > 5) {
+          message += `\n... and ${errors.length - 5} more`;
+        }
+      }
+      
+      alert(message);
     }
 
     async function deleteKnowledge(id) {
@@ -5219,8 +5451,122 @@
       originalSwitchTab(tabName);
       if (tabName === 'knowledge') {
         loadKnowledgeBase();
+        loadAISettings();
       }
     };
+
+    // AI Settings Functions
+    async function loadAISettings() {
+      try {
+        const response = await fetch('/api/ai-settings');
+        const data = await response.json();
+        
+        if (data.success) {
+          const useCustom = data.settings.useCustomPrompt || false;
+          const customPrompt = data.settings.customPrompt || '';
+          
+          document.getElementById('use-custom-prompt').checked = useCustom;
+          document.getElementById('custom-prompt-text').value = customPrompt;
+          document.getElementById('custom-prompt-editor').style.display = useCustom ? 'block' : 'none';
+        }
+      } catch (error) {
+        console.error('Error loading AI settings:', error);
+      }
+    }
+
+    function toggleCustomPrompt() {
+      const useCustom = document.getElementById('use-custom-prompt').checked;
+      document.getElementById('custom-prompt-editor').style.display = useCustom ? 'block' : 'none';
+    }
+
+    async function saveAISettings() {
+      const useCustom = document.getElementById('use-custom-prompt').checked;
+      const customPrompt = document.getElementById('custom-prompt-text').value.trim();
+      
+      if (useCustom && !customPrompt) {
+        alert('❌ Please enter custom AI instructions or disable custom prompt.');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/ai-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            useCustomPrompt: useCustom,
+            customPrompt: customPrompt
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showAIStatus('✅ AI settings saved successfully! Changes will apply to new conversations.', 'success');
+        } else {
+          showAIStatus('❌ Failed to save AI settings: ' + (data.error || 'Unknown error'), 'error');
+        }
+      } catch (error) {
+        console.error('Error saving AI settings:', error);
+        showAIStatus('❌ Error saving AI settings: ' + error.message, 'error');
+      }
+    }
+
+    async function resetAISettings() {
+      if (!confirm('Are you sure you want to reset to the default AI prompt? This will discard your custom instructions.')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/ai-settings/reset', {
+          method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          document.getElementById('use-custom-prompt').checked = false;
+          document.getElementById('custom-prompt-text').value = '';
+          document.getElementById('custom-prompt-editor').style.display = 'none';
+          showAIStatus('✅ AI settings reset to default successfully!', 'success');
+        } else {
+          showAIStatus('❌ Failed to reset AI settings: ' + (data.error || 'Unknown error'), 'error');
+        }
+      } catch (error) {
+        console.error('Error resetting AI settings:', error);
+        showAIStatus('❌ Error resetting AI settings: ' + error.message, 'error');
+      }
+    }
+
+    async function viewDefaultPrompt() {
+      try {
+        const response = await fetch('/api/ai-settings');
+        const data = await response.json();
+        
+        if (data.success && data.defaultPrompt) {
+          alert('Default AI Prompt:\n\n' + data.defaultPrompt);
+        }
+      } catch (error) {
+        console.error('Error loading default prompt:', error);
+        alert('Error loading default prompt');
+      }
+    }
+
+    function showAIStatus(message, type) {
+      const statusDiv = document.getElementById('ai-settings-status');
+      statusDiv.style.display = 'block';
+      statusDiv.style.background = type === 'success' 
+        ? 'rgba(16, 185, 129, 0.1)' 
+        : 'rgba(239, 68, 68, 0.1)';
+      statusDiv.style.border = type === 'success'
+        ? '1px solid rgba(16, 185, 129, 0.3)'
+        : '1px solid rgba(239, 68, 68, 0.3)';
+      statusDiv.style.color = type === 'success' ? '#10b981' : '#ef4444';
+      statusDiv.textContent = message;
+      
+      setTimeout(() => {
+        statusDiv.style.display = 'none';
+      }, 5000);
+    }
   </script>
 
 </body>
