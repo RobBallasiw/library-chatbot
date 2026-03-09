@@ -155,6 +155,8 @@ const logger = {
 const LIBRARIAN_DATA_FILE = path.join(__dirname, 'librarian-data.json');
 const CANNED_RESPONSES_FILE = path.join(__dirname, 'canned-responses.json');
 const AI_SETTINGS_FILE = path.join(__dirname, 'ai-settings.json');
+const EVENTS_FILE = path.join(__dirname, 'library-events.json');
+const ANALYTICS_FILE = path.join(__dirname, 'document-analytics.json');
 
 // Load canned responses
 function loadCannedResponses() {
@@ -217,6 +219,62 @@ function saveAISettings(data) {
   }
 }
 
+// Load library events
+function loadEvents() {
+  try {
+    if (fs.existsSync(EVENTS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(EVENTS_FILE, 'utf8'));
+      console.log('✅ Loaded library events:', data.events.length);
+      return data;
+    }
+  } catch (error) {
+    console.error('⚠️  Error loading events:', error.message);
+  }
+  return { events: [], featured: [] };
+}
+
+// Save library events
+function saveEvents(data) {
+  try {
+    fs.writeFileSync(EVENTS_FILE, JSON.stringify(data, null, 2));
+    console.log('✅ Saved library events');
+    return true;
+  } catch (error) {
+    console.error('❌ Error saving events:', error.message);
+    return false;
+  }
+}
+
+// Load document analytics
+function loadAnalytics() {
+  try {
+    if (fs.existsSync(ANALYTICS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(ANALYTICS_FILE, 'utf8'));
+      console.log('✅ Loaded document analytics');
+      return data;
+    }
+  } catch (error) {
+    console.error('⚠️  Error loading analytics:', error.message);
+  }
+  return { 
+    documentViews: {}, 
+    searchTerms: {},
+    helpfulResponses: [],
+    trending: []
+  };
+}
+
+// Save document analytics
+function saveAnalytics(data) {
+  try {
+    fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(data, null, 2));
+    return true;
+  } catch (error) {
+    console.error('❌ Error saving analytics:', error.message);
+    return false;
+  }
+}
+
 // Load or initialize librarian data
 function loadLibrarianData() {
   try {
@@ -259,6 +317,8 @@ function saveLibrarianData(data) {
 let librarianData = loadLibrarianData();
 let cannedResponses = loadCannedResponses();
 let aiSettings = loadAISettings();
+let libraryEvents = loadEvents();
+let documentAnalytics = loadAnalytics();
 
 // Cleanup old conversations to prevent memory leaks
 function cleanupOldConversations() {
@@ -1995,6 +2055,14 @@ app.get('/api/knowledge-base/document/:id', (req, res) => {
     return res.status(404).json({ success: false, error: 'Document not found' });
   }
   
+  // Track document view
+  if (!documentAnalytics.documentViews[id]) {
+    documentAnalytics.documentViews[id] = { count: 0, lastViewed: null };
+  }
+  documentAnalytics.documentViews[id].count++;
+  documentAnalytics.documentViews[id].lastViewed = new Date().toISOString();
+  saveAnalytics(documentAnalytics);
+  
   // Return document with preview and original file
   res.json({
     success: true,
@@ -2105,6 +2173,183 @@ app.post('/api/ai-settings/reset', (req, res) => {
   } else {
     res.status(500).json({ success: false, error: 'Failed to save settings' });
   }
+});
+
+// ===== LIBRARY EVENTS ENDPOINTS =====
+
+// Get all events
+app.get('/api/events', (req, res) => {
+  res.json({ success: true, events: libraryEvents.events, featured: libraryEvents.featured });
+});
+
+// Add new event
+app.post('/api/events', (req, res) => {
+  const { title, description, date, time, location, type } = req.body;
+  
+  if (!title || !date) {
+    return res.status(400).json({ success: false, error: 'Title and date required' });
+  }
+  
+  const event = {
+    id: Date.now().toString(),
+    title,
+    description: description || '',
+    date,
+    time: time || '',
+    location: location || '',
+    type: type || 'general',
+    createdAt: new Date().toISOString()
+  };
+  
+  libraryEvents.events.push(event);
+  
+  if (saveEvents(libraryEvents)) {
+    res.json({ success: true, event });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to save' });
+  }
+});
+
+// Delete event
+app.delete('/api/events/:id', (req, res) => {
+  const { id } = req.params;
+  const index = libraryEvents.events.findIndex(e => e.id === id);
+  
+  if (index === -1) {
+    return res.status(404).json({ success: false, error: 'Event not found' });
+  }
+  
+  libraryEvents.events.splice(index, 1);
+  
+  if (saveEvents(libraryEvents)) {
+    res.json({ success: true });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to save' });
+  }
+});
+
+// ===== FEATURED CONTENT ENDPOINTS =====
+
+// Set featured documents
+app.post('/api/featured', (req, res) => {
+  const { documentIds } = req.body;
+  
+  if (!Array.isArray(documentIds)) {
+    return res.status(400).json({ success: false, error: 'documentIds must be an array' });
+  }
+  
+  libraryEvents.featured = documentIds;
+  
+  if (saveEvents(libraryEvents)) {
+    res.json({ success: true, featured: libraryEvents.featured });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to save' });
+  }
+});
+
+// ===== ANALYTICS ENDPOINTS =====
+
+// Track document view
+app.post('/api/analytics/view/:id', (req, res) => {
+  const { id } = req.params;
+  
+  if (!documentAnalytics.documentViews[id]) {
+    documentAnalytics.documentViews[id] = { count: 0, lastViewed: null };
+  }
+  
+  documentAnalytics.documentViews[id].count++;
+  documentAnalytics.documentViews[id].lastViewed = new Date().toISOString();
+  
+  saveAnalytics(documentAnalytics);
+  res.json({ success: true });
+});
+
+// Track search term
+app.post('/api/analytics/search', (req, res) => {
+  const { term } = req.body;
+  
+  if (!term) {
+    return res.status(400).json({ success: false, error: 'Search term required' });
+  }
+  
+  const termLower = term.toLowerCase().trim();
+  if (!documentAnalytics.searchTerms[termLower]) {
+    documentAnalytics.searchTerms[termLower] = 0;
+  }
+  documentAnalytics.searchTerms[termLower]++;
+  
+  saveAnalytics(documentAnalytics);
+  res.json({ success: true });
+});
+
+// Track helpful response
+app.post('/api/analytics/helpful', (req, res) => {
+  const { messageId, response, helpful } = req.body;
+  
+  if (!messageId || !response) {
+    return res.status(400).json({ success: false, error: 'Message ID and response required' });
+  }
+  
+  const existing = documentAnalytics.helpfulResponses.find(r => r.messageId === messageId);
+  
+  if (existing) {
+    existing.helpful = helpful;
+    existing.updatedAt = new Date().toISOString();
+  } else {
+    documentAnalytics.helpfulResponses.push({
+      messageId,
+      response,
+      helpful,
+      createdAt: new Date().toISOString()
+    });
+  }
+  
+  // Keep only last 100 responses
+  if (documentAnalytics.helpfulResponses.length > 100) {
+    documentAnalytics.helpfulResponses = documentAnalytics.helpfulResponses.slice(-100);
+  }
+  
+  saveAnalytics(documentAnalytics);
+  res.json({ success: true });
+});
+
+// Get analytics data
+app.get('/api/analytics', (req, res) => {
+  // Calculate trending documents
+  const now = Date.now();
+  const oneDayAgo = now - (24 * 60 * 60 * 1000);
+  
+  const trending = Object.entries(documentAnalytics.documentViews)
+    .filter(([id, data]) => new Date(data.lastViewed).getTime() > oneDayAgo)
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 5)
+    .map(([id, data]) => ({
+      documentId: id,
+      views: data.count,
+      document: knowledgeBase.documents.find(d => d.id === id)
+    }))
+    .filter(item => item.document);
+  
+  // Top search terms
+  const topSearches = Object.entries(documentAnalytics.searchTerms)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([term, count]) => ({ term, count }));
+  
+  // Most helpful responses
+  const mostHelpful = documentAnalytics.helpfulResponses
+    .filter(r => r.helpful === true)
+    .slice(-10)
+    .reverse();
+  
+  res.json({
+    success: true,
+    trending,
+    topSearches,
+    mostHelpful,
+    totalViews: Object.values(documentAnalytics.documentViews).reduce((sum, d) => sum + d.count, 0),
+    totalSearches: Object.values(documentAnalytics.searchTerms).reduce((sum, count) => sum + count, 0)
+  });
 });
 
 // Search knowledge base (for RAG)

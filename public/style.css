@@ -302,7 +302,24 @@ body.dark-mode .close-btn:hover {
   border-radius: 8px;
   max-width: 80%;
   word-wrap: break-word;
-  animation: fadeIn 0.3s;
+  animation: slideInMessage 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.message:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+@keyframes slideInMessage {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px) scale(0.95);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes fadeIn {
@@ -310,18 +327,30 @@ body.dark-mode .close-btn:hover {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Pulse animation for new messages */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.message.new-message {
+  animation: slideInMessage 0.4s cubic-bezier(0.4, 0, 0.2, 1), pulse 0.6s ease-in-out;
+}
+
 .user-message {
-  background: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   align-self: flex-end;
   margin-left: auto;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .bot-message {
   background: var(--bot-msg-bg);
   color: var(--bot-msg-text);
   align-self: flex-start;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-left: 3px solid #667eea;
 }
 
 .message-content {

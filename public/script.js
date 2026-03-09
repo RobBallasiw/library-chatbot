@@ -889,7 +889,10 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
   });
   
   const messageDiv = document.createElement('div');
-  messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+  messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'} new-message`;
+  
+  // Remove new-message class after animation
+  setTimeout(() => messageDiv.classList.remove('new-message'), 1000);
   
   if (messageId) {
     messageDiv.setAttribute('data-message-id', messageId);
