@@ -198,6 +198,8 @@ function loadAISettings() {
   return {
     customPrompt: null,
     useCustomPrompt: false,
+    customContext: null,
+    useCustomContext: false,
     lastUpdated: null
   };
 }
@@ -821,6 +823,15 @@ app.post('/api/chat', async (req, res) => {
     const messages = [
       { role: 'system', content: systemPrompt }
     ];
+    
+    // Add custom context if enabled
+    if (aiSettings.useCustomContext && aiSettings.customContext) {
+      messages.push({
+        role: 'system',
+        content: `ADDITIONAL LIBRARY INFORMATION:\n\n${aiSettings.customContext}\n\nUse this information to answer user questions when relevant. This is official library information that you should reference.`
+      });
+      console.log('📝 Added custom context to AI');
+    }
     
     // RAG: Search knowledge base for relevant information
     const knowledgeResults = searchKnowledgeBase(message);
@@ -2036,13 +2047,15 @@ app.get('/api/ai-settings', (req, res) => {
 
 // Update AI settings
 app.post('/api/ai-settings', (req, res) => {
-  const { customPrompt, useCustomPrompt } = req.body;
+  const { customPrompt, useCustomPrompt, customContext, useCustomContext } = req.body;
   
   aiSettings.customPrompt = customPrompt || null;
   aiSettings.useCustomPrompt = useCustomPrompt === true;
+  aiSettings.customContext = customContext || null;
+  aiSettings.useCustomContext = useCustomContext === true;
   
   if (saveAISettings(aiSettings)) {
-    console.log(`✅ Updated AI settings - Custom prompt ${aiSettings.useCustomPrompt ? 'enabled' : 'disabled'}`);
+    console.log(`✅ Updated AI settings - Custom prompt ${aiSettings.useCustomPrompt ? 'enabled' : 'disabled'}, Custom context ${aiSettings.useCustomContext ? 'enabled' : 'disabled'}`);
     res.json({ success: true, settings: aiSettings });
   } else {
     res.status(500).json({ success: false, error: 'Failed to save settings' });
@@ -2053,6 +2066,8 @@ app.post('/api/ai-settings', (req, res) => {
 app.post('/api/ai-settings/reset', (req, res) => {
   aiSettings.customPrompt = null;
   aiSettings.useCustomPrompt = false;
+  aiSettings.customContext = null;
+  aiSettings.useCustomContext = false;
   
   if (saveAISettings(aiSettings)) {
     console.log(`✅ Reset AI settings to default`);

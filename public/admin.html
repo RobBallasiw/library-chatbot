@@ -2764,19 +2764,46 @@
         </div>
 
         <div id="custom-prompt-editor" style="display: none;">
-          <div style="margin-bottom: 16px;">
+          <div style="margin-bottom: 24px;">
             <label style="display: block; font-size: 14px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px;">
               Custom AI Instructions
             </label>
             <textarea 
               id="custom-prompt-text" 
-              rows="15" 
+              rows="12" 
               placeholder="Enter your custom AI instructions here..."
               style="width: 100%; padding: 16px; border: 2px solid #334155; border-radius: 10px; background: #1e293b; color: #e2e8f0; font-size: 14px; font-family: 'Courier New', monospace; line-height: 1.6; resize: vertical;"
             ></textarea>
             <small style="display: block; margin-top: 8px; font-size: 12px; color: #64748b;">
               💡 Tip: Be specific about the AI's role, tone, and what it should/shouldn't do. The AI will follow these instructions when responding to users.
             </small>
+          </div>
+
+          <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <input type="checkbox" id="use-custom-context" onchange="toggleCustomContext()" style="width: 20px; height: 20px; cursor: pointer;">
+              <label for="use-custom-context" style="font-size: 16px; font-weight: 600; color: #f1f5f9; cursor: pointer;">
+                Use Custom Reference Data
+              </label>
+            </div>
+            <p style="font-size: 13px; color: #94a3b8; margin-left: 32px; margin-bottom: 16px;">
+              Add quick reference information (library hours, policies, FAQs, etc.) that the AI can use without uploading files.
+            </p>
+            
+            <div id="custom-context-editor" style="display: none; margin-left: 32px;">
+              <label style="display: block; font-size: 14px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px;">
+                Custom Reference Data
+              </label>
+              <textarea 
+                id="custom-context-text" 
+                rows="10" 
+                placeholder="Example:&#10;&#10;Library Hours:&#10;Monday-Friday: 8am-10pm&#10;Saturday: 9am-6pm&#10;Sunday: 10am-5pm&#10;&#10;Library Policies:&#10;- Maximum 5 books per student&#10;- 2-week borrowing period&#10;- Late fee: $0.50 per day&#10;&#10;Contact Information:&#10;Email: library@school.edu&#10;Phone: (555) 123-4567"
+                style="width: 100%; padding: 16px; border: 2px solid #334155; border-radius: 10px; background: #1e293b; color: #e2e8f0; font-size: 14px; font-family: 'Courier New', monospace; line-height: 1.6; resize: vertical;"
+              ></textarea>
+              <small style="display: block; margin-top: 8px; font-size: 12px; color: #64748b;">
+                💡 Paste any information you want the AI to reference: hours, policies, contact info, FAQs, procedures, etc.
+              </small>
+            </div>
           </div>
 
           <div style="display: flex; gap: 12px; flex-wrap: wrap;">
@@ -5462,12 +5489,18 @@
         const data = await response.json();
         
         if (data.success) {
-          const useCustom = data.settings.useCustomPrompt || false;
+          const useCustomPrompt = data.settings.useCustomPrompt || false;
           const customPrompt = data.settings.customPrompt || '';
+          const useCustomContext = data.settings.useCustomContext || false;
+          const customContext = data.settings.customContext || '';
           
-          document.getElementById('use-custom-prompt').checked = useCustom;
+          document.getElementById('use-custom-prompt').checked = useCustomPrompt;
           document.getElementById('custom-prompt-text').value = customPrompt;
-          document.getElementById('custom-prompt-editor').style.display = useCustom ? 'block' : 'none';
+          document.getElementById('custom-prompt-editor').style.display = useCustomPrompt ? 'block' : 'none';
+          
+          document.getElementById('use-custom-context').checked = useCustomContext;
+          document.getElementById('custom-context-text').value = customContext;
+          document.getElementById('custom-context-editor').style.display = useCustomContext ? 'block' : 'none';
         }
       } catch (error) {
         console.error('Error loading AI settings:', error);
@@ -5479,12 +5512,24 @@
       document.getElementById('custom-prompt-editor').style.display = useCustom ? 'block' : 'none';
     }
 
+    function toggleCustomContext() {
+      const useCustom = document.getElementById('use-custom-context').checked;
+      document.getElementById('custom-context-editor').style.display = useCustom ? 'block' : 'none';
+    }
+
     async function saveAISettings() {
-      const useCustom = document.getElementById('use-custom-prompt').checked;
+      const useCustomPrompt = document.getElementById('use-custom-prompt').checked;
       const customPrompt = document.getElementById('custom-prompt-text').value.trim();
+      const useCustomContext = document.getElementById('use-custom-context').checked;
+      const customContext = document.getElementById('custom-context-text').value.trim();
       
-      if (useCustom && !customPrompt) {
+      if (useCustomPrompt && !customPrompt) {
         alert('❌ Please enter custom AI instructions or disable custom prompt.');
+        return;
+      }
+      
+      if (useCustomContext && !customContext) {
+        alert('❌ Please enter custom reference data or disable custom context.');
         return;
       }
       
@@ -5493,8 +5538,10 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            useCustomPrompt: useCustom,
-            customPrompt: customPrompt
+            useCustomPrompt: useCustomPrompt,
+            customPrompt: customPrompt,
+            useCustomContext: useCustomContext,
+            customContext: customContext
           })
         });
         
@@ -5512,7 +5559,7 @@
     }
 
     async function resetAISettings() {
-      if (!confirm('Are you sure you want to reset to the default AI prompt? This will discard your custom instructions.')) {
+      if (!confirm('Are you sure you want to reset to the default AI settings? This will discard your custom instructions and reference data.')) {
         return;
       }
       
@@ -5527,6 +5574,9 @@
           document.getElementById('use-custom-prompt').checked = false;
           document.getElementById('custom-prompt-text').value = '';
           document.getElementById('custom-prompt-editor').style.display = 'none';
+          document.getElementById('use-custom-context').checked = false;
+          document.getElementById('custom-context-text').value = '';
+          document.getElementById('custom-context-editor').style.display = 'none';
           showAIStatus('✅ AI settings reset to default successfully!', 'success');
         } else {
           showAIStatus('❌ Failed to reset AI settings: ' + (data.error || 'Unknown error'), 'error');
