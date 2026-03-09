@@ -325,29 +325,46 @@ body.dark-mode .close-btn:hover {
 }
 
 .message-content {
-  line-height: 1.6;
+  line-height: 1.8;
   white-space: pre-wrap;
   word-wrap: break-word;
+  font-size: 15px;
 }
 
 .message-content strong {
   font-weight: 700;
-  color: inherit;
+  color: #667eea;
+  display: block;
+  margin-top: 8px;
+  margin-bottom: 4px;
 }
 
 .message-content em {
   font-style: italic;
 }
 
-/* Better list formatting in messages */
+/* Better spacing for formatted content */
 .bot-message .message-content {
-  font-size: 15px;
+  letter-spacing: 0.3px;
 }
 
+/* Ensure line breaks create visible space */
 .bot-message .message-content br {
   display: block;
   content: "";
+  margin: 6px 0;
+}
+
+/* Style for lists */
+.message-content ul,
+.message-content ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.message-content li {
   margin: 4px 0;
+  line-height: 1.6;
 }
 
 .message-sender {

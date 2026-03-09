@@ -907,10 +907,17 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
   contentDiv.className = 'message-content';
   // Use innerHTML to preserve line breaks and formatting
   // Convert newlines to <br> tags and preserve formatting
-  const formattedContent = content
+  let formattedContent = content
     .replace(/\n/g, '<br>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold: **text**
     .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italic: *text*
+  
+  // Convert bullet points to proper format
+  formattedContent = formattedContent
+    .replace(/^• (.+)$/gm, '<div style="margin-left: 16px; margin-top: 4px;">• $1</div>')
+    .replace(/^- (.+)$/gm, '<div style="margin-left: 16px; margin-top: 4px;">• $1</div>')
+    .replace(/^\d+\. (.+)$/gm, '<div style="margin-left: 16px; margin-top: 4px;">$&</div>');
+  
   contentDiv.innerHTML = formattedContent;
   messageDiv.appendChild(contentDiv);
   
