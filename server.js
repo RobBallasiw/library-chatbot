@@ -2314,7 +2314,7 @@ app.post('/api/analytics/helpful', (req, res) => {
 });
 
 // Get analytics data
-app.get('/api/analytics', (req, res) => {
+app.get('/api/document-analytics', (req, res) => {
   // Calculate trending documents
   const now = Date.now();
   const oneDayAgo = now - (24 * 60 * 60 * 1000);
