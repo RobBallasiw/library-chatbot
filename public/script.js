@@ -259,8 +259,9 @@ userInput.addEventListener('keypress', (e) => {
   }
 });
 
-function addMessage(content, isUser, sender = null, attachment = null) {
-  const messageId = isUser ? `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+function addMessage(content, isUser, sender = null, attachment = null, serverId = null) {
+  // Use server-provided ID if available, otherwise generate new one
+  const messageId = serverId || (isUser ? `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   addMessageWithFeedback(content, isUser, sender, messageId, attachment);
   
   // Update message status for user messages
@@ -515,9 +516,11 @@ async function checkForLibrarianIntervention() {
           librarianMessages.forEach(msg => {
             // Debug log
             console.log('📨 Loading librarian message from history:', {
+              id: msg.id,
               content: msg.content,
               hasAttachment: !!msg.attachment,
-              attachment: msg.attachment
+              hasReactions: !!msg.reactions,
+              reactions: msg.reactions
             });
             
             // Pass attachment if present
@@ -528,8 +531,14 @@ async function checkForLibrarianIntervention() {
               data: msg.attachment.data
             } : null;
             
-            addMessage(msg.content, false, 'librarian', attachmentData);
+            addMessage(msg.content, false, 'librarian', attachmentData, msg.id);
             conversationHistory.push({ role: 'assistant', content: msg.content });
+            
+            // If message has reactions, update the display
+            if (msg.reactions && Object.keys(msg.reactions).length > 0) {
+              console.log('📊 Message has reactions, updating display');
+              setTimeout(() => updateReactionsDisplay(msg.id, msg.reactions), 100);
+            }
           });
           chatContainer.scrollTop = chatContainer.scrollHeight;
         }, 1500);
@@ -632,9 +641,11 @@ async function checkForNewMessages() {
         if (msg.role === 'librarian') {
           // Debug log
           console.log('📨 Received librarian message:', {
+            id: msg.id,
             content: msg.content,
             hasAttachment: !!msg.attachment,
-            attachment: msg.attachment
+            hasReactions: !!msg.reactions,
+            reactions: msg.reactions
           });
           
           // Pass attachment if present
@@ -645,8 +656,15 @@ async function checkForNewMessages() {
             data: msg.attachment.data
           } : null;
           
-          addMessage(msg.content, false, 'librarian', attachmentData);
+          // Pass the server's message ID so reactions can be matched
+          addMessage(msg.content, false, 'librarian', attachmentData, msg.id);
           conversationHistory.push({ role: 'assistant', content: msg.content });
+          
+          // If message has reactions, update the display
+          if (msg.reactions && Object.keys(msg.reactions).length > 0) {
+            console.log('📊 Message has reactions, updating display');
+            setTimeout(() => updateReactionsDisplay(msg.id, msg.reactions), 100);
+          }
           
           // Update status to show connected to librarian
           if (conversationStatus !== 'responded') {
@@ -661,7 +679,7 @@ async function checkForNewMessages() {
           }
         } else if (msg.role === 'assistant') {
           // System message (like session ended or librarian takeover)
-          addMessage(msg.content, false, 'bot');
+          addMessage(msg.content, false, 'bot', null, msg.id);
           conversationHistory.push({ role: 'assistant', content: msg.content });
         }
       });
