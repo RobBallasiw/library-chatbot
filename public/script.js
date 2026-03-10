@@ -1055,6 +1055,8 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
 
 // Add emoji reaction button to message
 function addReactionButtonToMessage(messageDiv, messageId) {
+  console.log('🎯 addReactionButtonToMessage called with messageId:', messageId);
+  
   const reactionsDiv = document.createElement('div');
   reactionsDiv.className = 'message-reactions';
   reactionsDiv.id = `reactions-${messageId}`;
@@ -1065,16 +1067,21 @@ function addReactionButtonToMessage(messageDiv, messageId) {
   addReactionBtn.textContent = '+';
   addReactionBtn.title = 'Add reaction';
   addReactionBtn.onclick = (e) => {
+    console.log('➕ Plus button clicked for message:', messageId);
     e.stopPropagation();
     showReactionPicker(messageId, addReactionBtn);
   };
   
   reactionsDiv.appendChild(addReactionBtn);
   messageDiv.appendChild(reactionsDiv);
+  
+  console.log('✅ Reaction button added to message');
 }
 
 // Show reaction picker
 function showReactionPicker(messageId, buttonElement) {
+  console.log('🎨 showReactionPicker called for message:', messageId);
+  
   // Remove any existing picker
   const existingPicker = document.querySelector('.reaction-picker');
   if (existingPicker) {
@@ -1115,6 +1122,8 @@ function showReactionPicker(messageId, buttonElement) {
 
 // Add reaction to message
 async function addReaction(messageId, emoji) {
+  console.log('😊 addReaction called:', { messageId, emoji, sessionId });
+  
   try {
     const response = await fetch('/api/feedback/reaction', {
       method: 'POST',
@@ -1127,19 +1136,27 @@ async function addReaction(messageId, emoji) {
     });
     
     const data = await response.json();
+    console.log('📊 Reaction API response:', data);
     
     if (data.success) {
       updateReactionsDisplay(messageId, data.reactions);
     }
   } catch (error) {
-    console.error('Error adding reaction:', error);
+    console.error('❌ Error adding reaction:', error);
   }
 }
 
 // Update reactions display
 function updateReactionsDisplay(messageId, reactions) {
+  console.log('🔄 updateReactionsDisplay called:', { messageId, reactions });
+  
   const reactionsDiv = document.getElementById(`reactions-${messageId}`);
-  if (!reactionsDiv) return;
+  if (!reactionsDiv) {
+    console.error('❌ Reactions div not found for message:', messageId);
+    return;
+  }
+  
+  console.log('✅ Found reactions div');
   
   // Clear existing reactions (except add button)
   const addBtn = reactionsDiv.querySelector('.add-reaction-btn');
@@ -1148,6 +1165,7 @@ function updateReactionsDisplay(messageId, reactions) {
   // Add reaction buttons with counts
   Object.entries(reactions).forEach(([emoji, count]) => {
     if (count > 0) {
+      console.log('➕ Adding reaction button:', emoji, count);
       const reactionBtn = document.createElement('button');
       reactionBtn.className = 'reaction-btn';
       reactionBtn.innerHTML = `${emoji} <span class="reaction-count">${count}</span>`;
@@ -1159,6 +1177,7 @@ function updateReactionsDisplay(messageId, reactions) {
   // Re-add the add button
   if (addBtn) {
     reactionsDiv.appendChild(addBtn);
+    console.log('✅ Re-added + button');
   }
 }
 
