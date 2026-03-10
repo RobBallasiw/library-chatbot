@@ -80,6 +80,14 @@ const librarianLimiter = rateLimit({
   }
 });
 
+const feedbackLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 50, // 50 feedback actions per minute
+  message: 'Too many feedback requests. Please slow down.',
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 // Increase body size limit to handle file uploads (10MB)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -97,6 +105,8 @@ app.use('/api/librarian/*', librarianLimiter); // Generous limit for librarians
 app.use('/api/admin/*', librarianLimiter); // Generous limit for admin
 app.use('/api/conversation/*', librarianLimiter); // Generous limit for conversation endpoints
 app.use('/api/canned-responses', librarianLimiter); // Generous limit for canned responses
+app.use('/api/feedback/*', feedbackLimiter); // Rate limit feedback endpoints
+app.use('/api/analytics/*', feedbackLimiter); // Rate limit analytics tracking
 app.use('/api/*', apiLimiter); // Default limit for other endpoints
 
 // Configuration Constants
@@ -1424,11 +1434,15 @@ app.get('/librarian-mobile', (req, res) => {
 // Admin login endpoint
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  
+  // Require admin password to be set in environment
+  if (!adminPassword) {
+    console.error('❌ ADMIN_PASSWORD not set in environment variables');
+    return res.status(500).json({ success: false, message: 'Admin access not configured' });
+  }
   
   console.log('Login attempt - Password provided:', password ? 'Yes' : 'No');
-  console.log('Expected password:', adminPassword);
-  console.log('Password match:', password === adminPassword);
   
   if (password === adminPassword) {
     console.log('Login successful');
@@ -1442,7 +1456,13 @@ app.post('/api/admin/login', (req, res) => {
 // Librarian login endpoint
 app.post('/api/librarian/login', (req, res) => {
   const { password } = req.body;
-  const librarianPassword = process.env.LIBRARIAN_PASSWORD || 'librarian123';
+  const librarianPassword = process.env.LIBRARIAN_PASSWORD;
+  
+  // Require librarian password to be set in environment
+  if (!librarianPassword) {
+    console.error('❌ LIBRARIAN_PASSWORD not set in environment variables');
+    return res.status(500).json({ success: false, message: 'Librarian access not configured' });
+  }
   
   console.log('Librarian login attempt');
   
@@ -1455,90 +1475,9 @@ app.post('/api/librarian/login', (req, res) => {
   }
 });
 
-// Test endpoint to check admin password (REMOVE IN PRODUCTION)
-app.get('/api/admin/test-password', (req, res) => {
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
-  res.json({ 
-    passwordSet: !!process.env.ADMIN_PASSWORD,
-    passwordLength: adminPassword.length,
-    firstChar: adminPassword.charAt(0),
-    lastChar: adminPassword.charAt(adminPassword.length - 1)
-  });
-});
-
-// Test endpoint to send a test notification
-app.get('/api/test-notification', async (req, res) => {
-  try {
-    const authorizedLibrarians = getAuthorizedLibrarians();
-    
-    if (!process.env.FACEBOOK_PAGE_ACCESS_TOKEN) {
-      return res.json({
-        success: false,
-        error: 'FACEBOOK_PAGE_ACCESS_TOKEN not set'
-      });
-    }
-
-    if (authorizedLibrarians.length === 0) {
-      return res.json({
-        success: false,
-        error: 'No authorized librarians (LIBRARIAN_PSID not set)'
-      });
-    }
-
-    const url = `https://graph.facebook.com/v18.0/me/messages?access_token=${process.env.FACEBOOK_PAGE_ACCESS_TOKEN}`;
-    const results = [];
-
-    for (const librarianPsid of authorizedLibrarians) {
-      try {
-        await axios.post(url, {
-          recipient: { id: librarianPsid },
-          message: {
-            text: `🧪 Test notification from Library Chatbot\n\nThis is a test to verify Messenger notifications are working.\n\nTimestamp: ${new Date().toISOString()}`
-          }
-        });
-
-        results.push({
-          psid: librarianPsid,
-          status: 'success'
-        });
-      } catch (error) {
-        results.push({
-          psid: librarianPsid,
-          status: 'error',
-          error: error.response?.data || error.message
-        });
-      }
-    }
-
-    res.json({
-      success: true,
-      authorizedLibrarians: authorizedLibrarians.length,
-      results: results
-    });
-  } catch (error) {
-    res.json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
 // Admin Dashboard - Manage librarian access
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-// Test endpoint to check webhook configuration
-app.get('/api/test/webhook-status', (req, res) => {
-  res.json({
-    webhookConfigured: !!process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
-    verifyToken: !!process.env.FACEBOOK_VERIFY_TOKEN,
-    pageId: !!process.env.FACEBOOK_PAGE_ID,
-    librarianPsids: getAuthorizedLibrarians().length,
-    pendingRequests: pendingLibrarianRequests.size,
-    keyword: process.env.LIBRARIAN_REQUEST_KEYWORD || 'REQUEST_LIBRARIAN_ACCESS',
-    recentWebhookCalls: 'Check server console for webhook logs'
-  });
 });
 
 // Health check endpoint (prevents Render from sleeping)
@@ -2126,30 +2065,7 @@ app.get('/api/knowledge-base/document/:id', (req, res) => {
 });
 
 // Update document category
-app.patch('/api/knowledge-base/:id/category', (req, res) => {
-  const { id } = req.params;
-  const { category } = req.body;
-  
-  if (!category) {
-    return res.status(400).json({ success: false, error: 'Category required' });
-  }
-  
-  const document = knowledgeBase.documents.find(doc => doc.id === id);
-  if (!document) {
-    return res.status(404).json({ success: false, error: 'Document not found' });
-  }
-  
-  document.category = category;
-  
-  if (saveKnowledgeBase(knowledgeBase)) {
-    console.log(`✅ Updated category for document ${id}: ${category}`);
-    res.json({ success: true, document });
-  } else {
-    res.status(500).json({ success: false, error: 'Failed to save' });
-  }
-});
-
-// Update document (title and/or category)
+// Update document (title, category, and/or tags)
 app.patch('/api/knowledge-base/:id', (req, res) => {
   const { id } = req.params;
   const { title, category, tags } = req.body;

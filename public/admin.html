@@ -5038,13 +5038,15 @@
       const sortFilter = document.getElementById('sort-filter').value;
       const searchQuery = document.getElementById('knowledge-search').value.toLowerCase().trim();
       
-      // Filter by search query
+      // Filter by search query (now includes tags)
       let filtered = allDocuments;
       if (searchQuery) {
-        filtered = allDocuments.filter(doc => 
-          doc.title.toLowerCase().includes(searchQuery) || 
-          doc.content.toLowerCase().includes(searchQuery)
-        );
+        filtered = allDocuments.filter(doc => {
+          const titleMatch = doc.title.toLowerCase().includes(searchQuery);
+          const contentMatch = doc.content.toLowerCase().includes(searchQuery);
+          const tagMatch = doc.tags && doc.tags.some(tag => tag.toLowerCase().includes(searchQuery));
+          return titleMatch || contentMatch || tagMatch;
+        });
       }
       
       // Filter by category
@@ -5095,6 +5097,15 @@
       filterDocuments();
     }
 
+    function filterByTag(tag) {
+      // Set search query to the tag
+      document.getElementById('knowledge-search').value = tag;
+      filterDocuments();
+      
+      // Scroll to search bar to show the filter is active
+      document.getElementById('knowledge-search').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     function renderKnowledgeList(documents) {
       const list = document.getElementById('knowledge-list');
       
@@ -5135,7 +5146,7 @@
             </div>
             <div class="knowledge-meta">
               ${formatBytes(doc.size)} • ${new Date(doc.createdAt).toLocaleDateString()}
-              ${tags.length > 0 ? `<br><span style="font-size: 12px;">🏷️ ${tags.map(tag => `<span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 2px 8px; border-radius: 12px; margin-right: 4px;">${tag}</span>`).join('')}</span>` : ''}
+              ${tags.length > 0 ? `<br><span style="font-size: 12px;">🏷️ ${tags.map(tag => `<span onclick="event.stopPropagation(); filterByTag('${tag}')" style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 2px 8px; border-radius: 12px; margin-right: 4px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(16, 185, 129, 0.2)'" onmouseout="this.style.background='rgba(16, 185, 129, 0.1)'" title="Click to filter by this tag">${tag}</span>`).join('')}</span>` : ''}
             </div>
             <div class="knowledge-preview">${doc.content.substring(0, 150)}...</div>
           </div>

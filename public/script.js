@@ -294,11 +294,17 @@ function updateMessageStatus(messageId, status) {
   statusEl.innerHTML = `<span class="status-icon ${classes[status]}">${icons[status]}</span>`;
 }
 
-function showTypingIndicator() {
+function showTypingIndicator(customText = null) {
   const typingDiv = document.createElement('div');
   typingDiv.className = 'message bot-message typing-indicator';
   typingDiv.id = 'typing';
-  typingDiv.innerHTML = '<span></span><span></span><span></span>';
+  
+  if (customText) {
+    typingDiv.innerHTML = `<span class="typing-label">${customText}</span><span></span><span></span><span></span>`;
+  } else {
+    typingDiv.innerHTML = '<span></span><span></span><span></span>';
+  }
+  
   messagesContainer.appendChild(typingDiv);
   
   // Scroll the chat container
@@ -345,7 +351,13 @@ async function sendMessage() {
   userInput.value = '';
   clearFileSelection();
   sendBtn.disabled = true;
-  showTypingIndicator();
+  
+  // Show special indicator for image analysis
+  if (attachmentData && attachmentData.type.startsWith('image/')) {
+    showTypingIndicator('🖼️ Analyzing image...');
+  } else {
+    showTypingIndicator();
+  }
 
   try {
     // Add timeout for slow server response (Render wake-up)
@@ -1020,6 +1032,115 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
+// Add emoji reaction button to message
+function addReactionButtonToMessage(messageDiv, messageId) {
+  const reactionsDiv = document.createElement('div');
+  reactionsDiv.className = 'message-reactions';
+  reactionsDiv.id = `reactions-${messageId}`;
+  
+  // Add "+" button to add reactions
+  const addReactionBtn = document.createElement('button');
+  addReactionBtn.className = 'add-reaction-btn';
+  addReactionBtn.textContent = '+';
+  addReactionBtn.title = 'Add reaction';
+  addReactionBtn.onclick = (e) => {
+    e.stopPropagation();
+    showReactionPicker(messageId, addReactionBtn);
+  };
+  
+  reactionsDiv.appendChild(addReactionBtn);
+  messageDiv.appendChild(reactionsDiv);
+}
+
+// Show reaction picker
+function showReactionPicker(messageId, buttonElement) {
+  // Remove any existing picker
+  const existingPicker = document.querySelector('.reaction-picker');
+  if (existingPicker) {
+    existingPicker.remove();
+  }
+  
+  const picker = document.createElement('div');
+  picker.className = 'reaction-picker active';
+  
+  const emojis = ['❤️', '👍', '😊', '😂', '😮', '😢', '🎉', '🔥'];
+  
+  emojis.forEach(emoji => {
+    const btn = document.createElement('button');
+    btn.className = 'reaction-option';
+    btn.textContent = emoji;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      addReaction(messageId, emoji);
+      picker.remove();
+    };
+    picker.appendChild(btn);
+  });
+  
+  // Position picker relative to button
+  const reactionsDiv = document.getElementById(`reactions-${messageId}`);
+  reactionsDiv.appendChild(picker);
+  
+  // Close picker when clicking outside
+  setTimeout(() => {
+    document.addEventListener('click', function closePickerHandler(e) {
+      if (!picker.contains(e.target) && e.target !== buttonElement) {
+        picker.remove();
+        document.removeEventListener('click', closePickerHandler);
+      }
+    });
+  }, 100);
+}
+
+// Add reaction to message
+async function addReaction(messageId, emoji) {
+  try {
+    const response = await fetch('/api/feedback/reaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId,
+        messageId,
+        emoji
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      updateReactionsDisplay(messageId, data.reactions);
+    }
+  } catch (error) {
+    console.error('Error adding reaction:', error);
+  }
+}
+
+// Update reactions display
+function updateReactionsDisplay(messageId, reactions) {
+  const reactionsDiv = document.getElementById(`reactions-${messageId}`);
+  if (!reactionsDiv) return;
+  
+  // Clear existing reactions (except add button)
+  const addBtn = reactionsDiv.querySelector('.add-reaction-btn');
+  reactionsDiv.innerHTML = '';
+  
+  // Add reaction buttons with counts
+  Object.entries(reactions).forEach(([emoji, count]) => {
+    if (count > 0) {
+      const reactionBtn = document.createElement('button');
+      reactionBtn.className = 'reaction-btn';
+      reactionBtn.innerHTML = `${emoji} <span class="reaction-count">${count}</span>`;
+      reactionBtn.onclick = () => addReaction(messageId, emoji);
+      reactionsDiv.appendChild(reactionBtn);
+    }
+  });
+  
+  // Re-add the add button
+  if (addBtn) {
+    reactionsDiv.appendChild(addBtn);
+  }
+}
+
 // Give feedback on a specific message
 function giveFeedback(messageId, type) {
   messageFeedback[messageId] = type;
@@ -1222,101 +1343,6 @@ if (quickReplies) {
   });
 }
 
-// ===== MESSAGE REACTIONS =====
-function addReactionToMessage(messageId, emoji) {
-  if (!messageReactions[messageId]) {
-    messageReactions[messageId] = {};
-  }
-  
-  if (!messageReactions[messageId][emoji]) {
-    messageReactions[messageId][emoji] = 0;
-  }
-  
-  messageReactions[messageId][emoji]++;
-  updateReactionDisplay(messageId);
-  
-  // Send to server
-  fetch('/api/reactions/add', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sessionId, messageId, emoji })
-  }).catch(err => console.error('Error saving reaction:', err));
-}
-
-function updateReactionDisplay(messageId) {
-  const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
-  if (!messageEl) return;
-  
-  let reactionsContainer = messageEl.querySelector('.message-reactions');
-  if (!reactionsContainer) {
-    reactionsContainer = document.createElement('div');
-    reactionsContainer.className = 'message-reactions';
-    messageEl.appendChild(reactionsContainer);
-  }
-  
-  reactionsContainer.innerHTML = '';
-  
-  const reactions = messageReactions[messageId] || {};
-  Object.entries(reactions).forEach(([emoji, count]) => {
-    if (count > 0) {
-      const reactionBtn = document.createElement('button');
-      reactionBtn.className = 'reaction-btn';
-      reactionBtn.innerHTML = `${emoji} <span class="reaction-count">${count}</span>`;
-      reactionsContainer.appendChild(reactionBtn);
-    }
-  });
-  
-  // Add "+" button to add more reactions
-  const addBtn = document.createElement('button');
-  addBtn.className = 'add-reaction-btn';
-  addBtn.textContent = '+';
-  addBtn.onclick = (e) => {
-    e.stopPropagation();
-    showReactionPicker(messageId, addBtn);
-  };
-  reactionsContainer.appendChild(addBtn);
-}
-
-function showReactionPicker(messageId, buttonEl) {
-  // Remove any existing picker
-  document.querySelectorAll('.reaction-picker').forEach(p => p.remove());
-  
-  const picker = document.createElement('div');
-  picker.className = 'reaction-picker active';
-  
-  const emojis = ['👍', '❤️', '😊', '😂', '🎉', '🔥', '👏', '✨'];
-  emojis.forEach(emoji => {
-    const option = document.createElement('button');
-    option.className = 'reaction-option';
-    option.textContent = emoji;
-    option.onclick = () => {
-      addReactionToMessage(messageId, emoji);
-      picker.remove();
-    };
-    picker.appendChild(option);
-  });
-  
-  buttonEl.parentElement.style.position = 'relative';
-  buttonEl.parentElement.appendChild(picker);
-  
-  // Close picker when clicking outside
-  setTimeout(() => {
-    document.addEventListener('click', function closePicker(e) {
-      if (!picker.contains(e.target)) {
-        picker.remove();
-        document.removeEventListener('click', closePicker);
-      }
-    });
-  }, 100);
-}
-
-// Add reaction button to bot messages
-function addReactionButtonToMessage(messageDiv, messageId) {
-  // Only add to bot/librarian messages
-  if (messageDiv.classList.contains('bot-message')) {
-    updateReactionDisplay(messageId);
-  }
-}
 
 
 // Image and PDF Modal Functions
