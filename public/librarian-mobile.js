@@ -305,11 +305,32 @@ function renderMessages(messages) {
       }
     }
     
+    // Add emoji reactions display for librarian messages
+    let reactionsHtml = '';
+    if (msg.role === 'librarian' && msg.reactions && Object.keys(msg.reactions).length > 0) {
+      const reactionButtons = Object.entries(msg.reactions)
+        .filter(([emoji, count]) => count > 0)
+        .map(([emoji, count]) => `
+          <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: rgba(102, 126, 234, 0.1); border: 1px solid rgba(102, 126, 234, 0.3); border-radius: 12px; font-size: 14px; margin-right: 6px;">
+            ${emoji} <span style="font-size: 11px; font-weight: 700; color: #667eea;">${count}</span>
+          </span>
+        `).join('');
+      
+      if (reactionButtons) {
+        reactionsHtml = `
+          <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px;">
+            ${reactionButtons}
+          </div>
+        `;
+      }
+    }
+    
     return `
       <div class="message ${roleClass}">
         <div class="message-role">${roleLabel}</div>
         <div class="message-content">${msg.content}</div>
         ${attachmentHtml}
+        ${reactionsHtml}
         <div class="message-time">${time}</div>
       </div>
     `;

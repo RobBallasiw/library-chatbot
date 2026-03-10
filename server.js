@@ -881,7 +881,9 @@ app.post('/api/chat', async (req, res) => {
     }
     
     // Create message object with attachment if present
+    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const userMessage = { 
+      id: messageId,
       role: 'user', 
       content: message, 
       timestamp: new Date() 
@@ -1070,6 +1072,7 @@ app.post('/api/chat', async (req, res) => {
       const safeResponse = "I apologize, but I can only communicate in English and help with library services only. Please ask your question in English about library-related topics (books, hours, services, etc.), or you can request to speak with a librarian for personalized assistance.";
       
       conversation.messages.push({ 
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         role: 'assistant', 
         content: safeResponse, 
         timestamp: new Date() 
@@ -1084,6 +1087,7 @@ app.post('/api/chat', async (req, res) => {
     }
 
     conversation.messages.push({ 
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       role: 'assistant', 
       content: botResponse, 
       timestamp: new Date() 
@@ -1639,9 +1643,21 @@ app.get('/api/conversation/:sessionId', (req, res) => {
     const thumbsUp = sessionFeedback.filter(f => f.type === 'up').length;
     const thumbsDown = sessionFeedback.filter(f => f.type === 'down').length;
     
+    // Add reactions to each message using the message ID
+    const messagesWithReactions = conversation.messages.map((msg) => {
+      const messageReactions = feedback.reactions[msg.id];
+      const reactions = messageReactions ? messageReactions.counts : {};
+      
+      return {
+        ...msg,
+        reactions
+      };
+    });
+    
     res.json({
       sessionId,
       ...conversation,
+      messages: messagesWithReactions,
       feedback: {
         thumbsUp,
         thumbsDown
@@ -1765,6 +1781,7 @@ app.post('/api/librarian/respond', (req, res) => {
     if (wasBot) {
       // Add system message to notify user
       conversation.messages.push({
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         role: 'assistant',
         content: '👤 A librarian is now assisting you. You can ask any questions and they will respond personally.',
         timestamp: new Date()
@@ -1773,7 +1790,9 @@ app.post('/api/librarian/respond', (req, res) => {
     }
     
     // Create message object
+    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const librarianMessage = {
+      id: messageId,
       role: 'librarian',
       content: message,
       timestamp: new Date(),
@@ -1816,6 +1835,7 @@ app.post('/api/librarian/end-session', (req, res) => {
   if (conversation) {
     // Add a system message
     conversation.messages.push({
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       role: 'assistant',
       content: 'This conversation has been closed by the librarian. If you need further assistance, feel free to ask!',
       timestamp: new Date()
