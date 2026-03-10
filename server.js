@@ -2487,7 +2487,7 @@ app.post('/api/feedback/message', (req, res) => {
 
 // API endpoint for emoji reactions
 app.post('/api/feedback/reaction', (req, res) => {
-  const { sessionId, messageId, emoji } = req.body;
+  const { sessionId, messageId, emoji, userId } = req.body;
   
   if (!sessionId || !messageId || !emoji) {
     return res.status(400).json({ success: false, error: 'Missing required fields' });
@@ -2495,25 +2495,54 @@ app.post('/api/feedback/reaction', (req, res) => {
   
   // Initialize reactions for this message if not exists
   if (!feedback.reactions[messageId]) {
-    feedback.reactions[messageId] = {};
+    feedback.reactions[messageId] = {
+      counts: {},      // emoji -> count
+      users: {}        // emoji -> [userIds]
+    };
   }
   
-  // Toggle reaction (add if not exists, remove if exists)
-  if (feedback.reactions[messageId][emoji]) {
-    feedback.reactions[messageId][emoji]++;
+  const messageReactions = feedback.reactions[messageId];
+  
+  // Use sessionId as userId if not provided
+  const user = userId || sessionId;
+  
+  // Initialize arrays if needed
+  if (!messageReactions.counts[emoji]) {
+    messageReactions.counts[emoji] = 0;
+  }
+  if (!messageReactions.users[emoji]) {
+    messageReactions.users[emoji] = [];
+  }
+  
+  // Toggle: if user already reacted with this emoji, remove it; otherwise add it
+  const userIndex = messageReactions.users[emoji].indexOf(user);
+  
+  if (userIndex > -1) {
+    // User already reacted - remove reaction
+    messageReactions.users[emoji].splice(userIndex, 1);
+    messageReactions.counts[emoji]--;
+    
+    // Clean up if count reaches 0
+    if (messageReactions.counts[emoji] <= 0) {
+      delete messageReactions.counts[emoji];
+      delete messageReactions.users[emoji];
+    }
   } else {
-    feedback.reactions[messageId][emoji] = 1;
+    // User hasn't reacted - add reaction
+    messageReactions.users[emoji].push(user);
+    messageReactions.counts[emoji]++;
   }
   
-  logger.log('😊 Emoji reaction received:', { sessionId, messageId, emoji });
+  logger.log('😊 Emoji reaction toggled:', { sessionId, messageId, emoji, count: messageReactions.counts[emoji] || 0 });
   
-  res.json({ success: true, reactions: feedback.reactions[messageId] });
+  res.json({ success: true, reactions: messageReactions.counts });
 });
 
 // API endpoint to get reactions for a message
 app.get('/api/feedback/reactions/:messageId', (req, res) => {
   const { messageId } = req.params;
-  const reactions = feedback.reactions[messageId] || {};
+  const messageReactions = feedback.reactions[messageId];
+  const reactions = messageReactions ? messageReactions.counts : {};
   res.json({ success: true, reactions });
 });
 
