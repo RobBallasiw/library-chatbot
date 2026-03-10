@@ -2497,7 +2497,7 @@ app.post('/api/feedback/reaction', (req, res) => {
   if (!feedback.reactions[messageId]) {
     feedback.reactions[messageId] = {
       counts: {},      // emoji -> count
-      users: {}        // emoji -> [userIds]
+      users: {}        // userId -> emoji (each user can only have 1 emoji)
     };
   }
   
@@ -2506,34 +2506,30 @@ app.post('/api/feedback/reaction', (req, res) => {
   // Use sessionId as userId if not provided
   const user = userId || sessionId;
   
-  // Initialize arrays if needed
-  if (!messageReactions.counts[emoji]) {
-    messageReactions.counts[emoji] = 0;
-  }
-  if (!messageReactions.users[emoji]) {
-    messageReactions.users[emoji] = [];
-  }
+  // Check if user already has a reaction
+  const existingEmoji = messageReactions.users[user];
   
-  // Toggle: if user already reacted with this emoji, remove it; otherwise add it
-  const userIndex = messageReactions.users[emoji].indexOf(user);
-  
-  if (userIndex > -1) {
-    // User already reacted - remove reaction
-    messageReactions.users[emoji].splice(userIndex, 1);
-    messageReactions.counts[emoji]--;
-    
-    // Clean up if count reaches 0
-    if (messageReactions.counts[emoji] <= 0) {
-      delete messageReactions.counts[emoji];
-      delete messageReactions.users[emoji];
+  if (existingEmoji) {
+    // User already reacted - remove old reaction
+    messageReactions.counts[existingEmoji]--;
+    if (messageReactions.counts[existingEmoji] <= 0) {
+      delete messageReactions.counts[existingEmoji];
     }
-  } else {
-    // User hasn't reacted - add reaction
-    messageReactions.users[emoji].push(user);
-    messageReactions.counts[emoji]++;
+    
+    // If clicking the same emoji, just remove it (toggle off)
+    if (existingEmoji === emoji) {
+      delete messageReactions.users[user];
+      logger.log('😊 Emoji reaction removed:', { sessionId, messageId, emoji });
+      res.json({ success: true, reactions: messageReactions.counts });
+      return;
+    }
   }
   
-  logger.log('😊 Emoji reaction toggled:', { sessionId, messageId, emoji, count: messageReactions.counts[emoji] || 0 });
+  // Add new reaction
+  messageReactions.users[user] = emoji;
+  messageReactions.counts[emoji] = (messageReactions.counts[emoji] || 0) + 1;
+  
+  logger.log('😊 Emoji reaction added:', { sessionId, messageId, emoji, count: messageReactions.counts[emoji] });
   
   res.json({ success: true, reactions: messageReactions.counts });
 });
