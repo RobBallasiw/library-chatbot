@@ -893,9 +893,10 @@ let messageFeedback = {}; // Store feedback for individual messages
 function addMessageWithFeedback(content, isUser, sender = null, messageId = null, attachment = null) {
   // Debug log
   console.log('💬 addMessageWithFeedback called:', {
-    content,
+    content: content.substring(0, 50),
     isUser,
     sender,
+    messageId,
     hasAttachment: !!attachment,
     attachment
   });
@@ -1010,6 +1011,7 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
   
   // Add feedback buttons for AI bot messages only (thumbs up/down for AI quality)
   if (!isUser && sender === 'bot' && messageId) {
+    console.log('✅ Adding thumbs up/down for AI message');
     const feedbackDiv = document.createElement('div');
     feedbackDiv.className = 'message-feedback';
     feedbackDiv.innerHTML = `
@@ -1025,6 +1027,7 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
   
   // Add emoji reactions for librarian messages only (more personal/emotional)
   if (!isUser && sender === 'librarian' && messageId) {
+    console.log('✅ Adding emoji reactions for librarian message');
     addReactionButtonToMessage(messageDiv, messageId);
   }
   
