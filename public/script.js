@@ -1008,7 +1008,7 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
     messageDiv.appendChild(statusDiv);
   }
   
-  // Add feedback buttons for bot messages (not librarian)
+  // Add feedback buttons for AI bot messages only (thumbs up/down for AI quality)
   if (!isUser && sender === 'bot' && messageId) {
     const feedbackDiv = document.createElement('div');
     feedbackDiv.className = 'message-feedback';
@@ -1023,8 +1023,8 @@ function addMessageWithFeedback(content, isUser, sender = null, messageId = null
     messageDiv.appendChild(feedbackDiv);
   }
   
-  // Add reaction support for bot/librarian messages
-  if (!isUser && messageId) {
+  // Add emoji reactions for librarian messages only (more personal/emotional)
+  if (!isUser && sender === 'librarian' && messageId) {
     addReactionButtonToMessage(messageDiv, messageId);
   }
   
