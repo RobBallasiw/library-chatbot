@@ -776,6 +776,43 @@ app.post('/api/chat', async (req, res) => {
 
     const conversation = conversations.get(sessionId);
     
+    // Check if attachment is an image for recognition
+    let imageAnalysis = null;
+    if (attachment && attachment.type && attachment.type.startsWith('image/')) {
+      console.log('🖼️ Image detected, analyzing with AI...');
+      try {
+        // Use Groq's vision model to analyze the image
+        const visionResponse = await groq.chat.completions.create({
+          model: 'llama-3.2-11b-vision-preview',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'You are a library assistant. Analyze this image and describe what you see. If it\'s a book cover, identify the title, author, and any other relevant information. If it\'s a document or page, describe its content. Be specific and helpful.'
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: attachment.data
+                  }
+                }
+              ]
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 500
+        });
+        
+        imageAnalysis = visionResponse.choices[0].message.content;
+        console.log('✅ Image analysis complete:', imageAnalysis.substring(0, 100));
+      } catch (error) {
+        console.error('❌ Error analyzing image:', error.message);
+        imageAnalysis = 'I can see you\'ve shared an image, but I\'m having trouble analyzing it right now. Could you describe what you\'re looking for?';
+      }
+    }
+    
     // Crisis detection - immediate response with resources
     const crisisPatterns = [
       /\b(suicide|kill myself|end my life|want to die|hurt myself|self harm)\b/i,
@@ -848,6 +885,13 @@ app.post('/api/chat', async (req, res) => {
         data: attachment.data
       };
       console.log('📎 User attached file:', attachment.name);
+    }
+    
+    // If we have image analysis, prepend it to the message
+    let effectiveMessage = message;
+    if (imageAnalysis) {
+      effectiveMessage = `[User shared an image. AI Analysis: ${imageAnalysis}]\n\nUser's message: ${message || 'What can you tell me about this image?'}`;
+      console.log('🖼️ Including image analysis in conversation');
     }
     
     conversation.messages.push(userMessage);
@@ -924,12 +968,12 @@ app.post('/api/chat', async (req, res) => {
     }
     
     // RAG: Search knowledge base for relevant information
-    const knowledgeResults = searchKnowledgeBase(message);
+    const knowledgeResults = searchKnowledgeBase(effectiveMessage);
     
     // Check if user is asking for a general list of available documents
-    const isGeneralQuery = /what (books|documents|files|pdfs|materials|resources).*(do you have|available|got)/i.test(message) ||
-                          /list (all|available|your) (books|documents|files|pdfs)/i.test(message) ||
-                          /show me (all|available|your) (books|documents|files|pdfs)/i.test(message);
+    const isGeneralQuery = /what (books|documents|files|pdfs|materials|resources).*(do you have|available|got)/i.test(effectiveMessage) ||
+                          /list (all|available|your) (books|documents|files|pdfs)/i.test(effectiveMessage) ||
+                          /show me (all|available|your) (books|documents|files|pdfs)/i.test(effectiveMessage);
     
     if (isGeneralQuery && knowledgeBase.documents.length > 0) {
       // User wants a list of all available documents
@@ -981,7 +1025,7 @@ app.post('/api/chat', async (req, res) => {
     
     const recentHistory = history.slice(-LIMITS.CONVERSATION_HISTORY);
     messages.push(...recentHistory);
-    messages.push({ role: 'user', content: message });
+    messages.push({ role: 'user', content: effectiveMessage });
 
     const response = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
@@ -1934,7 +1978,7 @@ app.get('/api/knowledge-base', (req, res) => {
 
 // Add new document to knowledge base
 app.post('/api/knowledge-base', async (req, res) => {
-  const { title, content, fileData, fileType, category } = req.body;
+  const { title, content, fileData, fileType, category, tags } = req.body;
   
   if (!title) {
     return res.status(400).json({ success: false, error: 'Title required' });
@@ -2015,6 +2059,7 @@ app.post('/api/knowledge-base', async (req, res) => {
     size: documentContent.length,
     type: fileType || 'text/plain',
     category: category || 'other',
+    tags: tags || [], // Add tags support
     originalFile: fileData ? fileData : null // Store original PDF for preview
   };
   
@@ -2107,7 +2152,7 @@ app.patch('/api/knowledge-base/:id/category', (req, res) => {
 // Update document (title and/or category)
 app.patch('/api/knowledge-base/:id', (req, res) => {
   const { id } = req.params;
-  const { title, category } = req.body;
+  const { title, category, tags } = req.body;
   
   const document = knowledgeBase.documents.find(doc => doc.id === id);
   if (!document) {
@@ -2126,8 +2171,12 @@ app.patch('/api/knowledge-base/:id', (req, res) => {
     document.category = category;
   }
   
+  if (tags !== undefined) {
+    document.tags = Array.isArray(tags) ? tags : [];
+  }
+  
   if (saveKnowledgeBase(knowledgeBase)) {
-    console.log(`✅ Updated document ${id}:`, { title: document.title, category: document.category });
+    console.log(`✅ Updated document ${id}:`, { title: document.title, category: document.category, tags: document.tags });
     res.json({ success: true, document });
   } else {
     res.status(500).json({ success: false, error: 'Failed to save' });
@@ -2491,7 +2540,8 @@ app.get('/api/analytics', (req, res) => {
 // Feedback storage
 const feedback = {
   messages: [], // Individual message feedback
-  conversations: [] // Overall conversation feedback
+  conversations: [], // Overall conversation feedback
+  reactions: {} // Emoji reactions per message: { messageId: { emoji: count } }
 };
 
 // API endpoint for message feedback
@@ -2517,6 +2567,38 @@ app.post('/api/feedback/message', (req, res) => {
   logger.log('📊 Message feedback received:', { sessionId, messageId, type });
   
   res.json({ success: true });
+});
+
+// API endpoint for emoji reactions
+app.post('/api/feedback/reaction', (req, res) => {
+  const { sessionId, messageId, emoji } = req.body;
+  
+  if (!sessionId || !messageId || !emoji) {
+    return res.status(400).json({ success: false, error: 'Missing required fields' });
+  }
+  
+  // Initialize reactions for this message if not exists
+  if (!feedback.reactions[messageId]) {
+    feedback.reactions[messageId] = {};
+  }
+  
+  // Toggle reaction (add if not exists, remove if exists)
+  if (feedback.reactions[messageId][emoji]) {
+    feedback.reactions[messageId][emoji]++;
+  } else {
+    feedback.reactions[messageId][emoji] = 1;
+  }
+  
+  logger.log('😊 Emoji reaction received:', { sessionId, messageId, emoji });
+  
+  res.json({ success: true, reactions: feedback.reactions[messageId] });
+});
+
+// API endpoint to get reactions for a message
+app.get('/api/feedback/reactions/:messageId', (req, res) => {
+  const { messageId } = req.params;
+  const reactions = feedback.reactions[messageId] || {};
+  res.json({ success: true, reactions });
 });
 
 // API endpoint for conversation feedback

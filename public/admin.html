@@ -3227,6 +3227,13 @@
           </small>
         </div>
         <div class="form-group">
+          <label>Tags (Optional)</label>
+          <input type="text" id="knowledge-tags" placeholder="e.g., computer science, programming, java">
+          <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">
+            💡 Add tags separated by commas for better searchability (e.g., "python, tutorial, beginner")
+          </small>
+        </div>
+        <div class="form-group">
           <label>Document Content</label>
           <textarea id="knowledge-content" rows="10" placeholder="Paste or type document content here..."></textarea>
           <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">
@@ -3321,6 +3328,13 @@
             <option value="reference">📚 Reference Material</option>
             <option value="other">📁 Other</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label>Tags</label>
+          <input type="text" id="edit-doc-tags" placeholder="e.g., computer science, programming, java">
+          <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">
+            💡 Separate tags with commas
+          </small>
         </div>
       </div>
       <div class="modal-footer">
@@ -5106,6 +5120,7 @@
         const cat = categoryInfo[doc.category] || categoryInfo['other'];
         const fileIcon = doc.type === 'application/pdf' ? '📕' : '📄';
         const typeLabel = doc.type === 'application/pdf' ? 'PDF' : 'Text';
+        const tags = doc.tags || [];
         
         return `
         <div class="knowledge-item" onclick="previewDocument('${doc.id}')" style="cursor: pointer; transition: all 0.2s ease;">
@@ -5120,11 +5135,12 @@
             </div>
             <div class="knowledge-meta">
               ${formatBytes(doc.size)} • ${new Date(doc.createdAt).toLocaleDateString()}
+              ${tags.length > 0 ? `<br><span style="font-size: 12px;">🏷️ ${tags.map(tag => `<span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 2px 8px; border-radius: 12px; margin-right: 4px;">${tag}</span>`).join('')}</span>` : ''}
             </div>
             <div class="knowledge-preview">${doc.content.substring(0, 150)}...</div>
           </div>
           <div class="knowledge-actions" onclick="event.stopPropagation()">
-            <button class="btn-icon" onclick="editDocumentCategory('${doc.id}')" title="Edit Category" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">✏️</button>
+            <button class="btn-icon" onclick="editDocumentCategory('${doc.id}')" title="Edit Document" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">✏️</button>
             <button class="btn-icon" onclick="deleteKnowledge('${doc.id}')" title="Delete">🗑️</button>
           </div>
         </div>
@@ -5228,12 +5244,14 @@
       const title = document.getElementById('knowledge-title').value.trim();
       const content = document.getElementById('knowledge-content').value.trim();
       const category = document.getElementById('knowledge-category').value;
+      const tagsInput = document.getElementById('knowledge-tags').value.trim();
+      const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
       const fileInput = document.getElementById('knowledge-file');
       const files = fileInput.files;
       
       // Check if bulk upload (multiple files)
       if (files && files.length > 1) {
-        await bulkUploadDocuments(files, category);
+        await bulkUploadDocuments(files, category, tags);
         return;
       }
       
@@ -5245,7 +5263,7 @@
         return;
       }
       
-      let requestBody = { title, category };
+      let requestBody = { title, category, tags };
       
       // If PDF file is selected, send file data
       if (file && file.type === 'application/pdf') {
@@ -5621,6 +5639,7 @@
       currentEditDocId = id;
       document.getElementById('edit-doc-title').value = doc.title;
       document.getElementById('edit-doc-category').value = doc.category || 'other';
+      document.getElementById('edit-doc-tags').value = (doc.tags || []).join(', ');
       
       const modal = document.getElementById('edit-category-modal');
       modal.style.display = 'flex';
@@ -5639,6 +5658,8 @@
       
       const newTitle = document.getElementById('edit-doc-title').value.trim();
       const newCategory = document.getElementById('edit-doc-category').value;
+      const tagsInput = document.getElementById('edit-doc-tags').value.trim();
+      const newTags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
       
       if (!newTitle) {
         alert('❌ Title cannot be empty');
@@ -5651,7 +5672,8 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             title: newTitle,
-            category: newCategory 
+            category: newCategory,
+            tags: newTags
           })
         });
         
