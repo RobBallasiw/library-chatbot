@@ -1304,7 +1304,7 @@ body.dark-mode .reaction-btn.active {
   padding: 6px 10px;
   font-size: 16px;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.6;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--text-secondary);
   font-weight: bold;
