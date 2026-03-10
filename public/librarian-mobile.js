@@ -307,7 +307,10 @@ function renderMessages(messages) {
     
     // Add emoji reactions display for librarian messages
     let reactionsHtml = '';
+    console.log('Message data:', { role: msg.role, hasReactions: !!msg.reactions, reactions: msg.reactions, id: msg.id });
+    
     if (msg.role === 'librarian' && msg.reactions && Object.keys(msg.reactions).length > 0) {
+      console.log('Adding reactions HTML for librarian message');
       const reactionButtons = Object.entries(msg.reactions)
         .filter(([emoji, count]) => count > 0)
         .map(([emoji, count]) => `

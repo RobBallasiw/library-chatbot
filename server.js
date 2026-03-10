@@ -1648,11 +1648,15 @@ app.get('/api/conversation/:sessionId', (req, res) => {
       const messageReactions = feedback.reactions[msg.id];
       const reactions = messageReactions ? messageReactions.counts : {};
       
+      console.log('Message:', { id: msg.id, role: msg.role, hasReactions: !!messageReactions, reactions });
+      
       return {
         ...msg,
         reactions
       };
     });
+    
+    console.log('Sending conversation with', messagesWithReactions.length, 'messages');
     
     res.json({
       sessionId,
