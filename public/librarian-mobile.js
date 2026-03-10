@@ -322,7 +322,24 @@ function renderMessages(messages) {
       if (reactionButtons) {
         reactionsHtml = `
           <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px;">
+            <span style="font-size: 11px; color: #64748b; margin-right: 8px;">User reactions:</span>
             ${reactionButtons}
+          </div>
+        `;
+      }
+    }
+    
+    // Add thumbs up/down feedback display for bot messages
+    let feedbackHtml = '';
+    if (msg.role === 'assistant' && msg.feedback) {
+      const thumbsUp = msg.feedback.up || 0;
+      const thumbsDown = msg.feedback.down || 0;
+      
+      if (thumbsUp > 0 || thumbsDown > 0) {
+        feedbackHtml = `
+          <div style="margin-top: 8px; display: flex; gap: 8px; font-size: 12px; color: #64748b;">
+            ${thumbsUp > 0 ? `<span style="display: inline-flex; align-items: center; gap: 4px;">👍 ${thumbsUp}</span>` : ''}
+            ${thumbsDown > 0 ? `<span style="display: inline-flex; align-items: center; gap: 4px;">👎 ${thumbsDown}</span>` : ''}
           </div>
         `;
       }
@@ -334,6 +351,7 @@ function renderMessages(messages) {
         <div class="message-content">${msg.content}</div>
         ${attachmentHtml}
         ${reactionsHtml}
+        ${feedbackHtml}
         <div class="message-time">${time}</div>
       </div>
     `;

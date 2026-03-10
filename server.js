@@ -1648,11 +1648,26 @@ app.get('/api/conversation/:sessionId', (req, res) => {
       const messageReactions = feedback.reactions[msg.id];
       const reactions = messageReactions ? messageReactions.counts : {};
       
-      console.log('Message:', { id: msg.id, role: msg.role, hasReactions: !!messageReactions, reactions });
+      // Get thumbs up/down feedback for this message
+      const messageFeedback = feedback.messages.filter(f => f.messageId === msg.id);
+      const thumbsUpCount = messageFeedback.filter(f => f.type === 'up').length;
+      const thumbsDownCount = messageFeedback.filter(f => f.type === 'down').length;
+      
+      console.log('Message:', { 
+        id: msg.id, 
+        role: msg.role, 
+        hasReactions: !!messageReactions, 
+        reactions,
+        feedback: { up: thumbsUpCount, down: thumbsDownCount }
+      });
       
       return {
         ...msg,
-        reactions
+        reactions,
+        feedback: {
+          up: thumbsUpCount,
+          down: thumbsDownCount
+        }
       };
     });
     
