@@ -412,18 +412,23 @@
     }
 
     .main-content {
-      flex: 1;
-      margin-left: 280px;
+      position: absolute;
+      left: 280px;
+      right: 0;
+      top: 0;
+      bottom: 0;
       background: #0f172a;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
+      transition: left 0.3s ease;
+    }
       transition: margin-left 0.3s ease;
     }
 
     .main-content.expanded {
-      margin-left: 80px;
-      width: calc(100% - 80px);
+      left: 80px;
     }
 
     .sidebar-header {
@@ -577,14 +582,16 @@
 
     /* Main Content Area */
     .main-content {
-      flex: 1;
-      margin-left: 280px;
+      position: absolute;
+      left: 280px;
+      right: 0;
+      top: 0;
+      bottom: 0;
       background: #0f172a;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      width: calc(100% - 280px);
-      box-sizing: border-box;
+      overflow-x: hidden;
     }
 
     .top-bar {
