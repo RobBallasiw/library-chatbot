@@ -221,6 +221,12 @@ async function openConversation(sessionId) {
     const response = await fetch(`/api/conversation/${sessionId}`);
     const data = await response.json();
     
+    console.log('📦 Conversation data received:', {
+      sessionId,
+      messageCount: data.messages?.length,
+      messages: data.messages
+    });
+    
     const avatarUrl = generateAvatar(sessionId);
     const initials = getInitials(sessionId);
     const bgColor = getColorFromSession(sessionId);
