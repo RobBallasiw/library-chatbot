@@ -423,6 +423,7 @@
 
     .main-content.expanded {
       margin-left: 80px;
+      width: calc(100% - 80px);
     }
 
     .sidebar-header {
@@ -582,6 +583,8 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      width: calc(100% - 280px);
+      box-sizing: border-box;
     }
 
     .top-bar {
@@ -639,6 +642,8 @@
       flex: 1;
       padding: 32px 40px;
       overflow-y: auto;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     /* Dashboard Styles */
