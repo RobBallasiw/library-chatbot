@@ -3203,16 +3203,23 @@
         
         const hasFeedbackChanged = oldThumbsUp !== newThumbsUp || oldThumbsDown !== newThumbsDown;
         
+        // Check if emoji reactions changed on any message
+        const hasReactionsChanged = !currentConversation || 
+          JSON.stringify(data.messages.map(m => ({ id: m.id, reactions: m.reactions || {} }))) !== 
+          JSON.stringify(currentConversation.messages.map(m => ({ id: m.id, reactions: m.reactions || {} })));
+        
         console.log('Refresh check:', {
           messages: `${currentConversation?.messages?.length || 0} → ${data.messages?.length || 0}`,
           status: `${currentConversation?.status} → ${data.status}`,
           feedback: `${oldThumbsUp}👍 ${oldThumbsDown}👎 → ${newThumbsUp}👍 ${newThumbsDown}👎`,
+          reactions: hasReactionsChanged ? '🔄 CHANGED' : '✓ same',
           hasNewMessages,
-          hasFeedbackChanged
+          hasFeedbackChanged,
+          hasReactionsChanged
         });
         
-        if (hasNewMessages) {
-          console.log('✅ Updating conversation view (messages/status changed)');
+        if (hasNewMessages || hasReactionsChanged) {
+          console.log('✅ Updating conversation view (messages/status/reactions changed)');
           const messagesEl = document.getElementById('modal-messages');
           
           currentConversation = data;
